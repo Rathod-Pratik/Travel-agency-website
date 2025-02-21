@@ -1,0 +1,35 @@
+1. Authentication & User Management
+POST /register → Register new users (tourists, agents, admins) - ok
+POST /login → Authenticate users & issue tokens -ok
+PUT /user/profile → Update user profile
+POST /logout → Log out the user
+
+2. Tour Packages & Destinations
+GET /tours → Fetch all available tour packages
+GET /tours/{id} → Fetch details of a specific tour
+POST /tours → Create a new tour (admin/agent only)
+PUT /tours/{id} → Update tour details (admin/agent only)
+DELETE /tours/{id} → Delete a tour (admin/agent only)
+
+3. Booking & Reservations
+POST /booking → Create a new booking
+GET /booking/{id} → View booking details
+GET /bookings/user/{userId} → Get all bookings for a user
+PUT /booking/{id} → Update booking details
+DELETE /booking/{id} → Cancel a booking
+
+4. Payment Processing
+POST /payment → Initiate payment for a booking
+GET /payment/{id} → Get payment details
+POST /payment/verify → Verify payment transaction status
+
+5. Reviews & Ratings
+POST /reviews → Add a review for a tour
+GET /reviews/{tourId} → Get all reviews for a tour
+PUT /reviews/{id} → Edit a review (only author/admin)
+DELETE /reviews/{id} → Delete a review (only author/admin)
+
+6. Admin & Agent Dashboard
+GET /dashboard/stats → Get summary stats (total users, bookings, revenue, etc.)
+GET /users → List all users (admin only)
+DELETE /users/{id} → Delete user (admin only)
