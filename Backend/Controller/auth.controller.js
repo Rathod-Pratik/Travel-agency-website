@@ -75,3 +75,42 @@ export const signup = async (req, res) => {
     console.log(error);
   }
 };
+
+export const UpdateProfile = async (req, res) => {
+  try {
+    const { name, email, password, phone } = req.body;
+    
+    // Check if user exists
+    const userExist = await UserModel.findOne({ email });
+    if (!userExist) {
+      return res.status(400).send("User not found");
+    }
+
+    // Prepare update fields
+    const updateFields = {};
+    const hashPassword = await bcrypt.hash(password, 10);
+    if (name) updateFields.name = name;
+    if (email) updateFields.email = email;
+    if (password) updateFields.password = hashPassword; 
+    if (phone) updateFields.phone = phone;
+
+    // Update user details
+    const updatedUser = await UserModel.findOneAndUpdate(
+      { email },
+      { $set: updateFields },
+      { new: true } // Return the updated document
+    );
+
+    return res.status(200).json({ message: "Profile updated successfully", user: updatedUser });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send("Internal Server Error");
+  }
+};
+
+export const logout = (req, res) => {
+  res.clearCookie("jwt", { httpOnly: true, secure: true, sameSite: "None" });
+  res.status(200).json({ success: true, message: "Logged out successfully" });
+};
+
+

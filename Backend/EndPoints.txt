@@ -1,15 +1,15 @@
 1. Authentication & User Management
 POST /register → Register new users (tourists, agents, admins) - ok
 POST /login → Authenticate users & issue tokens -ok
-PUT /user/profile → Update user profile
-POST /logout → Log out the user
+PUT /user/profile → Update user profile -ok
+POST /logout → Log out the user -ok
 
 2. Tour Packages & Destinations
-GET /tours → Fetch all available tour packages
-GET /tours/{id} → Fetch details of a specific tour
-POST /tours → Create a new tour (admin/agent only)
-PUT /tours/{id} → Update tour details (admin/agent only)
-DELETE /tours/{id} → Delete a tour (admin/agent only)
+GET /tours → Fetch all available tour packages -ok
+GET /tours/{id} → Fetch details of a specific tour -ok
+POST /tours → Create a new tour (admin/agent only) -ok
+PUT /tours/{id} → Update tour details (admin/agent only) -ok
+DELETE /tours/{id} → Delete a tour (admin/agent only) -ok
 
 3. Booking & Reservations
 POST /booking → Create a new booking
