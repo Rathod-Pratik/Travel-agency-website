@@ -2,9 +2,13 @@ import express from 'express';
 import { mongoose } from 'mongoose';
 import dotenv from 'dotenv'
 const app=express();
+
+import ReviewRoutes from './Routes/Payment.routes.js'
 import authRoutes from "./Routes/auth.routes.js"
 import tourRoutes from './Routes/tours.routes.js'
 import PaymentRoutes from "./Routes/Payment.routes.js";
+
+
 import cookieParser from 'cookie-parser';
 import Razorpay from 'razorpay';
 
@@ -25,7 +29,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 //razerpay integration
-export const intance=new Razorpay({
+export const razorpayInstance =new Razorpay({
     key_id:process.env.RAZERPAY_API_KEY,
     key_secret:process.env.RAZERPAY_API_SECRET
 })
@@ -35,6 +39,7 @@ app.get('/',(req,res)=>{
 })
 
 app.use('/auth',authRoutes);
+app.use('/reviews',ReviewRoutes);
 app.use('tour',tourRoutes);
 app.use('/payment',PaymentRoutes);
 

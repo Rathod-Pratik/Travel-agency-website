@@ -19,13 +19,13 @@ PUT /booking/{id} → Update booking details -ok
 DELETE /booking/{id} → Cancel a booking-ok
 
 4. Payment Processing
-POST /payment → Initiate payment for a booking
+POST /payment → Initiate payment for a booking -ok
 GET /payment/{id} → Get payment details
-POST /payment/verify → Verify payment transaction status
+POST /payment/verify → Verify payment transaction status -ok
 
 5. Reviews & Ratings
 POST /reviews → Add a review for a tour
-GET /reviews/{tourId} → Get all reviews for a tour
+GET /reviews/{tourId} → Get all reviews for a tour -ok
 PUT /reviews/{id} → Edit a review (only author/admin)
 DELETE /reviews/{id} → Delete a review (only author/admin)
 
