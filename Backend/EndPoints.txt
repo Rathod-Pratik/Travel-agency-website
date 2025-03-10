@@ -1,5 +1,5 @@
 1. Authentication & User Management
-POST /register → Register new users (tourists, agents, admins) - ok
+POST /register → Register new users (tourists, agents, admins) -ok
 POST /login → Authenticate users & issue tokens -ok
 PUT /user/profile → Update user profile -ok
 POST /logout → Log out the user -ok
@@ -16,20 +16,20 @@ POST /booking → Create a new booking -ok
 GET /booking/{id} → View booking details -ok
 GET /bookings/user/{userId} → Get all bookings for a user -ok
 PUT /booking/{id} → Update booking details -ok
-DELETE /booking/{id} → Cancel a booking-ok
+DELETE /booking/{id} → Cancel a booking -ok
 
 4. Payment Processing
-POST /payment → Initiate payment for a booking -ok
-GET /payment/{id} → Get payment details
-POST /payment/verify → Verify payment transaction status -ok
+POST /payment → Initiate payment for a booking 
+GET /payment/{id} → Get payment details 
+POST /payment/verify → Verify payment transaction status 
 
 5. Reviews & Ratings
-POST /reviews → Add a review for a tour
-GET /reviews/{tourId} → Get all reviews for a tour -ok
-PUT /reviews/{id} → Edit a review (only author/admin)
-DELETE /reviews/{id} → Delete a review (only author/admin)
+POST /reviews → Add a review for a tour -ok
+GET /reviews/{tourId} → Get all reviews for a tour -ok 
+PUT /reviews/{id} → Edit a review (only author/admin) -ok
+DELETE /reviews/{id} → Delete a review (only author/admin) -ok
 
 6. Admin & Agent Dashboard
-GET /dashboard/stats → Get summary stats (total users, bookings, revenue, etc.)
-GET /users → List all users (admin only)
-DELETE /users/{id} → Delete user (admin only)
+GET /dashboard/stats → Get summary stats (total users, bookings, revenue, etc.) -ok
+GET /users → List all users (admin only) -ok
+DELETE /users/{id} → Delete user (admin only) -ok

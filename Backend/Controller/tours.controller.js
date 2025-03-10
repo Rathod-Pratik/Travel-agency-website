@@ -16,10 +16,11 @@ export const getTours = async (req, res) => {
     });
   }
 };
+
 export const getToursData = async (req, res) => {
-  const { id } = req.query;
+  const { _id } = req.params;
   try {
-    const tours = await TourModel.find({ id });
+    const tours = await TourModel.findById( _id );
     res.status(200).json({
       success: true,
       data: tours,
@@ -32,6 +33,7 @@ export const getToursData = async (req, res) => {
     });
   }
 };
+
 export const MakeTour = async (req, res) => {
   try {
     const {
@@ -58,8 +60,9 @@ export const MakeTour = async (req, res) => {
       !maxCapacity ||
       !included ||
       !notIncluded ||
-      !itinerary ||
-      !req.file
+      !itinerary
+      //  ||
+      //  !req.file
     ) {
       return res
         .status(400)
@@ -67,7 +70,7 @@ export const MakeTour = async (req, res) => {
     }
 
     // Cloudinary image URL
-    const imageUrl = req.file.path;
+     const imageUrl = req.file.path;
 
     // Create new tour
     const tour = await TourModel.create({
@@ -81,7 +84,7 @@ export const MakeTour = async (req, res) => {
       included,
       notIncluded,
       itinerary,
-      images: [imageUrl],
+    images: [imageUrl],
     });
 
     res.status(201).json({
@@ -97,7 +100,7 @@ export const MakeTour = async (req, res) => {
 
 export const UpdateTour = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { _id } = req.params;
     const {
       title,
       description,
@@ -112,7 +115,7 @@ export const UpdateTour = async (req, res) => {
     } = req.body;
 
     // Check if tour exists
-    const existingTour = await TourModel.findById(id);
+    const existingTour = await TourModel.findById(_id);
     if (!existingTour) {
       return res
         .status(404)
@@ -120,14 +123,14 @@ export const UpdateTour = async (req, res) => {
     }
 
     // Handle optional image update
-    let imageUrl = existingTour.images;
-    if (req.file) {
-      imageUrl = [req.file.path];
-    }
+     let imageUrl = existingTour.images;
+     if (req.file) {
+       imageUrl = [req.file.path];
+     }
 
     // Update tour details
     const updatedTour = await TourModel.findByIdAndUpdate(
-      id,
+      _id,
       {
         title,
         description,
@@ -139,7 +142,7 @@ export const UpdateTour = async (req, res) => {
         included,
         notIncluded,
         itinerary,
-        images: imageUrl,
+         images: imageUrl,
       },
       { new: true, runValidators: true }
     );
@@ -157,10 +160,10 @@ export const UpdateTour = async (req, res) => {
 
 export const DeleteTour = async (req, res) => {
   try {
-    const { id } = req.params; // Get tour ID from URL
+    const { _id } = req.params; // Get tour ID from URL
 
     // Check if the tour exists
-    const existingTour = await TourModel.findById(id);
+    const existingTour = await TourModel.findById(_id);
     if (!existingTour) {
       return res
         .status(404)
@@ -168,7 +171,7 @@ export const DeleteTour = async (req, res) => {
     }
 
     // Delete the tour
-    await TourModel.findByIdAndDelete(id);
+    await TourModel.findByIdAndDelete(_id);
 
     res.status(200).json({
       success: true,

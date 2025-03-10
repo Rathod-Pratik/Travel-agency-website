@@ -8,11 +8,10 @@ const UserSchema = new mongoose.Schema(
     phone: { type: String },
     role: {
       type: String,
-      enum: ["user", "agent", "admin"],
+      enum: ["user", "admin"],
       default: "user",
     },
     bookings: [{ type: mongoose.Schema.Types.ObjectId, ref: "Booking" }],
-    resetToken: { type: String, default: null },
     createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }

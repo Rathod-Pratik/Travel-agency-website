@@ -24,7 +24,8 @@ export const verifyOrder=async(req,res)=>{
     const {order_id,payment_id}=req.body;
 
     const razorpay_signature=req.headers['x-razorpay-signature'];
-    
+
+    try {
     const key_secret=process.env.RAZERPAY_API_SECRET;
     
     let hmac=crypto.createHmac('sha256',key_secret);
@@ -39,4 +40,8 @@ export const verifyOrder=async(req,res)=>{
     else{
         res.status(500).json({sucess:false,message:"Payment varification failed"});
     }
+} catch (error) {
+    console.log(error);
+  return res.status(400).json({error});       
+}
 }

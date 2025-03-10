@@ -40,10 +40,6 @@ const TourSchema = new mongoose.Schema(
     itinerary: {
       type: [{ day: Number, activity: String }], // Example: [{ day: 1, activity: "City Tour" }]
     },
-    tourGuideId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "TourGuide",
-    },
     rating: {
       type: Number,
       default: 0,

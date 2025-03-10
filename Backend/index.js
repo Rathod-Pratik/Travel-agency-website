@@ -3,11 +3,12 @@ import { mongoose } from 'mongoose';
 import dotenv from 'dotenv'
 const app=express();
 
-import ReviewRoutes from './Routes/Payment.routes.js'
+import ReviewRoutes from './Routes/review.routes.js'
 import authRoutes from "./Routes/auth.routes.js"
 import tourRoutes from './Routes/tours.routes.js'
 import PaymentRoutes from "./Routes/Payment.routes.js";
-
+import BookingRoutes from "./Routes/booking.routes.js"
+import AdminRoutes from "./Routes/admin.routes.js";
 
 import cookieParser from 'cookie-parser';
 import Razorpay from 'razorpay';
@@ -40,7 +41,9 @@ app.get('/',(req,res)=>{
 
 app.use('/auth',authRoutes);
 app.use('/reviews',ReviewRoutes);
-app.use('tour',tourRoutes);
+app.use('/tour',tourRoutes);
 app.use('/payment',PaymentRoutes);
+app.use('/booking',BookingRoutes)
+app.use('/Admin',AdminRoutes)
 
 app.listen(5000,()=>console.log(`Server is running at ${5000}`));

@@ -1,9 +1,10 @@
-import BookingModel from "../models/booking.model.js";
-import TourModel from "../models/tour.model.js";
+import BookingModel from "../model/Booking.model.js";
+import TourModel from "../Model/tour.model.js";
 
 export const CreateBooking = async (req, res) => {
   try {
     const {
+      price,
       userId,
       userName,
       userEmail,
@@ -25,7 +26,8 @@ export const CreateBooking = async (req, res) => {
       !specialRequests ||
       !userName ||
       !userEmail ||
-      !userPhone
+      !userPhone ||
+      !price
     ) {
       return res
         .status(400)
@@ -33,12 +35,21 @@ export const CreateBooking = async (req, res) => {
     }
 
     // Check if the tour exists
-    const tour = await TourModel.findById(tourId);
+    const tour = await TourModel.findOne({_id:tourId});
+    // res.json(tour);
     if (!tour) {
       return res
         .status(404)
         .json({ success: false, message: "Tour not found" });
     }
+
+    const alreadybooking = await BookingModel.exists({ tourId, userId });
+
+    if (alreadybooking) {
+      return res.status(409).json({ success: false, message: "You have already booked this tour" });
+    }
+    
+
 
     // Calculate total price
     const totalPrice = tour.price * numberOfPeople;
@@ -50,7 +61,6 @@ export const CreateBooking = async (req, res) => {
       userEmail,
       userPhone,
       tourId,
-      tourTitle: tour.title,
       tourDate,
       tourPrice: tour.price,
       numberOfPeople,
@@ -70,14 +80,15 @@ export const CreateBooking = async (req, res) => {
 
 export const ViewBooking = async (req, res) => {
   try {
-    const { _id } = req.params;
-    if (_id) {
+    const { tourId,userId } = req.body;
+    if (!userId || !tourId) {
       return res.status(400).send("id is required");
     }
 
-    const tourData = await TourModel.find();
+    const tourData = await TourModel.find({_id:tourId});
+    const bookingData=await BookingModel.find({userId,tourId});
     if (tourData) {
-      return res.status(200).json(tourData);
+      return res.status(200).json({tourData,bookingData});
     } else {
       return res.send("This tour is not found");
     }
@@ -93,7 +104,7 @@ export const GetAllBooking = async (req, res) => {
       return res.status(400).send("user id is required");
     }
 
-    const getBooking = await BookingModel.find(userId);
+    const getBooking = await BookingModel.find({userId});
 
     return res.status(201).json({ getBooking });
   } catch (error) {
@@ -102,57 +113,46 @@ export const GetAllBooking = async (req, res) => {
 };
 
 export const UpdateBooking = async (req, res) => {
-  try {
-    const {
-      userId,
-      userName,
-      userEmail,
-      userPhone,
-      tourId,
-      tourDate,
-      numberOfPeople,
-      paymentMethod,
-      specialRequests,
-    } = req.body;
+  const {
+    userId,
+    userEmail,
+    userPhone,
+    tourDate,
+    numberOfPeople,
+    paymentMethod,
+    specialRequests,
+  } = req.body;
 
-    // Validate required fields
-    if (
-      !userId ||
-      !tourId ||
-      !tourDate ||
-      !numberOfPeople ||
-      !paymentMethod ||
-      !specialRequests ||
-      !userName ||
-      !userEmail ||
-      !userPhone
-    ) {
-      return res
-        .status(400)
-        .json({ success: false, message: "All fields are required" });
+  try {
+    // Check if the booking exists for the given userId
+    const findBooking = await BookingModel.findOne({userId});
+    
+    if (!findBooking) {
+      return res.status(400).send("Your booking is not found");
     }
 
-    const updatedBooking = await TourModel.findByIdAndUpdate(
-      userId,
+    // Proceed to update the booking with the new details
+    const updatedBooking = await BookingModel.findOneAndUpdate(
+      { userId }, // Use findOneAndUpdate to find by userId
       {
-      userName,
-      userEmail,
-      userPhone,
-      tourId,
-      tourDate,
-      numberOfPeople,
-      paymentMethod,
-      specialRequests,
+        userEmail,
+        userPhone,
+        tourDate,
+        numberOfPeople,
+        paymentMethod,
+        specialRequests,
       },
-      { new: true, runValidators: true }
+      { new: true } // Option to return the updated document
     );
 
-    return res.status(200).json({updatedBooking});
+    return res.status(200).json({ updatedBooking });
 
   } catch (error) {
     console.log(error);
+    return res.status(500).send("An error occurred while updating the booking");
   }
 };
+
 
 export const CancelBooking=async(req,res)=>{
   try {
@@ -162,11 +162,14 @@ export const CancelBooking=async(req,res)=>{
       return res.status(400).send("Id is required");
     }
   
-    const cancelBookings=await findByIdAndUpdate(_id,{
-      bookingStatus:"Cancelled",
-    })
+    const cancelBookings = await BookingModel.findByIdAndUpdate(_id, { bookingStatus: "Cancelled" });
   
+    if(cancelBookings){
     res.status(201).json({message:"Your booking is cancel"});
+    }
+    else{
+      res.status(400).json({message:"Fail to cancel booking"});
+    }
   } catch (error) {
    console.log(error); 
   }

@@ -23,10 +23,6 @@ const bookingSchema = new mongoose.Schema({
     ref: "Tour",
     required: true
   },
-  tourTitle: {
-    type: String,
-    required: true
-  },
   tourDate: {
     type: Date,
     required: true

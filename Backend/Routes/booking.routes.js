@@ -4,9 +4,9 @@ import { CancelBooking, CreateBooking, GetAllBooking, UpdateBooking, ViewBooking
 const router=express.Router();
 
 router.post('/',CreateBooking);
-router.get('/{_id}',ViewBooking);
-router.get('user/{userId}',GetAllBooking);
-router.put('/{userId}',UpdateBooking);
-router.delete('/{id}',CancelBooking);
+router.post('/ViewBooking',ViewBooking);
+router.get('/user/:userId',GetAllBooking);
+router.put('/',UpdateBooking);
+router.delete('/:_id',CancelBooking);
 
 export default router;
