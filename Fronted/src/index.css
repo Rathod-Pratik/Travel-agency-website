@@ -1,0 +1,6 @@
+ @import "tailwindcss";
+
+ :root {
+  --orange: #faa935; /* Define your custom color */
+  --secondary: #9333EA; /* Another custom color */
+ }
