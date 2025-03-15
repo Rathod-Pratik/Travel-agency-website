@@ -71,9 +71,10 @@ export const signup = async (req, res) => {
       password: hashPassword,
     });
 
-    const token = jwt.sign({ id: user._id, email }, process.env.JWT_SECRAT, {
+    const token = jwt.sign({ id: user._id, email }, process.env.JWT_SECRET, {
       expiresIn: "2h",
     });
+
     user.token = token;
     user.password = undefined;
 
@@ -82,11 +83,11 @@ export const signup = async (req, res) => {
       expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
       httpOnly: true,
     };
-    res.status(200).cookie("token", token, options).json({
+    res.cookie("token", token, options).json({
       success: true,
     });
 
-    res.status(201).json(user);
+    res.status(200).json(user);
   } catch (error) {
     console.log(error);
   }
