@@ -1,6 +1,7 @@
 import express from 'express';
 import { mongoose } from 'mongoose';
 import dotenv from 'dotenv'
+import cors from 'cors'
 const app=express();
 
 import ReviewRoutes from './Routes/review.routes.js'
@@ -25,6 +26,11 @@ function ConnectToMongo(url){
 ConnectToMongo(process.env.Database).then(()=>{
     console.log("Connection successfully")
 })
+
+app.use(cors({
+    origin: 'http://localhost:5173', // Allow only requests from this origin
+    methods: 'GET,POST,PUT,DELETE,PATCH', // Allow only these methods
+}))
 
 app.use(express.json());
 app.use(cookieParser());
