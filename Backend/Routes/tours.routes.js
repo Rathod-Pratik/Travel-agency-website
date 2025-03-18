@@ -7,8 +7,8 @@ const router=express.Router();
 
 router.get('/',getTours);
 router.get('/data/:_id',getToursData);
-router.post('/',checkAdminCookie,upload.array('image'),MakeTour);
-router.put('/:_id',checkAdminCookie,upload.array('image'),UpdateTour);
+router.post('/',checkAdminCookie,upload.single('image'),MakeTour);
+router.put('/:_id',checkAdminCookie,upload.single('image'),UpdateTour);
 router.delete('/:_id',DeleteTour);
 
 export default router;

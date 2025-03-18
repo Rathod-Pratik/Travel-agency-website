@@ -10,6 +10,7 @@ import tourRoutes from './Routes/tours.routes.js'
 import PaymentRoutes from "./Routes/Payment.routes.js";
 import BookingRoutes from "./Routes/booking.routes.js"
 import AdminRoutes from "./Routes/admin.routes.js";
+import BlogRoutes from './Routes/blog.router.js'
 
 import cookieParser from 'cookie-parser';
 import Razorpay from 'razorpay';
@@ -28,7 +29,7 @@ ConnectToMongo(process.env.Database).then(()=>{
 })
 
 app.use(cors({
-    origin: 'http://localhost:5173', // Allow only requests from this origin
+    origin: process.env.origin, // Allow only requests from this origin
     methods: 'GET,POST,PUT,DELETE,PATCH', // Allow only these methods
 }))
 
@@ -50,6 +51,7 @@ app.use('/reviews',ReviewRoutes);
 app.use('/tour',tourRoutes);
 app.use('/payment',PaymentRoutes);
 app.use('/booking',BookingRoutes)
-app.use('/Admin',AdminRoutes)
+app.use('/Admin',AdminRoutes);
+app.use('/blog',BlogRoutes);
 
 app.listen(5000,()=>console.log(`Server is running at ${5000}`));

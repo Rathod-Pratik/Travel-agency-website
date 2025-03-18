@@ -11,6 +11,7 @@ import Navbar from "./Components/Navbar";
 import Blog from "./Pages/Blog";
 import Footer from "./Components/Footer";
 import Account from "./Pages/Account";
+import TourDatail from "./Pages/Tours/TourDatail";
 
 const App = () => {
   const [color, SetColor] = useState();
@@ -80,6 +81,7 @@ const App = () => {
           <Route path="/signup" element={<SignUp Showalert={Showalert} />} />
           <Route path="/booking" element={<Booking />} />
           <Route path="/tour" element={<Tours />} />
+          <Route path="/tourDetail/:_id" element={<TourDatail />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/about" element={<About />} />
           <Route path="/account" element={<Account/>}/>

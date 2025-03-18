@@ -5,7 +5,7 @@ const Contect = () => {
     <div className="w-full md:w-[40%] mx-auto pb-6">
       {/* Title */}
       <p className="text-2xl bg-[orange] px-4 py-2 text-white inline-block hero-title rounded-[50px] shadow-md mb-6 mx-auto text-center">
-        Testimonial
+        Contect Us
       </p>
 
       {/* Contact Section */}

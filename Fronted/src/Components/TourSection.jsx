@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { apiClient } from "../lib/api-Client";
-import { GET_TOUR, HOST } from "../Utils/Constant";
+import {GET_TOUR} from "../Utils/Constant";
 import TourCard from "./TourCard";
 import { Link } from "react-router-dom";
 
@@ -30,7 +30,7 @@ const TourSection = () => {
   </div>
 
   {/* Featured Tours List */}
-  <div className="grid grid-cols-1 items-center md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-4 sm:self-center">
+  <div className="grid grid-cols-1 place-items-center md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-4 sm:self-center">
     {tourData.map((data, index) => (
       <div key={index} className="w-full sm:w-[300px] rounded-lg shadow-sm">
         <TourCard data={data} />

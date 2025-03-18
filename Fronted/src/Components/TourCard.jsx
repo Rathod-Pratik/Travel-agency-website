@@ -1,7 +1,12 @@
 import React from "react";
 import { GoLocation } from "react-icons/go";
 import { AiFillStar } from "react-icons/ai";
+import { useNavigate } from "react-router-dom";
 const TourCard = ({ data }) => {
+  const navigate=useNavigate();
+  const redirectToTourData=()=>{
+    navigate(`/tourDetail/${data._id}`);
+  }
   return (
     <div>
       <div className="relative">
@@ -37,7 +42,7 @@ const TourCard = ({ data }) => {
               /Per Person
             </span>
           </p>
-          <button className="cursor-pointer text-center font-semibold rounded-3xl bg-[orange] text-white py-1 px-1 hover:bg-orange-600 transition-colors">
+          <button onClick={redirectToTourData} className="cursor-pointer text-center font-semibold rounded-3xl bg-[orange] text-white py-1 px-1 hover:bg-orange-600 transition-colors">
             Book Now
           </button>
         </div>

@@ -37,9 +37,16 @@ const Navbar = () => {
     return colors[index];
   };
 
+  function scrollToTop() {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth' // Makes the scroll smooth
+    });
+  }
+  
   return (
-    <header className={`p-4 ${isScrolled ? "shadow-md" : ""}`}>
-      <div className="container flex justify-between h-14 mx-auto">
+    <header className={`bg-white sticky top-0 z-50 ${isScrolled ? "shadow-md" : ""} `}>
+      <div className="container flex justify-between w-[90%] h-16 mx-auto">
         <Link
           to="/"
           aria-label="Back to homepage"
@@ -48,8 +55,8 @@ const Navbar = () => {
           <img
             height="100"
             width="100"
-            className="rounded-[50%]"
-            src="/tour-images/logo-travel.avif"
+            className="rounded-[50%] mt-2"
+            src="/tour-images/logo-travel2.jpg"
             alt="Logo"
           />
         </Link>
@@ -61,7 +68,7 @@ const Navbar = () => {
           <li className="flex">
             <Link
               to="/"
-              onClick={hideNavbar}
+              onClick={()=>(hideNavbar(),scrollToTop())}
               className={`flex items-center px-4 ${
                 location.pathname === "/" ? "text-[Orange]" : ""
               }`}
@@ -71,7 +78,7 @@ const Navbar = () => {
           </li>
           <li className="flex">
             <Link
-              onClick={hideNavbar}
+              onClick={()=>(hideNavbar(),scrollToTop())}
               to="/about"
               className={`flex items-center px-4 ${
                 location.pathname === "/about" ? "text-[Orange]" : ""
@@ -82,7 +89,7 @@ const Navbar = () => {
           </li>
           <li className="flex">
             <Link
-              onClick={hideNavbar}
+              onClick={()=>(hideNavbar(),scrollToTop())}
               to="/tour"
               className={`flex items-center px-4 ${
                 location.pathname === "/tour" ? "text-[Orange]" : ""
@@ -93,7 +100,7 @@ const Navbar = () => {
           </li>
           <li className="flex">
             <Link
-              onClick={hideNavbar}
+              onClick={()=>(hideNavbar(),scrollToTop())}
               to="/blog"
               className={`flex items-center px-4 ${
                 location.pathname === "/blog" ? "text-[Orange]" : ""
@@ -119,11 +126,13 @@ const Navbar = () => {
               <div className="flex">
                 <Link
                   to="/login"
+                  onClick={scrollToTop}
                   className="cursor-pointer self-center px-8 py-3 rounded text-[1.1rem] font-semibold"
                 >
                   Login
                 </Link>
                 <Link
+                 onClick={scrollToTop}
                   to="/signup"
                   className="cursor-pointer self-center px-4 py-3 font-semibold rounded-3xl bg-[orange] text-white text-[1.1rem]"
                 >
@@ -147,6 +156,7 @@ const Navbar = () => {
           <div className="items-center md:justify-end flex-shrink-0 hidden md:flex gap-4">
             {userInfo ? (
               <Link
+              onClick={scrollToTop}
                 to="/account"
                 className={`w-8 h-8 flex justify-center items-center text-lg font-bold text-white rounded-full ${getBackgroundColor(
                   userInfo.name
@@ -157,12 +167,14 @@ const Navbar = () => {
             ) : (
               <div className="flex">
                 <Link
+                 onClick={scrollToTop}
                   to="/login"
                   className="cursor-pointer self-center px-8 py-3 rounded text-[1.1rem] font-semibold"
                 >
                   Login
                 </Link>
                 <Link
+                 onClick={scrollToTop}
                   to="/signup"
                   className="cursor-pointer self-center px-4 py-3 font-semibold rounded-3xl bg-[orange] text-white text-[1.1rem]"
                 >
