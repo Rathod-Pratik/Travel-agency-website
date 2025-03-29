@@ -17,7 +17,7 @@ const TourDatail = () => {
   const [phone, SetPhone] = useState("");
   const [date, SetDate] = useState("");
   const [groupsize, SetGroupSize] = useState("");
-
+  const [tex,setTex]=useState(0);
   useEffect(() => {
     const fetchTourData = async () => {
       try {
@@ -69,7 +69,7 @@ const TourDatail = () => {
   
       // ✅ Create Order on Backend
       const { data } = await apiClient.post("payment/create-order", {
-        amount: tourdata.price, // Replace with dynamic amount if needed
+        amount: tourdata.price*groupsize + tex, // Replace with dynamic amount if needed
         currency: "INR",
         receipt: `receipt_${Date.now()}`,
         notes: {
@@ -292,6 +292,7 @@ const TourDatail = () => {
             </div>
             <div className="flex flex-row justify-between px-5 mt-4 font-semibold ">
               <p className="flex flex-row gap-2 items-center ">Total</p>
+              {/* {setTex(tourdata.tax)} */}
               <p>${tourdata.price * (groupsize < 1 ? 1 : groupsize) +tourdata.tax}</p>
             </div>
             <button

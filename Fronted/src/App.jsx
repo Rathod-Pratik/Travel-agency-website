@@ -15,6 +15,7 @@ import TourDatail from "./Pages/Tours/TourDatail";
 import './App.css'
 import { ToastContainer } from 'react-toastify';
 import RazorpayPayment from "./Components/PaymentPage";
+import CancelBooking from "./Pages/Cancelbooking";
 
 const App = () => {
 
@@ -29,6 +30,7 @@ const App = () => {
           <Route path="/blog" element={<Blog />} />
           <Route path="/signup" element={<SignUp  />} />
           <Route path="/booking" element={<Booking  />} />
+          <Route path="/cancelbooking" element={<CancelBooking  />} />
           <Route path="/tour" element={<Tours />} />
           <Route path="/tourDetail/:_id" element={<TourDatail  />} />
           <Route path="/paymentPage" element={<RazorpayPayment />} />

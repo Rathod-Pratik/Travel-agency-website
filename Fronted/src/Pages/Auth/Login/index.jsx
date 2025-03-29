@@ -3,8 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { LOGIN } from "../../../Utils/Constant";
 import { apiClient } from "../../../lib/api-Client";
 import { useAppStore } from "../../../Store";
+import { toast } from "react-toastify";
 
-const Login = ({Showalert}) => {
+const Login = () => {
   const {setUserInfo}=useAppStore();
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
@@ -13,7 +14,7 @@ const Login = ({Showalert}) => {
 
   const HandleLogin= async () => {
     if (!password || password.length < 8) {
-      Showalert("red","Password must be at least 8 characters long.");
+      toast.error("Password must be at least 8 characters long.");
       return;
     }
   
@@ -26,16 +27,16 @@ const Login = ({Showalert}) => {
       if (response.status === 200) {
         navigate("/");
         setUserInfo(response.data.user);
-        Showalert("green","Login successful!");
+        toast.success("Login successful!");
       }
       else{
-        Showalert("red","Please enter Valid Credintails");
+        toast.error("Please enter Valid Credintails");
       }
     } catch (error) {
       if (error.response && error.response.status === 401) {
-        Showalert("red", "Please enter valid credentials.");
+        toast.error( "Please enter valid credentials.");
       } else {
-        Showalert("red", error.response?.data?.message || "Login failed. Please try again.");
+        toast.error( error.response?.data?.message || "Login failed. Please try again.");
       }
       console.error("Login failed:", error.response?.data || error.message);
     }

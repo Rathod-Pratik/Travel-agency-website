@@ -7,7 +7,6 @@ export const GET_TOUR_DETAIL=`${HOST}/${TOURS}/data`
 export const AUTH='auth';
 export const SIGNUP=`${HOST}/${AUTH}/signup`;
 export const LOGIN=`${HOST}/${AUTH}/login`;
-
 export const UPDATE_PROFILE=`${HOST}/auth/user/profile`
 
 export const BLOG='blog';
@@ -18,3 +17,4 @@ export const CREATE_BOOKING=`${HOST}/${BOOKING}`
 export const UPDATE_BOOKING=`${HOST}/${BOOKING}`
 export const CANCEL_BOOKING=`${HOST}/${BOOKING}`
 export const GET_BOOKING=`${HOST}/${BOOKING}/user`
+export const GET_CANCEL_BOOKING=`${HOST}/${BOOKING}/user/cancel`

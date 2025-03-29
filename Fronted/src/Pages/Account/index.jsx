@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppStore } from "../../Store";
 import { UPDATE_PROFILE } from "../../Utils/Constant";
-
+import { apiClient } from "../../lib/api-Client";
+import {toast} from 'react-toastify'
 const Account = () => {
   const { userInfo,setUserInfo } = useAppStore();
   const [address, setAddress] = useState("");
@@ -21,13 +22,11 @@ const Account = () => {
         UPDATE_PROFILE,
         {
           email: userInfo.email,
-          user: userInfo._id,
           address:address,
           phone:phone,
           Oldpassword: oldPassword,
           NewPassword: newPassword,
-        },
-        { withCredentials: true }
+        }
       );
       if (response.status == 200) {
         setUserInfo(response.data.user);
@@ -42,9 +41,6 @@ const Account = () => {
   };
 
   const validataion=()=>{
-    if(!address || userInfo.address){
-      return false;
-    }
     if(!oldPassword || !newPassword || !confirmPassword){
       return false;
     }
@@ -53,7 +49,7 @@ const Account = () => {
   let [firstName, lastName] = userInfo.name.split(" ");
   return (
     <div className="min-h-[100vh] w-full md:w-[90%] lg:w-[80%] mt-10 mx-auto flex flex-col gap-8 p-4">
-  <p data-aos="fade-left" className="flex justify-center lg:justify-end gap-2 text-[orange] text-lg">
+  <p  className="flex justify-center lg:justify-end gap-2 text-[orange] text-lg">
     <span className="text-black">Welcome</span> {userInfo.name}
   </p>
 
@@ -73,7 +69,7 @@ const Account = () => {
         <h2 className="font-medium text-lg mb-2">My Tours</h2>
         <div className="flex flex-col space-y-2 text-gray-500">
           <Link to="/returns" className="hover:text-gray-700">My Traveled</Link>
-          <Link to="/cancellations" className="hover:text-gray-700">My Cancellations</Link>
+          <Link to="/cancelbooking" className="hover:text-gray-700">My Cancellations</Link>
         </div>
       </div>
 
@@ -120,13 +116,22 @@ const Account = () => {
           </div>
 
           <div className="w-full">
-            <p className="text-black">Email</p>
-            <input
-              onChange={(e)=>SetPhone(e.target.value)}
-              value={phone}
-              className="bg-[#F5F5F5] p-3 border-none w-full outline-none text-gray-500"
-              type="text"
-            />
+            <p className="text-black">Moblie No:</p>
+            {userInfo.phone ? (
+              <input
+                disabled
+                value={userInfo.phone}
+                className="bg-[#F5F5F5] p-3 border-none w-full outline-none text-gray-500"
+                type="text"
+              />
+            ) : (
+              <input
+                value={phone}
+                onChange={(e) => SetPhone(e.target.value)}
+                className="bg-[#F5F5F5] p-3 border-none w-full outline-none text-gray-500"
+                type="text"
+              />
+            )}
           </div>
 
           <div className="w-full">
@@ -178,7 +183,7 @@ const Account = () => {
         {/* Save Button */}
         <div className="flex justify-center lg:justify-end">
           <button
-            className="bg-[orange] text-white p-3 w-full md:w-[200px] rounded-md"
+            className="bg-[orange] text-white p-3 w-full md:w-[200px] rounded-md cursor-pointer"
             onClick={UpdateData}
           >
             Save Changes

@@ -87,7 +87,7 @@ export const signup = async (req, res) => {
       success: true,
     });
 
-    res.status(200).json(user);
+    res.status(200).json({user});
   } catch (error) {
     console.log(error);
   }
@@ -95,18 +95,24 @@ export const signup = async (req, res) => {
 
 export const UpdateProfile = async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { email,phone,NewPassword,Oldpassword,address } = req.body;
 
     // Check if user exists
     const userExist = await UserModel.findOne({ email });
     if (!userExist) {
       return res.status(400).send("User not found");
     }
+    
+    const isPasswordMatch = await bcrypt.compare(Oldpassword,userExist.password);
+    if (!isPasswordMatch) {
+      return res.status(401).send("Invalid credentials");
+    }
 
+    const password= bcrypt.hash(NewPassword,10);
     // Prepare update fields
     const updateFields = {};
-    const hashPassword = await bcrypt.hash(password, 10);
-    if (name) updateFields.name = name;
+    const hashPassword = await bcrypt.hash(NewPassword, 10);
+    if (address) updateFields.address = address;
     if (email) updateFields.email = email;
     if (password) updateFields.password = hashPassword;
     if (phone) updateFields.phone = phone;

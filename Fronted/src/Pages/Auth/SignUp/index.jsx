@@ -2,8 +2,11 @@ import React, { useState } from "react";
 import { Link,useNavigate } from "react-router-dom";
 import { apiClient } from "../../../lib/api-Client";
 import { SIGNUP } from "../../../Utils/Constant";
+import { toast } from "react-toastify";
+import { useAppStore } from "../../../Store";
 
-const SignUp = ({Showalert}) => {
+const SignUp = () => {
+  const {setUserInfo}=useAppStore();
   const [name, setName] = useState();
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
@@ -13,12 +16,12 @@ const SignUp = ({Showalert}) => {
   const HandleSignUp = async () => {
     // Input Validation
     if (!name || name.length < 5) {
-      Showalert("red","Name must be at least 5 characters long.");
+      toast.success("Name must be at least 5 characters long.");
       return;
     }
   
     if (!password || password.length < 8) {
-      Showalert("red","Password must be at least 8 characters long.");
+      toast.error("Password must be at least 8 characters long.");
       return;
     }
   
@@ -30,14 +33,15 @@ const SignUp = ({Showalert}) => {
       });
   
       if (response.status === 200) {
-        Showalert("green","Signup successful!");
+        toast.success("Signup successful!");
+        setUserInfo(response.data.user)
         navigate("/");
       } else if (response.status === 400) {
-        Showalert("orange","User already exists.");
+        toast.error("User already exists.");
       }
     } catch (error) {
-      Showalert("orange","Some error occured try again after some time.");
-      console.error("Signup failed:", error.response?.data || error.message);
+      toast.error("Some error occured try again after some time.");
+      console.log("Signup failed:", error.response?.data || error.message);
     }
   };
 

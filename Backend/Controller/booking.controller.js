@@ -93,6 +93,22 @@ export const GetAllBooking = async (req, res) => {
   }
 };
 
+export const GetAllCancelBooking = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    if (!userId) {
+      return res.status(400).send("user id is required");
+    }
+
+    const getBooking = await BookingModel.find({ userId });
+    const filteredBookings = getBooking.filter((booking) => booking.bookingStatus !== "success");
+
+    return res.status(201).json({ getBooking:filteredBookings });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 export const UpdateBooking = async (req, res) => {
   const { _id, userName, userPhone, tourDate } = req.body;
 
