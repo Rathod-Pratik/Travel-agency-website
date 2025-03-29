@@ -13,10 +13,10 @@ DELETE /tours/{id} → Delete a tour (admin/agent only)
 
 3. Booking & Reservations
 POST /booking → Create a new booking -ok
-GET /booking/{id} → View booking details 
-GET /bookings/user/{userId} → Get all bookings for a user 
-PUT /booking/{id} → Update booking details 
-DELETE /booking/{id} → Cancel a booking 
+GET /booking/{id} → View booking details -ok
+GET /bookings/user/{userId} → Get all bookings for a user -ok
+PUT /booking/{id} → Update booking details -ok
+DELETE /booking/{id} → Cancel a booking -ok
 
 4. Payment Processing
 POST /payment → Initiate payment for a booking -ok
