@@ -292,7 +292,6 @@ const TourDatail = () => {
             </div>
             <div className="flex flex-row justify-between px-5 mt-4 font-semibold ">
               <p className="flex flex-row gap-2 items-center ">Total</p>
-              {/* {setTex(tourdata.tax)} */}
               <p>${tourdata.price * (groupsize < 1 ? 1 : groupsize) +tourdata.tax}</p>
             </div>
             <button
