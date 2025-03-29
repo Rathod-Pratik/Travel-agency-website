@@ -5,7 +5,7 @@ import { useAppStore } from "../Store";
 import { FaPaperPlane } from "react-icons/fa";
 
 const Navbar = () => {
-  const { userInfo } = useAppStore();
+  const { userInfo,booking } = useAppStore();
 
   const location = useLocation();
 
@@ -147,7 +147,7 @@ const Navbar = () => {
             <Link to="/booking" className="text-[orange] text-2xl relative">
               {/* Notification Badge for Booking */}
               <span className="absolute top-[-10px] right-[-12px] bg-[orange] text-white text-xs font-medium rounded-full px-2 py-0.5 shadow-md">
-                3
+                {booking.length}
               </span>
               <FaPaperPlane className="w-6 h-6" />
             </Link>

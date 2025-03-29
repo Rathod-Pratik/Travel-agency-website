@@ -1,16 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { apiClient } from "../../lib/api-Client";
-import { GET_TOUR_DETAIL } from "../../Utils/Constant";
+import { CREATE_BOOKING, GET_TOUR_DETAIL } from "../../Utils/Constant";
 import { useParams } from "react-router-dom";
 import { AiFillStar } from "react-icons/ai";
 import { FaRegUserCircle } from "react-icons/fa";
 import { RiMoneyRupeeCircleFill } from "react-icons/ri";
+import { IoClose } from "react-icons/io5";
+import { useAppStore } from "../../Store";
+import { toast } from "react-toastify";
 
 const TourDatail = () => {
   const { _id } = useParams();
   const [tourdata, SetTourData] = useState([]);
+  const { userInfo, AddBookingData } = useAppStore();
+  const [name, setName] = useState("");
+  const [phone, SetPhone] = useState("");
+  const [date, SetDate] = useState("");
+  const [groupsize, SetGroupSize] = useState("");
+
   useEffect(() => {
-    const fetchTourData = async (req, res) => {
+    const fetchTourData = async () => {
       try {
         const response = await apiClient.get(`${GET_TOUR_DETAIL}/${_id}`);
         if (response.status === 200) {
@@ -24,10 +33,126 @@ const TourDatail = () => {
     };
     fetchTourData();
   }, []);
+
+  const loadScript = (src) => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = src;
+      script.onload = () => {
+        resolve(true);
+      };
+      script.onerror = () => {
+        resolve(false);
+      };
+      document.body.appendChild(script);
+    });
+  };
+
+  const handlePayment = async () => {
+    // ✅ Improved Input Validations
+    if (name.length < 3) {
+      return toast.error("Please enter a valid name (minimum 3 characters).");
+    } else if (!/^\d{10}$/.test(phone)) {
+      return toast.error("Please enter a valid 10-digit phone number.");
+    } else if (!date) {
+      return toast.error("Please select a date for the tour.");
+    } else if (groupsize < 1) {
+      return toast.error("Please select a valid group size.");
+    }
+  
+    try {
+      // ✅ Load Razorpay Script Dynamically
+      const res = await loadScript("https://checkout.razorpay.com/v1/checkout.js");
+      if (!res) {
+        return toast.error("Razorpay SDK failed to load. Please check your network.");
+      }
+  
+      // ✅ Create Order on Backend
+      const { data } = await apiClient.post("payment/create-order", {
+        amount: tourdata.price, // Replace with dynamic amount if needed
+        currency: "INR",
+        receipt: `receipt_${Date.now()}`,
+        notes: {
+          productName: tourdata.title,
+          userId: userInfo._id,
+        },
+      });
+  
+      // ✅ Razorpay Payment Options
+      const options = {
+        key: data.key,
+        amount: data.order.amount,
+        currency: data.order.currency,
+        name: "Easy Travel",
+        description: `Payment for ${tourdata.title}`,
+        image: "/tour-images/logo-travel2.jpg",
+        order_id: data.order.id,
+  
+        // ✅ Payment Handler Function
+        handler: async function (response) {
+          try {
+            // 🔹 Verify payment with backend
+            const verifyRes = await apiClient.post("payment/verify-order", {
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+            });
+  
+            if (!verifyRes.data.success) {
+              return toast.error("Payment verification failed.");
+            }
+  
+            toast.success(`Payment Successful! Payment ID: ${response.razorpay_payment_id}`);
+  console.log(response.razorpay_payment_id);
+            // 🔹 Create booking after successful payment
+            const bookingRes = await apiClient.post(CREATE_BOOKING, {
+              paymentId: response.razorpay_payment_id,
+              price: tourdata.price,
+              userId: userInfo._id,
+              userName: name,
+              userEmail: userInfo.email,
+              userPhone: phone,
+              tourData: tourdata,
+              tourDate: new Date(),
+              numberOfPeople: groupsize,
+            });
+            if (bookingRes.status === 200) {
+              AddBookingData(bookingRes.data.data);
+              toast.success("Booking confirmed successfully!");
+            } else {
+              toast.error("Payment succeeded, but booking failed. Please contact support.");
+            }
+          } catch (error) {
+            console.error("Error in payment processing:", error);
+            toast.error("Something went wrong. Please try again.");
+          }
+        },
+  
+        prefill: {
+          name: name,
+          email: userInfo.email,
+          contact: phone,
+        },
+        notes: {
+          address: "Customer Address",
+        },
+        theme: {
+          color: "#3399cc",
+        },
+      };
+  
+      // ✅ Open Razorpay Checkout
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error("Payment Error:", error);
+      toast.error("Payment failed. Please try again.");
+    }
+  };
   return (
     <div>
-      <div className="grid grid-cols-3 gap-4 w-[90vw] mt-3 m-auto mt-4">
-        <div className="col-span-2 space-y-6">
+      <div className="lg:grid flex flex-col lg:grid-cols-3 gap-4 w-[90vw]  m-auto mt-4">
+        <div className="lg:col-span-2 space-y-6">
           {/* Tour Image */}
           <div className="overflow-hidden rounded-lg shadow-lg">
             <img
@@ -36,7 +161,6 @@ const TourDatail = () => {
               className="w-full object-cover rounded-lg"
             />
           </div>
-
           {/* Tour Details */}
           <div className="p-6 flex justify-start flex-col border border-gray-300 rounded-lg shadow-md bg-white ">
             {/* Tour Title */}
@@ -109,7 +233,7 @@ const TourDatail = () => {
             </div>
           </div>
         </div>
-        <div className="col-span-1 border border-gray-300 h-[87vh] rounded-md p-4">
+        <div className="lg:col-span-1 border border-gray-300 h-[87vh] rounded-md p-4">
           <div className="flex justify-between flex-row py-9 border-b border-b-gray-300">
             <p>
               <span className="font-bold text-xl">${tourdata.price}</span> / Per
@@ -122,19 +246,60 @@ const TourDatail = () => {
           <div className="mt-5">
             <h1 className="text-xl">Information</h1>
             <div className="border border-gray-300 p-[30px] flex flex-col gap-5">
-              <input type="text" className="outline-none border-b border-b-gray-300" placeholder="Full Name" />
-              <input type="text" className="outline-none border-b border-b-gray-300 my-4" placeholder="Moblie Number"/>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="outline-none border-b border-b-gray-300"
+                placeholder="Full Name"
+              />
+              <input
+                type="text"
+                className="outline-none border-b border-b-gray-300 my-4"
+                value={phone}
+                onChange={(e) => SetPhone(e.target.value)}
+                placeholder="Moblie Number"
+              />
               <div className="flex flex-row justify-between">
-                <input type="date" className="outline-none border-b border-b-gray-300" />
-                <input type="number" className="outline-none border-b border-b-gray-300" placeholder="Group Size" />
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => SetDate(e.target.value)}
+                  className="outline-none border-b border-b-gray-300"
+                />
+                <input
+                  type="number"
+                  value={groupsize}
+                  onChange={(e) => SetGroupSize(e.target.value)}
+                  className="outline-none border-b border-b-gray-300"
+                  placeholder="Group Size"
+                />
               </div>
             </div>
           </div>
           <div>
-          <div className="flex flex-row justify-between">
-            <p> ${tourdata.price} 1 Person </p>
-            <p>{tourdata.price}</p>
-          </div>
+            <div className="flex flex-row justify-between px-5 mt-4 font-semibold text-gray-500">
+              <p className="flex flex-row gap-2 items-center ">
+                {" "}
+                ${tourdata.price}
+                <IoClose />1 Person{" "}
+              </p>
+              <p>${tourdata.price}</p>
+            </div>
+            <div className="flex flex-row justify-between px-5 mt-4 font-semibold text-gray-500">
+              <p className="flex flex-row gap-2 items-center ">Taxes</p>
+              <p>${tourdata.tax}</p>
+            </div>
+            <div className="flex flex-row justify-between px-5 mt-4 font-semibold ">
+              <p className="flex flex-row gap-2 items-center ">Total</p>
+              <p>${tourdata.price * (groupsize < 1 ? 1 : groupsize) +tourdata.tax}</p>
+            </div>
+            <button
+              onClick={handlePayment}
+              className="cursor-pointer flex items-center justify-center mt-4 w-[90%] mx-auto py-3 px-5 text-center font-semibold rounded-3xl bg-[orange] text-white"
+            >
+              Book Now
+            </button>
           </div>
         </div>
       </div>

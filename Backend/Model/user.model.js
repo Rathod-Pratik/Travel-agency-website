@@ -11,9 +11,14 @@ const UserSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    address:{
+      type:String,
+      default:null
+    },
     bookings: [{ type: mongoose.Schema.Types.ObjectId, ref: "Booking" }],
     createdAt: { type: Date, default: Date.now },
   },
+ 
   { timestamps: true }
 );
 

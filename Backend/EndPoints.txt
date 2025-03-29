@@ -1,5 +1,5 @@
 1. Authentication & User Management
-POST /register → Register new users (tourists, agents, admins) -ok
+POST /register → Register new users (tourists, agents, admins) 
 POST /login → Authenticate users & issue tokens -ok
 PUT /user/profile → Update user profile -ok
 POST /logout → Log out the user -ok
@@ -7,29 +7,29 @@ POST /logout → Log out the user -ok
 2. Tour Packages & Destinations
 GET /tours → Fetch all available tour packages -ok
 GET /tours/{id} → Fetch details of a specific tour -ok
-POST /tours → Create a new tour (admin/agent only) -ok
-PUT /tours/{id} → Update tour details (admin/agent only) -ok
-DELETE /tours/{id} → Delete a tour (admin/agent only) -ok
+POST /tours → Create a new tour (admin/agent only) 
+PUT /tours/{id} → Update tour details (admin/agent only) 
+DELETE /tours/{id} → Delete a tour (admin/agent only) 
 
 3. Booking & Reservations
 POST /booking → Create a new booking -ok
-GET /booking/{id} → View booking details -ok
-GET /bookings/user/{userId} → Get all bookings for a user -ok
-PUT /booking/{id} → Update booking details -ok
-DELETE /booking/{id} → Cancel a booking -ok
+GET /booking/{id} → View booking details 
+GET /bookings/user/{userId} → Get all bookings for a user 
+PUT /booking/{id} → Update booking details 
+DELETE /booking/{id} → Cancel a booking 
 
 4. Payment Processing
-POST /payment → Initiate payment for a booking 
-GET /payment/{id} → Get payment details 
-POST /payment/verify → Verify payment transaction status 
+POST /payment → Initiate payment for a booking -ok
+GET /payment/{id} → Get payment details -ok
+POST /payment/verify → Verify payment transaction status -ok
 
 5. Reviews & Ratings
-POST /reviews → Add a review for a tour -ok
-GET /reviews/{tourId} → Get all reviews for a tour -ok 
-PUT /reviews/{id} → Edit a review (only author/admin) -ok
-DELETE /reviews/{id} → Delete a review (only author/admin) -ok
+POST /reviews → Add a review for a tour 
+GET /reviews/{tourId} → Get all reviews for a tour  
+PUT /reviews/{id} → Edit a review (only author/admin) 
+DELETE /reviews/{id} → Delete a review (only author/admin) 
 
 6. Admin & Agent Dashboard
-GET /dashboard/stats → Get summary stats (total users, bookings, revenue, etc.) -ok
-GET /users → List all users (admin only) -ok
-DELETE /users/{id} → Delete user (admin only) -ok
+GET /dashboard/stats → Get summary stats (total users, bookings, revenue, etc.) 
+GET /users → List all users (admin only) 
+DELETE /users/{id} → Delete user (admin only) 

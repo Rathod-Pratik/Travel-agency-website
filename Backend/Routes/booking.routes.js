@@ -7,6 +7,6 @@ router.post('/',CreateBooking);
 router.post('/ViewBooking',ViewBooking);
 router.get('/user/:userId',GetAllBooking);
 router.put('/',UpdateBooking);
-router.delete('/:_id',CancelBooking);
+router.post('/:_id',CancelBooking);
 
 export default router;

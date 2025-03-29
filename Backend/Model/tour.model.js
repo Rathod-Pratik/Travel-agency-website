@@ -19,6 +19,10 @@ const TourSchema = new mongoose.Schema(
       type: String, // Example: "3 Days, 2 Nights"
       required: true,
     },
+    tax:{
+      type:Number,
+      required:true
+    },
     price: {
       type: Number,
       required: true,

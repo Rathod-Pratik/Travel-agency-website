@@ -37,6 +37,7 @@ export const getToursData = async (req, res) => {
 export const MakeTour = async (req, res) => {
   try {
     const {
+      tax,
       title,
       description,
       location,
@@ -60,7 +61,8 @@ export const MakeTour = async (req, res) => {
       !maxCapacity ||
       !included ||
       !notIncluded ||
-      !itinerary
+      !itinerary ||
+      !tax
       //  ||
       //  !req.file
     ) {
@@ -83,7 +85,7 @@ export const MakeTour = async (req, res) => {
       maxCapacity,
       included,
       notIncluded,
-      itinerary,
+      itinerary, tax,
     images: [imageUrl],
     });
 
@@ -112,6 +114,7 @@ export const UpdateTour = async (req, res) => {
       included,
       notIncluded,
       itinerary,
+      tax
     } = req.body;
 
     // Check if tour exists
@@ -141,7 +144,7 @@ export const UpdateTour = async (req, res) => {
         maxCapacity,
         included,
         notIncluded,
-        itinerary,
+        itinerary,tax,
          images: imageUrl,
       },
       { new: true, runValidators: true }

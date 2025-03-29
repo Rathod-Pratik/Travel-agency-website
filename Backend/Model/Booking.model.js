@@ -1,67 +1,57 @@
+import { json } from "express";
 import mongoose from "mongoose";
 
 const bookingSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true
+    required: true,
   },
   userName: {
     type: String,
-    required: true
+    required: true,
   },
   userEmail: {
     type: String,
-    required: true
+    required: true,
   },
   userPhone: {
     type: String,
-    required: true
+    required: true,
   },
-  tourId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Tour",
-    required: true
+  tourData: {
+    type: Object,
+    required: true,
   },
   tourDate: {
     type: Date,
-    required: true
+    required: true,
   },
   tourPrice: {
     type: Number,
-    required: true
+    required: true,
   },
   numberOfPeople: {
     type: Number,
     required: true,
-    min: 1
+    min: 1,
   },
   totalPrice: {
     type: Number,
-    required: true
+    required: true,
+  },
+  paymentId: {
+    type: String,
+    required: true,
   },
   bookingStatus: {
     type: String,
-    enum: ["Pending", "Confirmed", "Cancelled"],
-    default: "Pending"
-  },
-  paymentStatus: {
-    type: String,
-    enum: ["Pending", "Paid", "Failed"],
-    default: "Pending"
-  },
-  paymentMethod: {
-    type: String,
-    enum: ["Credit Card", "PayPal", "Cash"],
-    required: true
-  },
-  specialRequests: {
-    type: String
+    default: "success",
   },
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 const BookingModel = mongoose.model("Booking", bookingSchema);

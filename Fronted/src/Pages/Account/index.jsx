@@ -6,6 +6,7 @@ import { UPDATE_PROFILE } from "../../Utils/Constant";
 const Account = () => {
   const { userInfo,setUserInfo } = useAppStore();
   const [address, setAddress] = useState("");
+  const [phone, SetPhone] = useState("");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -22,6 +23,7 @@ const Account = () => {
           email: userInfo.email,
           user: userInfo._id,
           address:address,
+          phone:phone,
           Oldpassword: oldPassword,
           NewPassword: newPassword,
         },
@@ -115,6 +117,35 @@ const Account = () => {
               className="bg-[#F5F5F5] p-3 border-none w-full outline-none text-gray-500"
               type="text"
             />
+          </div>
+
+          <div className="w-full">
+            <p className="text-black">Email</p>
+            <input
+              onChange={(e)=>SetPhone(e.target.value)}
+              value={phone}
+              className="bg-[#F5F5F5] p-3 border-none w-full outline-none text-gray-500"
+              type="text"
+            />
+          </div>
+
+          <div className="w-full">
+            <p className="text-black">Address</p>
+            {userInfo.address ? (
+              <input
+                disabled
+                value={userInfo.address}
+                className="bg-[#F5F5F5] p-3 border-none w-full outline-none text-gray-500"
+                type="text"
+              />
+            ) : (
+              <input
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="bg-[#F5F5F5] p-3 border-none w-full outline-none text-gray-500"
+                type="text"
+              />
+            )}
           </div>
         </div>
 

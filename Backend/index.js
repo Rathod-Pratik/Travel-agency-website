@@ -43,7 +43,7 @@ export const razorpayInstance =new Razorpay({
 })
 
 app.get('/',(req,res)=>{
-    res.send("Server is running");
+    res.send(process.env.RAZERPAY_API_SECRET);
 })
 
 app.use('/auth',authRoutes);
