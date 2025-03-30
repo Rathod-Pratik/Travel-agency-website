@@ -8,6 +8,7 @@ import { RiMoneyRupeeCircleFill } from "react-icons/ri";
 import { IoClose } from "react-icons/io5";
 import { useAppStore } from "../../Store";
 import { toast } from "react-toastify";
+import TourReview from "../../Components/TourReview";
 
 const TourDatail = () => {
   const { _id } = useParams();
@@ -17,7 +18,6 @@ const TourDatail = () => {
   const [phone, SetPhone] = useState("");
   const [date, SetDate] = useState("");
   const [groupsize, SetGroupSize] = useState("");
-  const [tex,setTex]=useState(0);
   useEffect(() => {
     const fetchTourData = async () => {
       try {
@@ -59,17 +59,21 @@ const TourDatail = () => {
     } else if (groupsize < 1) {
       return toast.error("Please select a valid group size.");
     }
-  
+
     try {
       // ✅ Load Razorpay Script Dynamically
-      const res = await loadScript("https://checkout.razorpay.com/v1/checkout.js");
+      const res = await loadScript(
+        "https://checkout.razorpay.com/v1/checkout.js"
+      );
       if (!res) {
-        return toast.error("Razorpay SDK failed to load. Please check your network.");
+        return toast.error(
+          "Razorpay SDK failed to load. Please check your network."
+        );
       }
-  
+
       // ✅ Create Order on Backend
       const { data } = await apiClient.post("payment/create-order", {
-        amount: tourdata.price*groupsize + tex, // Replace with dynamic amount if needed
+        amount: tourdata.price * groupsize + tourdata.tax,
         currency: "INR",
         receipt: `receipt_${Date.now()}`,
         notes: {
@@ -77,7 +81,7 @@ const TourDatail = () => {
           userId: userInfo._id,
         },
       });
-  
+
       // ✅ Razorpay Payment Options
       const options = {
         key: data.key,
@@ -87,7 +91,7 @@ const TourDatail = () => {
         description: `Payment for ${tourdata.title}`,
         image: "/tour-images/logo-travel2.jpg",
         order_id: data.order.id,
-  
+
         // ✅ Payment Handler Function
         handler: async function (response) {
           try {
@@ -97,13 +101,15 @@ const TourDatail = () => {
               paymentId: response.razorpay_payment_id,
               signature: response.razorpay_signature,
             });
-  
+
             if (!verifyRes.data.success) {
               return toast.error("Payment verification failed.");
             }
-  
-            toast.success(`Payment Successful! Payment ID: ${response.razorpay_payment_id}`);
-  console.log(response.razorpay_payment_id);
+
+            toast.success(
+              `Payment Successful! Payment ID: ${response.razorpay_payment_id}`
+            );
+            console.log(response.razorpay_payment_id);
             // 🔹 Create booking after successful payment
             const bookingRes = await apiClient.post(CREATE_BOOKING, {
               paymentId: response.razorpay_payment_id,
@@ -120,27 +126,29 @@ const TourDatail = () => {
               AddBookingData(bookingRes.data.data);
               toast.success("Booking confirmed successfully!");
             } else {
-              toast.error("Payment succeeded, but booking failed. Please contact support.");
+              toast.error(
+                "Payment succeeded, but booking failed. Please contact support."
+              );
             }
           } catch (error) {
             console.error("Error in payment processing:", error);
             toast.error("Something went wrong. Please try again.");
           }
         },
-  
+
         prefill: {
           name: name,
           email: userInfo.email,
           contact: phone,
         },
         notes: {
-          address: "Customer Address",
+          address: userInfo.address,
         },
         theme: {
           color: "#3399cc",
         },
       };
-  
+
       // ✅ Open Razorpay Checkout
       const rzp = new window.Razorpay(options);
       rzp.open();
@@ -233,19 +241,22 @@ const TourDatail = () => {
             </div>
           </div>
         </div>
-        <div className="lg:col-span-1 border border-gray-300 h-[87vh] rounded-md p-4">
+        <div className="lg:col-span-1 border border-gray-300 h-[87vh] rounded-md p-4 flex flex-col lg:sticky top-5">
+          {/* Price and Rating */}
           <div className="flex justify-between flex-row py-9 border-b border-b-gray-300">
             <p>
               <span className="font-bold text-xl">${tourdata.price}</span> / Per
               Person
             </p>
-            <p className=" flex flex-row items-center gap-2 text-xl">
+            <p className="flex flex-row items-center gap-2 text-xl">
               <AiFillStar className="text-[orange]" /> {tourdata.rating}
             </p>
           </div>
-          <div className="mt-5">
+
+          {/* Information Section */}
+          <div className="mt-5 flex-grow">
             <h1 className="text-xl">Information</h1>
-            <div className="border border-gray-300 p-[30px] flex flex-col gap-5">
+            <div className="border border-gray-300 p-6 flex flex-col gap-5">
               <input
                 type="text"
                 value={name}
@@ -258,7 +269,7 @@ const TourDatail = () => {
                 className="outline-none border-b border-b-gray-300 my-4"
                 value={phone}
                 onChange={(e) => SetPhone(e.target.value)}
-                placeholder="Moblie Number"
+                placeholder="Mobile Number"
               />
               <div className="flex flex-row justify-between">
                 <input
@@ -277,31 +288,39 @@ const TourDatail = () => {
               </div>
             </div>
           </div>
+
+          {/* Pricing Summary */}
           <div>
             <div className="flex flex-row justify-between px-5 mt-4 font-semibold text-gray-500">
-              <p className="flex flex-row gap-2 items-center ">
-                {" "}
-                ${tourdata.price}
-                <IoClose />1 Person{" "}
+              <p className="flex flex-row gap-2 items-center">
+                ${tourdata.price} <IoClose /> 1 Person
               </p>
               <p>${tourdata.price}</p>
             </div>
             <div className="flex flex-row justify-between px-5 mt-4 font-semibold text-gray-500">
-              <p className="flex flex-row gap-2 items-center ">Taxes</p>
+              <p className="flex flex-row gap-2 items-center">Taxes</p>
               <p>${tourdata.tax}</p>
             </div>
-            <div className="flex flex-row justify-between px-5 mt-4 font-semibold ">
-              <p className="flex flex-row gap-2 items-center ">Total</p>
-              <p>${tourdata.price * (groupsize < 1 ? 1 : groupsize) +tourdata.tax}</p>
+            <div className="flex flex-row justify-between px-5 mt-4 font-semibold">
+              <p className="flex flex-row gap-2 items-center">Total</p>
+              <p>
+                $
+                {tourdata.price * (groupsize < 1 ? 1 : groupsize) +
+                  tourdata.tax}
+              </p>
             </div>
+
+            {/* Book Now Button */}
             <button
               onClick={handlePayment}
-              className="cursor-pointer flex items-center justify-center mt-4 w-[90%] mx-auto py-3 px-5 text-center font-semibold rounded-3xl bg-[orange] text-white"
+              className="cursor-pointer flex items-center justify-center mt-4 w-full py-3 px-5 text-center font-semibold rounded-3xl bg-[orange] text-white"
             >
               Book Now
             </button>
           </div>
         </div>
+
+        <TourReview TourId={tourdata._id} userId={userInfo._id} userName={userInfo.name} />
       </div>
     </div>
   );

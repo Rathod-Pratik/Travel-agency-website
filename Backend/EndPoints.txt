@@ -1,5 +1,5 @@
 1. Authentication & User Management
-POST /register → Register new users (tourists, agents, admins) 
+POST /register → Register new users (tourists, agents, admins) -ok
 POST /login → Authenticate users & issue tokens -ok
 PUT /user/profile → Update user profile -ok
 POST /logout → Log out the user -ok
@@ -24,8 +24,8 @@ GET /payment/{id} → Get payment details -ok
 POST /payment/verify → Verify payment transaction status -ok
 
 5. Reviews & Ratings
-POST /reviews → Add a review for a tour 
-GET /reviews/{tourId} → Get all reviews for a tour  
+POST /reviews → Add a review for a tour -ok
+GET /reviews/{tourId} → Get all reviews for a tour  -ok
 PUT /reviews/{id} → Edit a review (only author/admin) 
 DELETE /reviews/{id} → Delete a review (only author/admin) 
 

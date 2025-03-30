@@ -2,16 +2,16 @@ import mongoose from "mongoose";
 import Review from "../Model/review.model.js";
 
 export const AddReview = async (req, res) => {
-  const { userId, TourId, rating, reviewText } = req.body;
+  const { userName, TourId, rating, reviewText,userId } = req.body;
 
-  if (!userId || !TourId || !rating || !reviewText) {
+  if (!userName || !TourId || !rating || !reviewText || !userId) {
     return res.status(400).send("All the field are required");
   }
   try {
-    const review = await Review.create({ userId, TourId, rating, reviewText });
+    const review = await Review.create({ userName, TourId, rating, reviewText,userId });
 
     if (review) {
-      res.status(200).send("Review add successfully");
+      res.status(200).send({Message:"Review add successfully",review});
     } else {
       res.status(400).send("Failed to add review");
     }
@@ -78,25 +78,24 @@ export const EditReview = async (req, res) => {
   }
 };
 
-export const DeleteReview=async(req,res)=>{
-  const {_id}=req.params;
+export const DeleteReview = async (req, res) => {
+  const { TourId, userName, userId } = req.body; // Extract from body
 
-  if(!_id){
-    return res.status(400).send("Id is required");
+  if (!TourId || !userName || !userId) {
+    return res.status(400).json({ message: "TourId, userName, and userId are required" });
   }
 
   try {
-    const RemoveReview=await Review.findByIdAndDelete({_id});
+    const RemoveReview = await Review.findOneAndDelete({ TourId, userName, userId });
 
-    if(RemoveReview){
-      return res.status(200).send("Review Removed successfully");
+    if (RemoveReview) {
+      return res.status(200).json({ message: "Review removed successfully" });
+    } else {
+      return res.status(404).json({ message: "Review not found" });
     }
-    else{
-      return res.status(400).send("fail to delete review");
-    }
-
   } catch (error) {
-    console.log(error);
-    return res.status(400).send("Some error occurred try again after some time");
+    console.error("Error deleting review:", error);
+    return res.status(500).json({ message: "Server error. Try again later." });
   }
-}
+};
+

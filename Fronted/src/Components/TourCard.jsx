@@ -12,7 +12,8 @@ const TourCard = ({ data }) => {
       <div className="relative">
         {/* Image */}
         <img
-          className="h-full w-full object-cover"
+        onClick={redirectToTourData}
+          className="h-full w-full object-cover cursor-pointer"
           src={data.images}
           alt="Featured Tour"
         />
