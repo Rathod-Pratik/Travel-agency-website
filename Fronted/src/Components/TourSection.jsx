@@ -18,7 +18,7 @@ const TourSection = () => {
   }, []);
 
   return (
-    <div className="mt-6 w-[90%] mx-auto">
+    <div className="mt-6 w-[95%] mx-auto">
   {/* Section Header */}
   <div className="mb-6">
     <p className="text-2xl bg-[orange] px-4 py-2 text-white inline-block hero-title rounded-[50px] shadow-md mb-6 mx-auto md:ml-0">

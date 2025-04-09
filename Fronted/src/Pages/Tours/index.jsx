@@ -1,7 +1,7 @@
 import React from 'react'
 import Tour from '../../Components/Tour'
 
-const Tours = () => {
+const AdminTours = () => {
   return (
     <div>
       <Tour/>
@@ -9,4 +9,4 @@ const Tours = () => {
   )
 }
 
-export default Tours
+export default AdminTours

@@ -20,17 +20,23 @@ const Login = () => {
   
     try {
       const response = await apiClient.post(LOGIN, {
-        email: email, // Ensure email is included
+        email: email,
         password: password,
-      });
-  console.log(response.data.user);
+      }, { withCredentials: true });
+      
       if (response.status === 200) {
-        navigate("/");
+        const role = response.data.user.role;
+      
         setUserInfo(response.data.user);
         toast.success("Login successful!");
-      }
-      else{
-        toast.error("Please enter Valid Credintails");
+      
+        if (role === "admin") {
+          navigate("/admin"); 
+        } else {
+          navigate("/"); // 👈 redirect normal user
+        }
+      } else {
+        toast.error("Please enter valid credentials");
       }
     } catch (error) {
       if (error.response && error.response.status === 401) {

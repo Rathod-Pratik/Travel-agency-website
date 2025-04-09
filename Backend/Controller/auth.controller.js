@@ -32,8 +32,10 @@ export const login = async (req, res) => {
   user.password = undefined;
 
   const options = {
-    expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
     httpOnly: true,
+    secure: true, // use true in production with HTTPS
+    sameSite: "None", // "Strict" or "Lax" can block cross-site cookies
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
   };
 
   if (user.role === "admin") {
