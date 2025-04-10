@@ -33,7 +33,6 @@ const AdminReview = () => {
       const response = await apiClient.get(GET_ALL_REVIEW);
       if (response.status === 200) {
         SetReview(response.data.reviews);
-        console.log(response.data.reviews);
       }
     } catch (error) {
       toast.error("Some error occured try again after some time");

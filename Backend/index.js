@@ -11,6 +11,7 @@ import PaymentRoutes from "./Routes/Payment.routes.js";
 import BookingRoutes from "./Routes/booking.routes.js"
 import AdminRoutes from "./Routes/admin.routes.js";
 import BlogRoutes from './Routes/blog.router.js'
+import contactRoutes from './Routes/contact.route.js'
 
 import cookieParser from 'cookie-parser';
 import Razorpay from 'razorpay';
@@ -54,5 +55,6 @@ app.use('/payment',PaymentRoutes);
 app.use('/booking',BookingRoutes)
 app.use('/Admin',AdminRoutes);
 app.use('/blog',BlogRoutes);
+app.use('/contact',contactRoutes);
 
 app.listen(5000,()=>console.log(`Server is running at ${5000}`));

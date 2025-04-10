@@ -23,3 +23,7 @@ export const ADD_REVIEW=`reviews`;
 export const GET_REVIEW=`reviews`;
 export const GET_ALL_REVIEW=`reviews`
 export const DELETE_REVIEW=`reviews/DeleteReview`;
+
+export const ADD_CONTECT="contact/AddContact"
+export const GET_CONTECT="contact/GetContact"
+export const DELETE_CONTECT="contact/DeleteContact"

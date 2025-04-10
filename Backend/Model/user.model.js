@@ -15,7 +15,6 @@ const UserSchema = new mongoose.Schema(
       type:String,
       default:null
     },
-    bookings: [{ type: mongoose.Schema.Types.ObjectId, ref: "Booking" }],
     createdAt: { type: Date, default: Date.now },
   },
  

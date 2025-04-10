@@ -14,7 +14,6 @@ const Navbar = () => {
 
   const ShowNavbar = () => {
     SetIsOpen(!isOpen);
-    console.log("Show navbar");
   };
   const hideNavbar = () => {
     SetIsOpen(false);
