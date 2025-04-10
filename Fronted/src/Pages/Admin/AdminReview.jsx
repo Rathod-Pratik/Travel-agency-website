@@ -65,7 +65,7 @@ const AdminReview = () => {
         {/* Review Info */}
         <div className="">
 
-          <div className="flex justify-between">
+          <div className="flex justify-between lg:flex-row flex-col">
           <p className="text-xl font-semibold text-gray-800 mb-2">
             Title: {review.TourData.title}
           </p>
