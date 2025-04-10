@@ -5,10 +5,6 @@ const blogSchema=new mongoose.Schema({
         type:String,
         required:true
     },
-    name:{
-        type:String,
-        required:true
-    },
     date:{
         type: Date, // Specify the type as Date
         default: Date.now,
@@ -21,9 +17,6 @@ const blogSchema=new mongoose.Schema({
         required:true,
         type:String
     },
-    comment:{
-        type:Array,
-    }
 })
 
 const BlogModel=mongoose.model('blog',blogSchema);

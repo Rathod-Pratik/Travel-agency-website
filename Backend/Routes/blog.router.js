@@ -5,7 +5,7 @@ import {CreateBlog, UpdateBlog, DeleteBlog, GetBlog} from '../Controller/blog.co
 const router = express.Router();
 
 // Upload & Create Blog Route
-router.post("/create" ,upload.single("image"), uploadToCloudinary, CreateBlog);
+router.post("/create" ,upload.single('BlogImage'), uploadToCloudinary, CreateBlog);
 
 // Other Routes
 router.put("/update/:_id", UpdateBlog);

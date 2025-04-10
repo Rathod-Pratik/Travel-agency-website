@@ -11,6 +11,9 @@ export const UPDATE_PROFILE=`${HOST}/auth/user/profile`
 
 export const BLOG='blog';
 export const GET_BLOG=`${BLOG}`;
+export const CREATE_BLOG=`${BLOG}/create`
+export const UPDATE_BLOG=`${BLOG}/update`
+export const DELETE_BLOG=`${BLOG}/delete`
 
 export const BOOKING=`booking`;
 export const CREATE_BOOKING=`${HOST}/${BOOKING}`

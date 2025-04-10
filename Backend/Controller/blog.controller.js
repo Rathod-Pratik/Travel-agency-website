@@ -3,21 +3,19 @@ import BlogModel from "../Model/blog.model.js"; // Adjust the import path as nee
 // 
 export const CreateBlog = async (req, res) => {
   try {
-    const { Title, name, BlogImage, BlogText, comment } = req.body;
-
+    const { Title, BlogText } = req.body;
+    const imageUrl = req.imageUrl;
     // Create a new blog instance
     const newBlog = new BlogModel({
       Title,
-      name,
-      BlogImage,
+      BlogImage:imageUrl,
       BlogText,
-      comment: comment || [],
     });
 
     // Save to database
     await newBlog.save();
 
-    res.status(201).json({ success: true, message: "Blog created successfully", blog: newBlog });
+    res.status(200).json({ success: true, message: "Blog created successfully", blog: newBlog });
   } catch (error) {
     res.status(500).json({ success: false, message: "Error creating blog", error: error.message });
   }
