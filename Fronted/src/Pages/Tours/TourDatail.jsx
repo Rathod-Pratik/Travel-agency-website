@@ -320,7 +320,7 @@ const TourDatail = () => {
           </div>
         </div>
 
-        <TourReview TourId={tourdata._id} userId={userInfo._id} userName={userInfo.name} />
+        <TourReview TourId={tourdata._id} TourData={tourdata} userId={userInfo._id} userName={userInfo.name} />
       </div>
     </div>
   );

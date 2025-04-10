@@ -5,7 +5,7 @@ import { ADD_REVIEW, DELETE_REVIEW, GET_REVIEW } from "../Utils/Constant";
 import { toast } from "react-toastify";
 import { MdDelete } from "react-icons/md";
 
-const TourReview = ({ TourId, userName, userId }) => {
+const TourReview = ({ TourId, userName, userId,TourData }) => {
   const [selected, setSelected] = useState(null);
   const [reviewText, SetReviewText] = useState("");
   const [reviewStar, SetReviewStar] = useState(0);
@@ -46,8 +46,8 @@ const TourReview = ({ TourId, userName, userId }) => {
         TourId: TourId,
         rating: reviewStar,
         reviewText: reviewText,
+        TourData:TourData
       });
-
       if (response.status === 200) {
         toast.success("Review added successfully");
 
@@ -67,6 +67,7 @@ const TourReview = ({ TourId, userName, userId }) => {
         // ✅ Clear input fields after submission
         SetReviewText("");
         SetReviewStar(0);
+        setSelected(0)
       } else {
         toast.error("Failed to add review");
       }

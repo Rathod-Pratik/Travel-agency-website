@@ -15,6 +15,10 @@ const reviewSchema = new mongoose.Schema({
     ref: 'Tour',
     required: true
   },
+  TourData:{
+    type:Object,
+    required:true
+  },
   rating: {
     type: Number,
     required: true,

@@ -21,4 +21,5 @@ export const GET_CANCEL_BOOKING=`${HOST}/${BOOKING}/user/cancel`
 
 export const ADD_REVIEW=`reviews`;
 export const GET_REVIEW=`reviews`;
+export const GET_ALL_REVIEW=`reviews`
 export const DELETE_REVIEW=`reviews/DeleteReview`;

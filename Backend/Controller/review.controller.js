@@ -2,13 +2,13 @@ import mongoose from "mongoose";
 import Review from "../Model/review.model.js";
 
 export const AddReview = async (req, res) => {
-  const { userName, TourId, rating, reviewText,userId } = req.body;
+  const { userName, TourId, rating, reviewText,userId,TourData } = req.body;
 
-  if (!userName || !TourId || !rating || !reviewText || !userId) {
+  if (!userName || !TourId || !rating || !reviewText || !userId || !TourData) {
     return res.status(400).send("All the field are required");
   }
   try {
-    const review = await Review.create({ userName, TourId, rating, reviewText,userId });
+    const review = await Review.create({ userName, TourId, rating, reviewText,userId,TourData });
 
     if (review) {
       res.status(200).send({Message:"Review add successfully",review});
@@ -20,6 +20,19 @@ export const AddReview = async (req, res) => {
     return res.status(500).send("An error occurred while fetching reviews");
   }
 };
+
+export const GetallReview=async(req,res)=>{
+  try {
+    // Fetch reviews based on tour ID
+    const reviews = await Review.find()
+
+    // Return reviews
+    return res.status(200).json({reviews});
+  } catch (err) {
+    console.error(err); // Log the error for debugging
+    return res.status(500).send("An error occurred while fetching reviews");
+  }
+}
 
 export const GetReview = async (req, res) => {
   const { _id } = req.params;

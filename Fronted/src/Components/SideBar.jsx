@@ -10,75 +10,57 @@ import { FaStar } from "react-icons/fa6";
 import { IoSettings } from "react-icons/io5";
 
 const SideBar = () => {
-  const location=useLocation();
+  const location = useLocation();
   return (
-    <div>
-      <div className="flex flex-col text-xl px-2 mt-12">
-  <Link
-    className={`flex items-center gap-3 pl-3 py-3 justify-start transition-all duration-150 ${location.pathname=="/admin"? "text-white bg-[orange]":""}`}
-    to="/admin"
-  >
-    <FaHome className={`text-[orange] text-xl ${location.pathname=="/admin"?"text-white":"text-[orange]"}`} />
-    DashBoard
-  </Link>
+    <div className="group/sidebar relative ">
+      {/* Sidebar Container */}
+      <div
+        className="flex flex-col text-xl px-2 pt-12
+      w-[60px] lg:w-[250px] shadow-lg lg:shadow-none
+      group-hover/sidebar:w-[250px] 
+      transition-all duration-300 ease-in-out
+      bg-white z-50 fixed h-full"
+      >
+        {[
+          { to: "/admin", icon: <FaHome />, label: "Dashboard" },
+          { to: "/admin/Tours", icon: <IoLocationOutline />, label: "Tours" },
+          {
+            to: "/admin/Bookings",
+            icon: <FaRegAddressBook />,
+            label: "Booking",
+          },
+          { to: "/admin/Users", icon: <FaUser />, label: "Users" },
+          { to: "/admin/blog", icon: <FaBlog />, label: "Blogs" },
+          { to: "/admin/contacts", icon: <FaMessage />, label: "Contacts" },
+          { to: "/admin/Review", icon: <FaStar />, label: "Review" },
+          { to: "/admin/setting", icon: <IoSettings />, label: "Settings" },
+        ].map((item) => (
+          <Link
+            key={item.to}
+            to={item.to}
+            className={`flex items-center gap-3 py-3 pl-4 transition-all duration-150
+          ${
+            location.pathname === item.to
+              ? "bg-[orange] text-white"
+              : "text-black"
+          }
+          hover:bg-orange-400`}
+          >
+            <div
+              className={`text-xl shrink-0 ${
+                location.pathname === item.to ? "text-white" : "text-[orange]"
+              }`}
+            >
+              {item.icon}
+            </div>
 
-  <Link
-    className={`flex items-center gap-3 pl-3 py-3 justify-start transition-all duration-150 ${location.pathname=="/admin/Tours"? "text-white bg-[orange]":""}`}
-    to="/admin/Tours"
-  >
-    <IoLocationOutline className={`text-[orange] text-xl ${location.pathname=="/admin/Tours"?"text-white":"text-[orange]"}`} />
-    Tours
-  </Link>
-
-  <Link
-    className={`flex items-center gap-3 pl-3 py-3 justify-start transition-all duration-150 ${location.pathname=="/admin/Bookings"? "text-white bg-[orange]":""}`}
-    to="/admin/Bookings"
-  >
-    <FaRegAddressBook className={`text-[orange] text-xl ${location.pathname=="/admin/Bookings"?"text-white":"text-[orange]"}`} />
-    Booking
-  </Link>
-
-  <Link
-    className={`flex items-center gap-3 pl-3 py-3 justify-start transition-all duration-150 ${location.pathname=="/admin/Users"? "text-white bg-[orange]":""}`}
-    to="/admin/Users"
-  >
-    <FaUser className={`text-[orange] text-xl ${location.pathname=="/admin/Users"?"text-white":"text-[orange]"}`} />
-    Users
-  </Link>
-
-  <Link
-    className={`flex items-center gap-3 pl-3 py-3 justify-start transition-all duration-150 ${location.pathname=="/admin/blog"? "text-white bg-[orange]":""}`}
-    to="/admin/blog"
-  >
-    <FaBlog className={`text-[orange] text-xl ${location.pathname=="/admin/blog"?"text-white":"text-[orange]"}`} />
-    Blogs
-  </Link>
-
-  <Link
-    className={`flex items-center gap-3 pl-3 py-3 justify-start transition-all duration-150 ${location.pathname=="/admin/contacts"? "text-white bg-[orange]":""}`}
-    to="/admin/contacts"
-  >
-    <FaMessage className={`text-[orange] text-xl ${location.pathname=="/admin/contacts"?"text-white":"text-[orange]"}`} />
-    Contects
-  </Link>
-
-  <Link
-    className={`flex items-center gap-3 pl-3 py-3 justify-start transition-all duration-150 ${location.pathname=="/admin/Review"? "text-white bg-[orange]":""}`}
-    to="/admin/Review"
-  >
-    <FaStar className={`text-[orange] text-xl ${location.pathname=="/admin/Review"?"text-white":"text-[orange]"}`} />
-    Review
-  </Link>
-
-  <Link
-    className={`flex items-center gap-3 pl-3 py-3 justify-start transition-all duration-150 ${location.pathname=="/admin/setting"? "text-white bg-[orange]":""}`}
-    to="/admin/setting"
-  >
-    <IoSettings className={`text-[orange] text-xl ${location.pathname=="/admin/setting"?"text-white":"text-[orange]"}`} />
-    settings
-  </Link>
-</div>
-
+            {/* Text label */}
+            <span className="hidden lg:block group-hover/sidebar:block whitespace-nowrap">
+              {item.label}
+            </span>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 };
