@@ -1,6 +1,6 @@
 import BlogModel from "../Model/blog.model.js"; // Adjust the import path as needed
 
-// 
+// Create a blog
 export const CreateBlog = async (req, res) => {
   try {
     const { Title, BlogText } = req.body;
@@ -24,10 +24,9 @@ export const CreateBlog = async (req, res) => {
 // ✅ Update an Existing Blog
 export const UpdateBlog = async (req, res) => {
   try {
-    const { id } = req.params;
-    const updateData = req.body;
-
-    const updatedBlog = await BlogModel.findByIdAndUpdate(id, updateData, { new: true });
+    const {Title,BlogText,_id} =req.body;
+    const BlogImage=req.newImageUrl
+    const updatedBlog = await BlogModel.findByIdAndUpdate(_id,{Title,BlogText,BlogImage}, { new: true });
 
     if (!updatedBlog) {
       return res.status(404).json({ success: false, message: "Blog not found" });
@@ -42,9 +41,9 @@ export const UpdateBlog = async (req, res) => {
 // ✅ Delete a Blog
 export const DeleteBlog = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { _id } = req.body;
 
-    const deletedBlog = await BlogModel.findByIdAndDelete(id);
+    const deletedBlog = await BlogModel.findByIdAndDelete(_id);
 
     if (!deletedBlog) {
       return res.status(404).json({ success: false, message: "Blog not found" });

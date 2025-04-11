@@ -33,9 +33,6 @@ const formattedDate = `${day}-${month}-${year}`;
         </div>
         <p className='text-sm hover:text-[orange] my-2 text-gray-500 font-medium'>{data.BlogText.substring(0, 25)}...</p>
         <div className="flex flex-row justify-between items-center text-gray-500">
-          <p>
-            {data.comment.length} Comment
-          </p>
           <button className="text-sm cursor-pointer text-center font-semibold rounded-md bg-[orange] text-white py-1 px-1 hover:bg-orange-600 transition-colors">
             Read More
           </button>

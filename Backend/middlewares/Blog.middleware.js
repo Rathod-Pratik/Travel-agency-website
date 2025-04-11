@@ -1,7 +1,7 @@
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
-import path from "path";
+import BlogModel from "../Model/blog.model.js";
 import dotenv from "dotenv";
 
 // Load environment variables
@@ -36,9 +36,11 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB file size limit (adjust as needed)
   fileFilter: (req, file, cb) => {
     // Only allow images (jpg, png, gif)
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
     if (!allowedTypes.includes(file.mimetype)) {
-      return cb(new Error("Invalid file type. Only JPEG, PNG, and GIF are allowed."));
+      return cb(
+        new Error("Invalid file type. Only JPEG, PNG, and GIF are allowed.")
+      );
     }
     cb(null, true);
   },
@@ -48,7 +50,9 @@ const upload = multer({
 const uploadToCloudinary = async (req, res, next) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ success: false, message: "No file uploaded" });
+      return res
+        .status(400)
+        .json({ success: false, message: "No file uploaded" });
     }
 
     const localFilePath = req.file.path; // Multer stores the file in req.file
@@ -56,6 +60,7 @@ const uploadToCloudinary = async (req, res, next) => {
     // Upload file to Cloudinary
     const uploadedUrl = await cloudinary.uploader.upload(localFilePath, {
       resource_type: "auto", // Automatically detects file type (image, video, etc.)
+      folder: "Travel agency",
     });
 
     // Clean up local file
@@ -73,8 +78,56 @@ const uploadToCloudinary = async (req, res, next) => {
       fs.unlinkSync(req.file.path);
     }
 
-    return res.status(500).json({ success: false, message: "Image upload failed", error: error.message });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Image upload failed",
+        error: error.message,
+      });
   }
 };
 
-export { upload, uploadToCloudinary };
+const updateBlogImage = async (req, res, next) => {
+  try {
+    const blogId = req.params.id;
+
+    const deleted=await cloudinary.uploader.destroy(`Travel agency/${blogId}`);
+
+    // 📤 2. Upload new image
+    const uploaded = await cloudinary.uploader.upload(req.file.path, {
+      folder: "Travel agency",
+    });
+
+    // 🧹 3. Remove local file
+    fs.unlinkSync(req.file.path);
+
+    // 📝 4. Attach new URL to req for controller to save
+    req.newImageUrl = uploaded.secure_url;
+
+    next(); // continue to controller
+  } catch (error) {
+    console.error("❌ Cloudinary update error:", error);
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    return res.status(500).json({
+      success: false,
+      message: "Image update failed",
+      error: error.message,
+    });
+  }
+};
+
+const DeleteBlogImage = async (req, res, next) => {
+  try {
+    const blogId = req.params.id;
+
+  const deleted=await cloudinary.uploader.destroy(`Travel agency/${blogId}`);
+  next();
+  } catch (error) {
+    return res.status(400).json({"Message":error})
+  }
+};
+
+export { upload, uploadToCloudinary, updateBlogImage,DeleteBlogImage };

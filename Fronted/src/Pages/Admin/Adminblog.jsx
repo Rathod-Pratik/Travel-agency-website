@@ -1,19 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { apiClient } from "../../lib/api-Client";
-import { CREATE_BLOG, GET_BLOG } from "../../Utils/Constant";
+import { CREATE_BLOG, DELETE_BLOG, GET_BLOG, UPDATE_BLOG } from "../../Utils/Constant";
 import AdminblogCard from "../../Components/AdminblogCard";
 import { toast } from "react-toastify";
 
 const Adminblog = () => {
   const [blogData, SetBlogData] = useState([]);
-  const [model, SetModel] = useState(true);
+  const [model, SetModel] = useState(false);
   const [title, SetTitle] = useState("");
   const [description, setDescription] = useState("");
   const [preview, setPreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState();
-
-  const formData = new FormData();
-  formData.append("BlogImage", selectedFile);
 
   const UploadBlog = async () => {
     if (title.length < 10) {
@@ -42,6 +39,7 @@ const Adminblog = () => {
 
       if (response.status === 200) {
         SetModel(!model);
+        SetBlogData((prev) => [...prev, response.data.blog]);
         setPreview("");
         setDescription("");
         SetTitle("");
@@ -74,16 +72,18 @@ const Adminblog = () => {
 
   const OpenModel = () => {
     SetModel(!model);
-    setPreview("");
-    setDescription("");
-    SetTitle("");
-    setSelectedFile("");
+    // setPreview("");
+    // setDescription("");
+    // SetTitle("");
+    // setSelectedFile("");
   };
 
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]); // Save the actual file object
     setPreview(URL.createObjectURL(e.target.files[0])); // Just for showing preview if needed
   };
+
+
   return (
     <div>
       <div className="flex justify-end">
@@ -98,7 +98,7 @@ const Adminblog = () => {
         {blogData.map((data, index) => {
           return (
             <div key={index} className="w-[350px] h-[400px]">
-              <AdminblogCard data={data} />
+              <AdminblogCard setBlogData={SetBlogData} data={data} />
             </div>
           );
         })}

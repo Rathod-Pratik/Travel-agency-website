@@ -1,5 +1,5 @@
 import express from "express";
-import { upload, uploadToCloudinary } from "../middlewares/Blog.middleware.js";
+import { DeleteBlogImage, updateBlogImage, upload, uploadToCloudinary } from "../middlewares/Blog.middleware.js";
 import {CreateBlog, UpdateBlog, DeleteBlog, GetBlog} from '../Controller/blog.controller.js'
 
 const router = express.Router();
@@ -8,8 +8,8 @@ const router = express.Router();
 router.post("/create" ,upload.single('BlogImage'), uploadToCloudinary, CreateBlog);
 
 // Other Routes
-router.put("/update/:_id", UpdateBlog);
-router.delete("/delete/:_id", DeleteBlog);
+router.put("/update/:id",upload.single('BlogImage'),updateBlogImage, UpdateBlog);
+router.post("/delete/:id",DeleteBlogImage, DeleteBlog);
 router.get("/", GetBlog);
 
 export default router;
