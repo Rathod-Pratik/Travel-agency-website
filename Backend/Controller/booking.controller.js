@@ -4,6 +4,7 @@ import TourModel from "../Model/tour.model.js";
 export const CreateBooking = async (req, res) => {
   try {
     const {
+      BookedBy,
       price,
       userId,
       userName,
@@ -17,6 +18,7 @@ export const CreateBooking = async (req, res) => {
 
     // Validate required fields
     if (
+      !BookedBy ||
       !paymentId ||
       !userId ||
       !tourData ||
@@ -37,6 +39,7 @@ export const CreateBooking = async (req, res) => {
 
     // Create a new booking
     const newBooking = await BookingModel.create({
+      BookedBy,
       paymentId,
       userId,
       userName,
@@ -158,3 +161,37 @@ export const CancelBooking = async (req, res) => {
     console.log(error);
   }
 };
+
+export const GetAllBookingToAdmin=async(req,res)=>{
+  
+  try {
+    const getBooking = await BookingModel.find();
+
+    return res.status(201).json({ getBooking });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export const DeleteBookingData=async(req,res)=>{
+  const {_id}=req.params;
+
+  if(!_id){
+    return res.status(400).send("_id is required");
+  }
+  try {
+
+    const DeleteData=await BookingModel.findOneAndDelete({_id})
+
+    if(DeleteData){
+      return res.status(200).send("Tour Deleted successfully")
+    }
+    else{
+      return res.status(400).send("Failed to delete Tour")
+    }
+    
+  } catch (error) {
+    console.log(error)
+    return res.status(400).send("Some error occured try again after some time")
+  }
+}

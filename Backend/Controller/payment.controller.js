@@ -34,7 +34,7 @@ export const createOrder = async (req, res) => {
       res.status(200).json({
         success: true,
         order,
-        key: process.env.RAZORPAY_KEY_ID // Send key to frontend
+        key: process.env.RAZERPAY_API_KEY // Send key to frontend
       });
   
     } catch (error) {

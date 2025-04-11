@@ -109,12 +109,12 @@ const TourDatail = () => {
             toast.success(
               `Payment Successful! Payment ID: ${response.razorpay_payment_id}`
             );
-            console.log(response.razorpay_payment_id);
             // 🔹 Create booking after successful payment
             const bookingRes = await apiClient.post(CREATE_BOOKING, {
               paymentId: response.razorpay_payment_id,
               price: tourdata.price,
               userId: userInfo._id,
+              BookedBy:userInfo.name,
               userName: name,
               userEmail: userInfo.email,
               userPhone: phone,
@@ -124,6 +124,10 @@ const TourDatail = () => {
             });
             if (bookingRes.status === 200) {
               AddBookingData(bookingRes.data.data);
+              setName("");
+              SetGroupSize("")
+              SetDate("")
+              SetPhone("")
               toast.success("Booking confirmed successfully!");
             } else {
               toast.error(
