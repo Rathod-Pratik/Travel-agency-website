@@ -8,6 +8,8 @@ export const AUTH='auth';
 export const SIGNUP=`${HOST}/${AUTH}/signup`;
 export const LOGIN=`${HOST}/${AUTH}/login`;
 export const UPDATE_PROFILE=`${HOST}/auth/user/profile`
+export const GET_USER='/Admin/getuser'
+export const REMOVE_USER='/Admin/reomveusers'
 
 export const BLOG='blog';
 export const GET_BLOG=`${BLOG}`;

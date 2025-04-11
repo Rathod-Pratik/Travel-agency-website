@@ -36,6 +36,19 @@ export const Stats = async (req, res) => {
   }
 };
 
+export const GetUser=async(req,res)=>{
+  try {
+    const users = await UserModel.find({role:"user"});
+    if(users){
+      return res.status(200).json({users});
+    }
+    else{
+      return res.status(400).send("Fail to fetch users");
+    }
+  } catch (error) {
+    return res.status(400).send("Some error occured try again after some time");
+  }
+}
 export const DeleteUser = async (req, res) => {
   const { _id } = req.params;
 
