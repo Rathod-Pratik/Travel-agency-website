@@ -27,10 +27,6 @@ const TourSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    availableDates: {
-      type: [Date], // Array of dates when the tour is available
-      required: true,
-    },
     maxCapacity: {
       type: Number,
       required: true,

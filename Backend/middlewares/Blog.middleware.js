@@ -1,7 +1,6 @@
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
-import BlogModel from "../Model/blog.model.js";
 import dotenv from "dotenv";
 
 // Load environment variables
@@ -69,6 +68,7 @@ const uploadToCloudinary = async (req, res, next) => {
     }
 
     req.imageUrl = uploadedUrl.secure_url; // Attach Cloudinary URL to request
+    console.log(req.imageUrl)
     next(); // Proceed to the next middleware/controller
   } catch (error) {
     console.error("❌ Cloudinary Upload Error:", error);
@@ -91,9 +91,18 @@ const uploadToCloudinary = async (req, res, next) => {
 const updateBlogImage = async (req, res, next) => {
   try {
     const blogId = req.params.id;
-
-    const deleted=await cloudinary.uploader.destroy(`Travel agency/${blogId}`);
-
+    if (!req.file) {
+      console.error("❌ No file uploaded");
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    
+    const deleted = await cloudinary.uploader.destroy(`Travel agency/${blogId}`);
+    
+    if (deleted.result === "ok") {
+      console.log("✅ Deleted successfully from Cloudinary");
+    } else {
+      console.log("❌ Failed to delete from Cloudinary:", deleted);
+    }
     // 📤 2. Upload new image
     const uploaded = await cloudinary.uploader.upload(req.file.path, {
       folder: "Travel agency",

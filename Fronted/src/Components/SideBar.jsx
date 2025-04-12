@@ -18,8 +18,8 @@ const SideBar = () => {
       className="group flex flex-col text-xl px-2 pt-12
       w-[60px] hover:w-[250px] lg:w-[250px]
       transition-all duration-300 ease-in-out
-      bg-white h-full z-10 overflow-hidden
-       top-0 left-0 shadow-md"
+      bg-white h-full z-100 overflow-hidden
+       top-[71px] left-0 fixed shadow-md"
     >
       {[
         { to: "/admin", icon: <FaHome />, label: "Dashboard" },

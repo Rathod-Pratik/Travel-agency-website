@@ -20,7 +20,7 @@ export const getTours = async (req, res) => {
 export const getToursData = async (req, res) => {
   const { _id } = req.params;
   try {
-    const tours = await TourModel.findById( _id );
+    const tours = await TourModel.findById(_id);
     res.status(200).json({
       success: true,
       data: tours,
@@ -43,36 +43,30 @@ export const MakeTour = async (req, res) => {
       location,
       duration,
       price,
-      availableDates,
       maxCapacity,
       included,
       notIncluded,
       itinerary,
     } = req.body;
 
-    // Validate required fields
     if (
       !title ||
       !description ||
       !location ||
       !duration ||
       !price ||
-      !availableDates ||
       !maxCapacity ||
       !included ||
       !notIncluded ||
       !itinerary ||
       !tax
-      //  ||
-      //  !req.file
     ) {
       return res
         .status(400)
         .json({ success: false, message: "All fields are required" });
     }
-
     // Cloudinary image URL
-     const imageUrl = req.file.path;
+    const imageUrl = req.imageUrl;
 
     // Create new tour
     const tour = await TourModel.create({
@@ -81,12 +75,12 @@ export const MakeTour = async (req, res) => {
       location,
       duration,
       price,
-      availableDates,
       maxCapacity,
-      included,
-      notIncluded,
-      itinerary, tax,
-    images: [imageUrl],
+      included :JSON.parse(included),
+      notIncluded:JSON.parse(notIncluded),
+      itinerary: JSON.parse(itinerary),
+      tax,
+      images: imageUrl,
     });
 
     res.status(201).json({
@@ -102,7 +96,7 @@ export const MakeTour = async (req, res) => {
 
 export const UpdateTour = async (req, res) => {
   try {
-    const { _id } = req.params;
+    const { _id } = req.body;
     const {
       title,
       description,
@@ -114,7 +108,7 @@ export const UpdateTour = async (req, res) => {
       included,
       notIncluded,
       itinerary,
-      tax
+      tax,
     } = req.body;
 
     // Check if tour exists
@@ -126,10 +120,7 @@ export const UpdateTour = async (req, res) => {
     }
 
     // Handle optional image update
-     let imageUrl = existingTour.images;
-     if (req.file) {
-       imageUrl = [req.file.path];
-     }
+    const imageUrl = req.newImageUrl;
 
     // Update tour details
     const updatedTour = await TourModel.findByIdAndUpdate(
@@ -142,10 +133,11 @@ export const UpdateTour = async (req, res) => {
         price,
         availableDates,
         maxCapacity,
-        included,
-        notIncluded,
-        itinerary,tax,
-         images: imageUrl,
+        included:JSON.parse(included),
+        notIncluded:JSON.parse(notIncluded),
+        itinerary:JSON.parse(itinerary),
+        tax,
+        images: imageUrl,
       },
       { new: true, runValidators: true }
     );
@@ -163,7 +155,7 @@ export const UpdateTour = async (req, res) => {
 
 export const DeleteTour = async (req, res) => {
   try {
-    const { _id } = req.params; // Get tour ID from URL
+    const { _id } = req.body; // Get tour ID from URL
 
     // Check if the tour exists
     const existingTour = await TourModel.findById(_id);

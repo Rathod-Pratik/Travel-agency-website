@@ -3,6 +3,9 @@ export const HOST=import.meta.env.VITE_API_HOST;
 export const TOURS='tour';
 export const GET_TOUR=`${HOST}/${TOURS}`;
 export const GET_TOUR_DETAIL=`${HOST}/${TOURS}/data`
+export const CREATE_TOUR=`${TOURS}`
+export const UPDATE_TOUR=`${TOURS}`
+export const DELETE_TOUR=`${TOURS}`
 
 export const AUTH='auth';
 export const SIGNUP=`${HOST}/${AUTH}/signup`;
