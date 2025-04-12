@@ -15,26 +15,27 @@ export const Stats = async (req, res) => {
     // Extract successful payments and calculate revenue
     const payments = response.data.items;
     const totalRevenue = payments
-      .filter((payment) => payment.status === "captured") // Filter successful payments
-      .reduce((sum, payment) => sum + payment.amount / 100, 0); // Sum and convert from paise to rupees
+      .filter((payment) => payment.status === "captured")
+      .reduce((sum, payment) => sum + payment.amount / 100, 0);
 
     const users = await UserModel.find();
     const booking = await BookingModel.find();
 
-    res.json({
+    res.status(200).json({
       totalRevenue,
-      totalUsers: users.length -1 ,
+      totalUsers: users.length - 1,
       totalBookings: booking.length,
       users,
       booking,
+      payments // ✅ Send payment history here
     });
+    
   } catch (error) {
     console.error("Razorpay API Error:", error.response.data);
-    return res
-      .status(502)
-      .json({ error: "Failed to fetch data from Razorpay" });
+    return res.status(502).json({ error: "Failed to fetch data from Razorpay" });
   }
 };
+
 
 export const GetUser=async(req,res)=>{
   try {
