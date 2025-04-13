@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import About from "./Pages/About";
 import Booking from "./Pages/Booking";
@@ -26,12 +26,18 @@ import AdminContect from "./Pages/Admin/AdminContect";
 import AdminNavbar from "./Components/AdminNavbar";
 import AdminLayout from "./Pages/Admin/AdminLayout";
 import AdminSetting from "./Pages/Admin/adminSetting";
+import BlogDetail from "./Pages/Blog/blogDetail";
 
+import AOS from 'aos';
+import 'aos/dist/aos.css'; // You can also use <link> for styles
 const App = () => {
+  useEffect(()=>{
+    AOS.init();
+  },[])
   const location = useLocation();
   const isAdminPage = location.pathname.startsWith("/admin");
   return (
-    <div>
+    <div className="">
       {" "}
       {!isAdminPage && <Navbar />}
       {isAdminPage && <AdminNavbar />}
@@ -40,6 +46,7 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/blog" element={<Blog />} />
+        <Route path="/blogdetails" element={<BlogDetail />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/booking" element={<Booking />} />
         <Route path="/cancelbooking" element={<CancelBooking />} />
