@@ -89,37 +89,44 @@ const uploadToCloudinary = async (req, res, next) => {
 };
 
 const updateBlogImage = async (req, res, next) => {
+  if (!req.file) {
+    // No file uploaded — just continue
+    return next();
+  }
+
   try {
     const blogId = req.params.id;
-    if (!req.file) {
-      console.error("❌ No file uploaded");
-      return res.status(400).json({ message: "No file uploaded" });
-    }
-    
+
+    // 🗑️ Delete existing image from Cloudinary
     const deleted = await cloudinary.uploader.destroy(`Travel agency/${blogId}`);
-    
     if (deleted.result === "ok") {
       console.log("✅ Deleted successfully from Cloudinary");
     } else {
       console.log("❌ Failed to delete from Cloudinary:", deleted);
     }
-    // 📤 2. Upload new image
+
+    // 📤 Upload new image
     const uploaded = await cloudinary.uploader.upload(req.file.path, {
       folder: "Travel agency",
+      public_id: blogId,  // optional: use the same id to overwrite
     });
 
-    // 🧹 3. Remove local file
+    // 🧹 Remove local file
     fs.unlinkSync(req.file.path);
 
-    // 📝 4. Attach new URL to req for controller to save
+    // 📝 Attach new URL to req for controller to use
     req.newImageUrl = uploaded.secure_url;
 
-    next(); // continue to controller
+    next(); // continue to next middleware/controller
+
   } catch (error) {
     console.error("❌ Cloudinary update error:", error);
+
+    // Clean up local file if it still exists
     if (req.file && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
+
     return res.status(500).json({
       success: false,
       message: "Image update failed",
@@ -127,6 +134,7 @@ const updateBlogImage = async (req, res, next) => {
     });
   }
 };
+
 
 const DeleteBlogImage = async (req, res, next) => {
   try {
