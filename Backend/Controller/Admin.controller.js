@@ -1,6 +1,6 @@
 import axios from "axios";
 import UserModel from "../Model/user.model.js";
-import BookingModel from "../model/Booking.model.js";
+import BookingModel from "../Model/Booking.model.js";
 
 export const Stats = async (req, res) => {
   try {
@@ -31,7 +31,7 @@ export const Stats = async (req, res) => {
     });
     
   } catch (error) {
-    console.error("Razorpay API Error:", error.response.data);
+    console.error("Razorpay API Error:", error);
     return res.status(502).json({ error: "Failed to fetch data from Razorpay" });
   }
 };

@@ -1,4 +1,4 @@
-import BookingModel from "../model/Booking.model.js";
+import BookingModel from "../Model/Booking.model.js";
 import TourModel from "../Model/tour.model.js";
 
 export const CreateBooking = async (req, res) => {
@@ -122,14 +122,14 @@ export const UpdateBooking = async (req, res) => {
       return res.status(400).send("Your booking is not found");
     }
 
+    const updateFields = {};
+    if (userName) updateFields.userName = userName;
+    if (userPhone) updateFields.userPhone = userPhone;
+    if (tourDate) updateFields.tourDate = tourDate;
     // Proceed to update the booking with the new details
     const updatedBooking = await BookingModel.findOneAndUpdate(
       { _id }, 
-      {
-        userPhone,
-        tourDate,
-        userName,
-      },
+      updateFields,
       { new: true } 
     );
 

@@ -97,6 +97,16 @@ export const MakeTour = async (req, res) => {
 export const UpdateTour = async (req, res) => {
   try {
     const { _id } = req.body;
+
+    // Check if tour exists
+    const existingTour = await TourModel.findById(_id);
+    if (!existingTour) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Tour not found" });
+    }
+
+    // Build updateFields object dynamically
     const {
       title,
       description,
@@ -111,34 +121,27 @@ export const UpdateTour = async (req, res) => {
       tax,
     } = req.body;
 
-    // Check if tour exists
-    const existingTour = await TourModel.findById(_id);
-    if (!existingTour) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Tour not found" });
-    }
+    const updateFields = {};
 
-    // Handle optional image update
-    const imageUrl = req.newImageUrl;
+    if (title) updateFields.title = title;
+    if (description) updateFields.description = description;
+    if (location) updateFields.location = location;
+    if (duration) updateFields.duration = duration;
+    if (price) updateFields.price = price;
+    if (availableDates) updateFields.availableDates = availableDates;
+    if (maxCapacity) updateFields.maxCapacity = maxCapacity;
+    if (included) updateFields.included = JSON.parse(included);
+    if (notIncluded) updateFields.notIncluded = JSON.parse(notIncluded);
+    if (itinerary) updateFields.itinerary = JSON.parse(itinerary);
+    if (tax) updateFields.tax = tax;
+
+    // If new image is uploaded
+    if (req.newImageUrl) updateFields.images = req.newImageUrl;
 
     // Update tour details
     const updatedTour = await TourModel.findByIdAndUpdate(
       _id,
-      {
-        title,
-        description,
-        location,
-        duration,
-        price,
-        availableDates,
-        maxCapacity,
-        included:JSON.parse(included),
-        notIncluded:JSON.parse(notIncluded),
-        itinerary:JSON.parse(itinerary),
-        tax,
-        images: imageUrl,
-      },
+      updateFields,
       { new: true, runValidators: true }
     );
 
@@ -147,11 +150,13 @@ export const UpdateTour = async (req, res) => {
       message: "Tour updated successfully",
       data: updatedTour,
     });
+
   } catch (error) {
     console.error("Error updating tour:", error);
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+
 
 export const DeleteTour = async (req, res) => {
   try {

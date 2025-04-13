@@ -26,7 +26,11 @@ export const UpdateBlog = async (req, res) => {
   try {
     const {Title,BlogText,_id} =req.body;
     const BlogImage=req.newImageUrl
-    const updatedBlog = await BlogModel.findByIdAndUpdate(_id,{Title,BlogText,BlogImage}, { new: true });
+    const updateFields = {};
+    if (Title) updateFields.Title = Title;
+    if (BlogText) updateFields.BlogText = BlogText;
+    if (BlogImage) updateFields.BlogImage = BlogImage;
+    const updatedBlog = await BlogModel.findByIdAndUpdate(_id,updateFields, { new: true });
 
     if (!updatedBlog) {
       return res.status(404).json({ success: false, message: "Blog not found" });
