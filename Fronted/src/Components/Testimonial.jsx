@@ -58,10 +58,10 @@ const Testimonial = () => {
   return (
     <div className="mt-6 w-[90vw] mx-auto">
       {/* Testimonial Title */}
-      <p className="mb-4 text-2xl bg-[orange] px-4 py-2 text-white inline-block rounded-full shadow-md mx-auto md:ml-0">
+      <p data-aos="fade-right" className="mb-4 text-2xl bg-[orange] px-4 py-2 text-white inline-block rounded-full shadow-md mx-auto md:ml-0">
         Testimonial
       </p>
-      <h2 className="text-3xl font-bold text-center md:text-left mb-8">
+      <h2 data-aos="fade-right" className="text-3xl font-bold text-center md:text-left mb-8">
         What Our Customers Say About Us
       </h2>
 

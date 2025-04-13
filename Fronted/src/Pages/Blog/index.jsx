@@ -5,14 +5,16 @@ import BlogSection from '../../Components/BlogSection';
 
 function Blog() {
 
-  const [blogData,SetBlogData]=useState([]);
+  const [blogData,SetBlogData]=useState();
   useEffect(()=>{
     const FetchBlog=async()=>{
       try {
         const response=await apiClient.get(GET_BLOG);
 
         if(response.status===200){
-          SetBlogData(response.data.blog);
+          setTimeout(() => {
+            SetBlogData(response.data.blog);
+          }, [2000]);
         }
         else{
           console.log("Some error occured")

@@ -4,8 +4,12 @@ import { apiClient } from "../lib/api-Client";
 import { ADD_REVIEW, DELETE_REVIEW, GET_REVIEW } from "../Utils/Constant";
 import { toast } from "react-toastify";
 import { MdDelete } from "react-icons/md";
+import { useAppStore } from "../Store";
+import { useNavigate } from "react-router-dom";
 
 const TourReview = ({ TourId, userName, userId,TourData }) => {
+  const navigate=useNavigate();
+  const {userInfo}=useAppStore()
   const [selected, setSelected] = useState(null);
   const [reviewText, SetReviewText] = useState("");
   const [reviewStar, SetReviewStar] = useState(0);
@@ -32,6 +36,10 @@ const TourReview = ({ TourId, userName, userId,TourData }) => {
   }, [TourId]);
 
   const AddReview = async () => {
+     if(!userInfo){
+          toast.error("Please Login now")
+          navigate('/login')
+        }
     try {
       if (reviewText.length <= 10) {
         return toast.error("Review text must contain at least 10 characters.");

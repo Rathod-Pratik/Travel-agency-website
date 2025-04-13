@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { useAppStore } from "../Store";
 import { FaPaperPlane } from "react-icons/fa";
+import { FaUser } from "react-icons/fa";
 
 const Navbar = () => {
-  const { userInfo,booking } = useAppStore();
+  const { userInfo, booking } = useAppStore();
 
   const location = useLocation();
 
@@ -39,12 +40,14 @@ const Navbar = () => {
   function scrollToTop() {
     window.scrollTo({
       top: 0,
-      behavior: 'smooth' // Makes the scroll smooth
+      behavior: "smooth", // Makes the scroll smooth
     });
   }
-  
+
   return (
-    <header className={`bg-white sticky top-0 z-50 ${isScrolled ? "shadow-md" : ""} `}>
+    <header
+      className={`bg-white sticky top-0 z-50 ${isScrolled ? "shadow-md" : ""} `}
+    >
       <div className="container flex justify-between w-[90%] h-16 mx-auto">
         <Link
           to="/"
@@ -61,13 +64,13 @@ const Navbar = () => {
         </Link>
         <ul
           className={`z-50 flex flex-col font-semibold md:flex-row items-center md:static bg-white left-0 absolute m-auto md:w-auto transition-all duration-500 ease-in-out gap-3 w-full ${
-            isOpen ? "!top-16 h-[205px] rounded shadow-lg" : "top-[-100vh]"
+            isOpen ? "!top-16 h-[230px] rounded shadow-lg" : "top-[-100vh]"
           }`}
         >
           <li className="flex">
             <Link
               to="/"
-              onClick={()=>(hideNavbar(),scrollToTop())}
+              onClick={() => (hideNavbar(), scrollToTop())}
               className={`flex items-center px-4 ${
                 location.pathname === "/" ? "text-[Orange]" : ""
               }`}
@@ -77,7 +80,7 @@ const Navbar = () => {
           </li>
           <li className="flex">
             <Link
-              onClick={()=>(hideNavbar(),scrollToTop())}
+              onClick={() => (hideNavbar(), scrollToTop())}
               to="/about"
               className={`flex items-center px-4 ${
                 location.pathname === "/about" ? "text-[Orange]" : ""
@@ -88,7 +91,7 @@ const Navbar = () => {
           </li>
           <li className="flex">
             <Link
-              onClick={()=>(hideNavbar(),scrollToTop())}
+              onClick={() => (hideNavbar(), scrollToTop())}
               to="/tour"
               className={`flex items-center px-4 ${
                 location.pathname === "/tour" ? "text-[Orange]" : ""
@@ -99,7 +102,7 @@ const Navbar = () => {
           </li>
           <li className="flex">
             <Link
-              onClick={()=>(hideNavbar(),scrollToTop())}
+              onClick={() => (hideNavbar(), scrollToTop())}
               to="/blog"
               className={`flex items-center px-4 ${
                 location.pathname === "/blog" ? "text-[Orange]" : ""
@@ -108,9 +111,12 @@ const Navbar = () => {
               Blog
             </Link>
           </li>
-          <div className="items-center flex-shrink-0 gap-3 md:hidden">
+          <div className="items-center flex flex-col justify-center flex-shrink-0 gap-3 md:hidden">
+           
+            
             {userInfo ? (
               <div className="flex flex-row gap-2 items-center">
+                <div className="flex flex-row gap-2 items-center">
                 <Link
                   to="/account"
                   className={`w-8 h-8 flex justify-center items-center text-lg font-bold text-white rounded-full ${getBackgroundColor(
@@ -120,6 +126,16 @@ const Navbar = () => {
                   {getInitial(userInfo.name)}
                 </Link>
                 <p>{userInfo.name}</p>
+                </div>
+                {userInfo.role === "admin" && (
+              <Link
+                to="/admin"
+                className="flex items-center gap-2 p-2 rounded-md bg-[orange] text-white text-sm font-medium"
+              >
+                <FaUser className="text-lg" />
+                Admin
+              </Link>
+            )}
               </div>
             ) : (
               <div className="flex">
@@ -131,7 +147,7 @@ const Navbar = () => {
                   Login
                 </Link>
                 <Link
-                 onClick={scrollToTop}
+                  onClick={scrollToTop}
                   to="/signup"
                   className="cursor-pointer self-center px-4 py-3 font-semibold rounded-3xl bg-[orange] text-white text-[1.1rem]"
                 >
@@ -139,9 +155,16 @@ const Navbar = () => {
                 </Link>
               </div>
             )}
+            <div>
+            
+         
+
+            </div>
           </div>
         </ul>
         <div className="items-center md:justify-end flex-shrink-0 hidden md:flex gap-4">
+         
+
           <div className="relative">
             <Link to="/booking" className="text-[orange] text-2xl relative">
               {/* Notification Badge for Booking */}
@@ -154,26 +177,37 @@ const Navbar = () => {
 
           <div className="items-center md:justify-end flex-shrink-0 hidden md:flex gap-4">
             {userInfo ? (
+              <div className="flex flex-row gap-2 items-center">
               <Link
-              onClick={scrollToTop}
+                onClick={scrollToTop}
                 to="/account"
                 className={`w-8 h-8 flex justify-center items-center text-lg font-bold text-white rounded-full ${getBackgroundColor(
                   userInfo.name
                 )}`}
-              >
+                >
                 {getInitial(userInfo.name)}
               </Link>
+              {userInfo.role === "admin" && (
+              <Link
+                to="/admin"
+                className="flex items-center gap-2 p-2 rounded-md bg-[orange] text-white text-sm font-medium"
+              >
+                <FaUser className="text-lg" />
+                Admin
+              </Link>
+            )}
+                </div>
             ) : (
               <div className="flex">
                 <Link
-                 onClick={scrollToTop}
+                  onClick={scrollToTop}
                   to="/login"
                   className="cursor-pointer self-center px-8 py-3 rounded text-[1.1rem] font-semibold"
                 >
                   Login
                 </Link>
                 <Link
-                 onClick={scrollToTop}
+                  onClick={scrollToTop}
                   to="/signup"
                   className="cursor-pointer self-center px-4 py-3 font-semibold rounded-3xl bg-[orange] text-white text-[1.1rem]"
                 >
@@ -181,6 +215,9 @@ const Navbar = () => {
                 </Link>
               </div>
             )}
+          </div>
+          <div>
+          
           </div>
         </div>
 

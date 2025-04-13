@@ -200,7 +200,8 @@ const Booking = () => {
                     {CheckModel && (
                       <CheckingModel
                         onClose={CloseCheckModel}
-                        CancelBooking={() =>
+                        text={"Booking"}
+                        functions={() =>
                           CancelBooking(
                             TourData.paymentId,
                             TourData.totalPrice,

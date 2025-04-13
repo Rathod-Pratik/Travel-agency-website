@@ -76,7 +76,7 @@ toast.error("Please Login now")
   
 
   return (
-    <div className="w-full md:w-[40%] mx-auto pb-6">
+    <div className="w-full md:w-[40%] mx-auto pb-6" data-aos="zoom-out">
       {/* Title */}
       <p className="text-2xl bg-[orange] px-4 py-2 text-white inline-block hero-title rounded-[50px] shadow-md mb-6 mx-auto text-center">
         Contect Us

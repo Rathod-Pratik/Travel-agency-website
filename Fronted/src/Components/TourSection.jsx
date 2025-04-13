@@ -21,10 +21,10 @@ const TourSection = () => {
     <div className="mt-6 w-[95%] mx-auto">
   {/* Section Header */}
   <div className="mb-6">
-    <p className="text-2xl bg-[orange] px-4 py-2 text-white inline-block hero-title rounded-[50px] shadow-md mb-6 mx-auto md:ml-0">
+    <p data-aos="fade-right" className="text-2xl bg-[orange] px-4 py-2 text-white inline-block hero-title rounded-[50px] shadow-md mb-6 mx-auto md:ml-0">
       Explore
     </p>
-    <p className="text-4xl font-bold text-gray-800">
+    <p data-aos="fade-right" className="text-4xl font-bold text-gray-800">
       Our Featured Tours
     </p>
   </div>
@@ -32,7 +32,7 @@ const TourSection = () => {
   {/* Featured Tours List */}
   <div className="grid grid-cols-1 place-items-center md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-4 sm:self-center">
     {tourData.map((data, index) => (
-      <div key={index} className="w-full sm:w-[300px] rounded-lg shadow-sm">
+      <div data-aos="fade-down" key={index} className="w-full sm:w-[300px] rounded-lg shadow-sm">
         <TourCard data={data} />
       </div>
     ))}

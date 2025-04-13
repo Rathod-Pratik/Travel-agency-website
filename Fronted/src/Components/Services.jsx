@@ -2,9 +2,9 @@ import React from "react";
 
 const Services = () => {
   return (
-    <div className="mt-4 w-[90%] mx-auto">
-  <p className="text-orange-600 hero-title text-4xl mb-4 font-bold">What We Serve</p>
-  <p className="font-semibold text-2xl text-gray-800 mb-6">
+    <div className="mt-4 w-[90%] mx-auto" >
+  <p data-aos="fade-right" className="text-orange-600 hero-title text-4xl mb-4 font-bold">What We Serve</p>
+  <p data-aos="fade-right" className="font-semibold text-2xl text-gray-800 mb-6">
     We Offer Our Best Services
   </p>
   <div className="flex flex-wrap justify-center gap-6">
@@ -16,6 +16,7 @@ const Services = () => {
       { src: "/tour-images/tours.png", title: "Exclusive Tours", desc: "Access curated travel experiences" },
     ].map((service, index) => (
       <div
+      data-aos="zoom-out"
         key={index}
         className="flex flex-col items-center gap-4 p-6 bg-white shadow-md rounded-lg border border-[orange] hover:shadow-lg transition-shadow w-[250px]"
       >

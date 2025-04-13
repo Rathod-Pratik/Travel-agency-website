@@ -8,7 +8,7 @@ const About = () => {
    
    <div className="flex flex-col-reverse md:flex-row gap-8 p-4 m-auto min-h-[65vh] overflow-hidden w-full max-w-[90vw]">
   {/* Text Content Section */}
-  <div className="w-full md:w-[45vw] flex flex-col justify-center text-center md:text-left gap-y-4">
+  <div data-aos="fade-right" className="w-full md:w-[45vw] flex flex-col justify-center text-center md:text-left gap-y-4">
     <div className="flex flex-row items-center justify-center md:justify-start">
       <span className="text-2xl mb-4 bg-[orange] px-4 py-2 text-white inline-block hero-title rounded-[50px] shadow-md">
         About Us
@@ -29,7 +29,7 @@ const About = () => {
   </div>
 
   {/* Media Content Section */}
-  <div className="w-full md:w-[45%] flex justify-end items-center">
+  <div data-aos="fade-left" className="w-full md:w-[45%] flex justify-end items-center">
     <img
       src="/public/tour-images/logo1.png"
       alt="A picturesque view of the destination"

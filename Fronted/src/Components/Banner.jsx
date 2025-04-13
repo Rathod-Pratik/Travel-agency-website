@@ -4,7 +4,7 @@ const Banner = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center h-[50vh] p-4 bg-[#cae5f4] px-10 ">
       {/* Subscribe Section */}
-      <div className="flex flex-col text-left lg:justify-end ml-5">
+      <div data-aos="fade-right" className="flex flex-col text-left lg:justify-end ml-5">
         <p className="text-4xl font-bold mb-4">
           Subscribe to Get Useful Traveling Information
         </p>
@@ -27,7 +27,7 @@ const Banner = () => {
       </div>
 
       {/* Image Section */}
-      <div className="hidden lg:flex justify-center">
+      <div data-aos="fade-left" className="hidden lg:flex justify-center">
         <img
           src="/tour-images/male-tourist.png"
           alt="Male Tourist"

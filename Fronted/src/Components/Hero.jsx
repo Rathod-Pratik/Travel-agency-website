@@ -4,7 +4,7 @@ const Hero = () => {
   return (
     <div className="flex flex-col-reverse md:flex-row gap-8 p-4 m-auto min-h-[65vh] overflow-hidden w-[90vw] ">
   {/* Text Content Section */}
-  <div className="flex flex-col justify-center text-center md:text-left gap-y-4">
+  <div data-aos="fade-right" className="flex flex-col justify-center text-center md:text-left gap-y-4">
     <div className="flex flex-row items-center justify-center md:justify-start">
       <span className="text-2xl mb-4 bg-[orange] px-4 py-2 text-white inline-block hero-title rounded-[50px] shadow-md">
         Welcome to Easy Travels
@@ -28,7 +28,7 @@ const Hero = () => {
   </div>
 
   {/* Media Content Section */}
-  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 justify-center items-center">
+  <div data-aos="fade-left" className="grid grid-cols-1 lg:grid-cols-3 gap-4 justify-center items-center">
     <img
       src="/tour-images/hero-img01.jpg"
       alt="A picturesque view of the destination"

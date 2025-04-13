@@ -4,14 +4,14 @@ const Experience = () => {
   return (
     <div className="mt-5 w-[90%] mx-auto">
     {/* Title Section */}
-    <p className="text-2xl bg-[orange] px-4 py-2 text-white inline-block hero-title rounded-[50px] shadow-md mb-6 mx-auto md:ml-0">
+    <p data-aos="fade-right" className="text-2xl bg-[orange] px-4 py-2 text-white inline-block hero-title rounded-[50px] shadow-md mb-6 mx-auto md:ml-0">
       Experience
     </p>
   
     {/* Content Section */}
     <div className="flex flex-col-reverse md:flex-row justify-evenly items-center">
       {/* Text Content */}
-      <div className="w-full md:w-[45%] flex flex-col self-center text-center md:text-left">
+      <div data-aos="fade-right" className="w-full md:w-[45%] flex flex-col self-center text-center md:text-left">
         <p className="text-4xl font-bold mb-4">
           With our experience, <br /> we will serve you
         </p>
@@ -48,7 +48,7 @@ const Experience = () => {
       </div>
   
       {/* Image Section */}
-      <div className="w-full md:w-[45%] flex justify-center lg:justify-end mt-6 md:mt-0">
+      <div data-aos="fade-left" className="w-full md:w-[45%] flex justify-center lg:justify-end mt-6 md:mt-0">
         <img
           src="/tour-images/experience.png"
           className="object-cover rounded-lg shadow-md"
