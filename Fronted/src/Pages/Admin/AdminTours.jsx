@@ -11,6 +11,7 @@ import CreateTour from "../../Components/CreateTour";
 
 const Tours = () => {
   const [Tour, SetTour] = useState([]);
+  const [FilterTourData, SetFilterTourData] = useState([]);
   const [expandedIndexes, setExpandedIndexes] = useState({});
   const [visibleModel, setVisibleModel] = useState();
   const [TourModel, SetTourModel] = useState();
@@ -18,8 +19,8 @@ const Tours = () => {
     const FetchBooking = async () => {
       try {
         const response = await apiClient.get(`${GET_TOUR}`);
-
         if (response.status === 200) {
+          SetFilterTourData(response.data.data)
           SetTour(response.data.data);
         } else {
           toast.error("Failed to fetch Data");
@@ -30,6 +31,18 @@ const Tours = () => {
     };
     FetchBooking();
   }, []);
+  const filterSearch = (searchValue) => {
+    const lowerValue = searchValue.toLowerCase();
+    if (lowerValue === "") {
+      SetFilterTourData(Tour);
+    } else {
+      const filtered = Tour.filter((tour) =>
+        tour.title.toLowerCase().includes(lowerValue)
+      );
+      SetFilterTourData(filtered);
+    }
+  };
+  
   const toggleExpand = (index) => {
     setExpandedIndexes((prev) => ({
       ...prev,
@@ -69,11 +82,13 @@ const Tours = () => {
   const [show, setShow] = useState(false);
   const HideDeleteModel = () => [setShow(!show)];
 
+ 
   return (
     <div>
       <div>
         <div className="flex justify-evenly gap-3 py-5">
           <input
+          onChange={(e) => filterSearch(e.target.value)}
             className="border-[orange] border-2 outline-none rounded-md px-4 py-2 w-[90%]"
             type="text"
             placeholder="Search Tour"
@@ -89,9 +104,32 @@ const Tours = () => {
           )}
         </div>
         <div>
-          <div className="mt-4 mx-auto max-w-5xl min-h-[90vh]">
-            {Tour.length > 0 &&
-              Tour.map((TourData, index) => (
+        <div className="mt-4 mx-auto max-w-5xl min-h-[90vh]">
+  {typeof FilterTourData=="undefined"  ? (
+     Array.from({ length: 3 }).map((_, index) => (
+      <div
+        key={index}
+        className="border border-orange-300 rounded-md p-4 mb-6 shadow-md overflow-hidden animate-pulse"
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Image Skeleton */}
+          <div className="h-64 bg-gray-200 rounded-lg"></div>
+
+          {/* Details Skeleton */}
+          <div className="p-3 flex flex-col justify-between">
+            <div>
+              <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/4 mb-3"></div>
+              <div className="h-10 w-10 bg-gray-200 rounded-full absolute bottom-4 right-4"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )) ) : FilterTourData.length >0 ? (
+              FilterTourData.map((TourData, index) => (
                 <div
                   key={index}
                   className={`border border-orange-400 rounded-md p-4 relative mb-6 shadow-md overflow-hidden transition-all duration-300 ${
@@ -273,11 +311,16 @@ const Tours = () => {
                     </>
                   )}
                 </div>
-              ))}
+              ))):(
+                <div className="text-center text-gray-500 text-lg py-10">
+              😕 No Tour found.
+            </div>
+              )
+            }
+            </div>
           </div>
         </div>
       </div>
-    </div>
   );
 };
 

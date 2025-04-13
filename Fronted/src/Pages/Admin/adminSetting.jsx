@@ -49,7 +49,7 @@ const AdminSetting = () => {
   }
   let [firstName, lastName] = userInfo.name.split(" ");
   return (
-    <div className=" w-full md:w-[90%] lg:w-[80%] mt-10 mx-auto flex flex-col gap-8 p-4">
+    <div data-aos="zoom-in" className=" w-full md:w-[90%] lg:w-[80%] mt-10 mx-auto flex flex-col gap-8 p-4">
 
   <section className="flex flex-col-reverse lg:flex-row gap-8 min-h-[80vh]">
     {/* Profile Update Form */}

@@ -5,7 +5,7 @@ import AdminblogCard from "../../Components/AdminblogCard";
 import { toast } from "react-toastify";
 
 const Adminblog = () => {
-  const [blogData, SetBlogData] = useState([]);
+  const [blogData, SetBlogData] = useState();
   const [model, SetModel] = useState(false);
   const [title, SetTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -59,7 +59,7 @@ const Adminblog = () => {
       try {
         const response = await apiClient.get(GET_BLOG);
         if (response.status === 200) {
-          SetBlogData(response.data.blog);
+            SetBlogData(response.data.blog);
         } else {
           console.log("Some error occured");
         }
@@ -94,15 +94,32 @@ const Adminblog = () => {
           New
         </button>
       </div>
-      <div className=" m-auto gap-6 p-4 flex flex-wrap w-full pl-7">
-        {blogData.map((data, index) => {
-          return (
-            <div key={index} className="w-[350px] h-[400px]">
-              <AdminblogCard setBlogData={SetBlogData} data={data} />
-            </div>
-          );
-        })}
+      <div className="m-auto gap-6 p-4 flex flex-wrap w-full pl-7">
+  {blogData ? (
+    blogData.map((data, index) => (
+      <div key={index} className="w-[350px] h-[400px]">
+        <AdminblogCard setBlogData={SetBlogData} data={data} />
       </div>
+    ))
+  ) : (
+    // Multiple Skeleton Cards (let's show 4)
+    Array.from({ length: 4 }).map((_, index) => (
+      <div key={index} className="w-[350px] h-[400px] bg-white border border-gray-200 rounded-lg shadow-sm animate-pulse">
+        <div className="h-48 bg-gray-200 rounded-t-lg"></div>
+        <div className="p-5 space-y-4">
+          <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-4 bg-gray-200 rounded w-full"></div>
+          <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+        </div>
+        <div className="flex flex-row gap-3 justify-end px-4 py-2">
+          <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+          <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+        </div>
+      </div>
+    ))
+  )}
+</div>
+
 
       {model && (
         <div
