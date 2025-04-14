@@ -3,48 +3,70 @@ import { razorpayInstance } from '../index.js';
 import Razorpay from 'razorpay';
 
 export const createOrder = async (req, res) => {
-    try {
+  try {
       const { amount, currency = 'INR', receipt, notes } = req.body;
-  
-      // Validate required fields
-      if (!amount || !receipt || !notes) {
-        return res.status(400).json({ error: "Missing required fields" });
+
+      // === Validation ===
+      // Check required fields
+      const requiredFields = { amount, receipt, notes };
+      const missingFields = Object.entries(requiredFields)
+          .filter(([_, value]) => !value)
+          .map(([key]) => key);
+
+      if (missingFields.length > 0) {
+          return res.status(400).json({
+              error: "Missing required fields",
+              missingFields
+          });
       }
-  
-      // Validate amount type
-      if (isNaN(amount)) {
-        return res.status(400).json({ error: "Amount must be a number" });
+
+      // Validate amount (must be positive number)
+      if (isNaN(amount) || amount <= 0) {
+          return res.status(400).json({
+              error: "Amount must be a positive number"
+          });
       }
-  
-      // Convert amount to paise (smallest currency unit)
+
+      // === Currency Conversion ===
       const amountInPaise = Math.round(amount * 100);
-  
-      // Create order options
+      if (amountInPaise < 100) { // Razorpay minimum amount
+          return res.status(400).json({
+              error: "Amount must be at least ₹1 (100 paise)"
+          });
+      }
+
+      // === Order Creation ===
       const options = {
-        amount: amountInPaise.toString(),
-        currency,
-        receipt,
-        notes,
-        payment_capture: 1 // Auto-capture payment
+          amount: amountInPaise.toString(),
+          currency,
+          receipt,
+          notes,
+          payment_capture: 1
       };
-  
-      // Create Razorpay order
+
       const order = await razorpayInstance.orders.create(options);
-  
-      res.status(200).json({
-        success: true,
-        order,
-        key: process.env.RAZERPAY_API_KEY // Send key to frontend
+
+      // === Response ===
+      res.status(201).json({ // 201 for resource creation
+          success: true,
+          order,
+          key: process.env.RAZERPAY_API_KEY
       });
-  
-    } catch (error) {
+
+  } catch (error) {
       console.error('Razorpay Order Error:', error);
-      res.status(500).json({
-        success: false,
-        error: error.error?.description || 'Failed to create order'
+
+      // Handle Razorpay API errors specifically
+      const errorMessage = error.error?.description || 
+                          error.message || 
+                          'Failed to create order';
+
+      res.status(error.statusCode || 500).json({
+          success: false,
+          error: errorMessage
       });
-    }
-}
+  }
+};
 
 export const verifyOrder = async (req, res) => {
   try {
@@ -83,27 +105,38 @@ export const verifyOrder = async (req, res) => {
 
 export const Refund = async (req, res) => {
   try {
-      const { payment_id, amount } = req.body;
+    const { payment_id, amount } = req.body;
 
-      // Fetch payment details
-      const payment = await razorpayInstance.payments.fetch(payment_id);
-      if (!payment || !payment.amount) {
-          return res.status(400).json({ success: false, message: "Invalid payment details or missing amount" });
-      }
-      console.log("Payment Details:", payment);
+    // Fetch payment details
+    const payment = await razorpayInstance.payments.fetch(payment_id);
+    if (!payment || !payment.amount) {
+      return res.status(400).json({ success: false, message: "Invalid payment details or missing amount" });
+    }
 
-      // Proceed with refund
-      const refund = await razorpayInstance.payments.refund(payment_id, { amount: amount || payment.amount });
-      console.log("Refund Details:", refund);
+    console.log("Payment Details:", payment);
 
-      res.json({
-          success: true,
-          message: "Refund initiated successfully!",
-          refund,
+    // If custom refund amount provided
+    const refundAmount = amount || payment.amount;
+
+    if (refundAmount < 100) {
+      return res.status(400).json({
+        success: false,
+        message: "The refund amount must be at least INR 1.00",
       });
+    }
+
+    // Proceed with refund
+    const refund = await razorpayInstance.payments.refund(payment_id, { amount: refundAmount });
+
+    res.json({
+      success: true,
+      message: "Refund initiated successfully!",
+      refund,
+    });
 
   } catch (error) {
-      console.error("Razorpay Refund Error:", error);
-      res.status(500).json({ success: false, message: error.error?.description || "Refund failed" });
+    console.error("Razorpay Refund Error:", error);
+    res.status(500).json({ success: false, message: error.error?.description || "Refund failed" });
   }
 };
+
