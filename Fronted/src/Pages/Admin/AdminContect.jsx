@@ -39,24 +39,26 @@ const AdminContect = () => {
   const DeleteContect = async (_id) => {
     try {
       const response = await apiClient.delete(`${DELETE_CONTECT}/${_id}`);
-
-      // Check if the response status is OK (successful)
+  
       if (response.status === 200) {
-        toast.success("Contact Deleted successfully");
-
-        // Update the state optimistically
-        setContact((prevContacts) =>
+        toast.success("Contact deleted successfully");
+  
+        // Remove the deleted contact from local state
+        SetFilterContactData((prevContacts) =>
           prevContacts.filter((contact) => contact._id !== _id)
         );
       } else {
         toast.error("Failed to delete contact");
       }
     } catch (error) {
-      // Handle errors, log them for debugging
       console.error("Error deleting contact:", error);
       toast.error("Some error occurred. Please try again later.");
+    } finally {
+      // Always hide the delete confirmation modal
+      HideDeleteModel();
     }
   };
+  
   const [show, setShow] = useState(false);
   const HideDeleteModel = () => [setShow(!show)];
   return (
@@ -114,10 +116,10 @@ const AdminContect = () => {
         <td className="px-6 py-4">{Contect.mobile_no}</td>
         <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{Contect.email}</td>
         <td className="px-6 py-4 font-medium text-gray-900 text-wrap">{Contect.message}</td>
-        <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+        <td >
           <MdDelete
             onClick={HideDeleteModel}
-            className="absolute bottom-2 right-2 text-[orange] cursor-pointer text-2xl hover:text-orange-400 transition"
+            className="text-[orange] cursor-pointer text-2xl hover:text-orange-400 transition"
           />
         </td>
 

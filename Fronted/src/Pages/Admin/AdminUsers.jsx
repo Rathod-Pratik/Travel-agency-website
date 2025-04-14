@@ -52,8 +52,8 @@ const AdminUsers = () => {
         toast.success("Contact Deleted successfully");
   
         // Update the state optimistically
-        SetUserData((prevContacts) =>
-          prevContacts.filter((contact) => contact._id !== _id)
+        SetFilterUserData((prevUsers) =>
+          prevUsers.filter((user) => user._id !== _id)
         );
       } else {
         toast.error("Failed to delete contact");

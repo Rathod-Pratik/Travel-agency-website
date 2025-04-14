@@ -13,7 +13,7 @@ const year = dateObj.getFullYear();  // 2025
 const formattedDate = `${day}-${month}-${year}`;
   return (
      <div>
-      <div className="relative ">
+      <div className="relative">
         {/* Image */}
         <img
           className="h-full w-full object-cover rounded-md"

@@ -45,8 +45,8 @@ const BlogDetail = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div>
+      <div className="w-[50%] mx-auto gap-8 my-4">
         {/* Main Content Area */}
         <div className="lg:col-span-8 border border-gray-200 rounded-lg p-6">
           {loading ? (
@@ -90,30 +90,6 @@ const BlogDetail = () => {
           ) : (
             <p>Blog not found</p>
           )}
-        </div>
-
-        {/* Sidebar with Featured Blogs */}
-        <div className="lg:col-span-4">
-          <h2 className="text-2xl bg-[orange] px-6 py-2 text-white font-bold rounded-full shadow-md mb-6 inline-block">
-            Featured Blogs
-          </h2>
-          
-          <div className="space-y-6">
-            {loading ? (
-              // Skeleton for featured blogs
-              [...Array(3)].map((_, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4">
-                  <div className="h-40 w-full bg-gray-200 rounded-md animate-pulse mb-4" />
-                  <div className="h-6 w-3/4 bg-gray-200 rounded-full animate-pulse mb-2" />
-                  <div className="h-4 w-1/2 bg-gray-200 rounded-full animate-pulse" />
-                </div>
-              ))
-            ) : (
-              BlogData.map((data) => (
-                <BlogCard key={data._id} data={data} />
-              ))
-            )}
-          </div>
         </div>
       </div>
     </div>

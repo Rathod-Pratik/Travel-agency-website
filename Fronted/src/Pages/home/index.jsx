@@ -10,7 +10,7 @@ import Banner from '../../Components/Banner'
 
 const Home = () => {
   return (
-    <div className='m-auto flex flex-col gap-8'>
+    <div className='m-auto flex flex-col gap-8 overflow-hidden'>
       <Hero/>
       <Services/>
       <TourSection/>

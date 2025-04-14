@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { useAppStore } from "../Store";
 import { FaPaperPlane } from "react-icons/fa";
 import { FaUser } from "react-icons/fa";
+import { apiClient } from "../lib/api-Client";
+import { LOGOUT } from "../Utils/Constant";
+import { toast } from "react-toastify";
+import { BiLogOut } from "react-icons/bi";
 
 const Navbar = () => {
   const { userInfo, booking } = useAppStore();
@@ -40,10 +44,22 @@ const Navbar = () => {
   function scrollToTop() {
     window.scrollTo({
       top: 0,
-      behavior: "smooth", // Makes the scroll smooth
+      behavior: "smooth",
     });
   }
-
+const navigate=useNavigate()
+  const Logout = async () => {
+    try {
+      const respone = await apiClient.post(LOGOUT);
+      if (respone.status === 200) {
+        toast.success("Logout successfully");
+        localStorage.removeItem("Store-data");
+        navigate("/login")
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <header
       className={`bg-white sticky top-0 z-50 ${isScrolled ? "shadow-md" : ""} `}
@@ -112,30 +128,31 @@ const Navbar = () => {
             </Link>
           </li>
           <div className="items-center flex flex-col justify-center flex-shrink-0 gap-3 md:hidden">
-           
-            
             {userInfo ? (
               <div className="flex flex-row gap-2 items-center">
+                <div onClick={Logout}>
+                  <BiLogOut className="p-2 rounded-md bg-[orange] text-white text-sm font-medium" />
+                </div>
                 <div className="flex flex-row gap-2 items-center">
-                <Link
-                  to="/account"
-                  className={`w-8 h-8 flex justify-center items-center text-lg font-bold text-white rounded-full ${getBackgroundColor(
-                    userInfo.name
-                  )}`}
-                >
-                  {getInitial(userInfo.name)}
-                </Link>
-                <p>{userInfo.name}</p>
+                  <Link
+                    to="/account"
+                    className={`w-8 h-8 flex justify-center items-center text-lg font-bold text-white rounded-full ${getBackgroundColor(
+                      userInfo.name
+                    )}`}
+                  >
+                    {getInitial(userInfo.name)}
+                  </Link>
+                  <p>{userInfo.name}</p>
                 </div>
                 {userInfo.role === "admin" && (
-              <Link
-                to="/admin"
-                className="flex items-center gap-2 p-2 rounded-md bg-[orange] text-white text-sm font-medium"
-              >
-                <FaUser className="text-lg" />
-                Admin
-              </Link>
-            )}
+                  <Link
+                    to="/admin"
+                    className="flex items-center gap-2 p-2 rounded-md bg-[orange] text-white text-sm font-medium"
+                  >
+                    <FaUser className="text-lg" />
+                    Admin
+                  </Link>
+                )}
               </div>
             ) : (
               <div className="flex">
@@ -155,48 +172,53 @@ const Navbar = () => {
                 </Link>
               </div>
             )}
-            <div>
-            
-         
-
-            </div>
+            <div></div>
           </div>
         </ul>
         <div className="items-center md:justify-end flex-shrink-0 hidden md:flex gap-4">
-         
-
-          <div className="relative">
-            <Link to="/booking" className="text-[orange] text-2xl relative">
+       { userInfo ? ( 
+         <div
+            onClick={Logout}
+            className="flex items-center flex-col gap-2 p-2 rounded-md bg-[orange] text-white cursor-pointer hover:bg-orange-600 transition"
+          >
+            <BiLogOut className="text-lg" />
+          </div>):(
+            <div className="hidden"></div>
+          )}
+         { userInfo ? (  <div className="relative">
+            <Link to={`${userInfo ? "/booking":"/login"}`} className="text-[orange] text-2xl relative">
               {/* Notification Badge for Booking */}
               <span className="absolute top-[-10px] right-[-12px] bg-[orange] text-white text-xs font-medium rounded-full px-2 py-0.5 shadow-md">
                 {booking.length}
               </span>
               <FaPaperPlane className="w-6 h-6" />
             </Link>
-          </div>
+          </div>):(
+            <div className="hidden"></div>
+          )}
 
           <div className="items-center md:justify-end flex-shrink-0 hidden md:flex gap-4">
             {userInfo ? (
               <div className="flex flex-row gap-2 items-center">
-              <Link
-                onClick={scrollToTop}
-                to="/account"
-                className={`w-8 h-8 flex justify-center items-center text-lg font-bold text-white rounded-full ${getBackgroundColor(
-                  userInfo.name
-                )}`}
+                <Link
+                  onClick={scrollToTop}
+                  to={`${userInfo ?"/account":"/login"}`}
+                  className={`w-8 h-8 flex justify-center items-center text-lg font-bold text-white rounded-full ${getBackgroundColor(
+                    userInfo.name
+                  )}`}
                 >
-                {getInitial(userInfo.name)}
-              </Link>
-              {userInfo.role === "admin" && (
-              <Link
-                to="/admin"
-                className="flex items-center gap-2 p-2 rounded-md bg-[orange] text-white text-sm font-medium"
-              >
-                <FaUser className="text-lg" />
-                Admin
-              </Link>
-            )}
-                </div>
+                  {getInitial(userInfo.name)}
+                </Link>
+                {userInfo.role === "admin" && (
+                  <Link
+                    to="/admin"
+                    className="flex items-center gap-2 p-2 rounded-md bg-[orange] text-white text-sm font-medium"
+                  >
+                    <FaUser className="text-lg" />
+                    Admin
+                  </Link>
+                )}
+              </div>
             ) : (
               <div className="flex">
                 <Link
@@ -216,9 +238,7 @@ const Navbar = () => {
               </div>
             )}
           </div>
-          <div>
-          
-          </div>
+          <div></div>
         </div>
 
         <button className="p-4 md:hidden" onClick={ShowNavbar}>

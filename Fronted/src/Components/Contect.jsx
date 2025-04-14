@@ -15,7 +15,6 @@ const navigate=useNavigate()
     message:""
   })
 
-  console.log(userInfo)
   const SendContect = async () => {
     if(!userInfo){
 toast.error("Please Login now")

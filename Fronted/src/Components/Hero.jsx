@@ -1,6 +1,15 @@
-import React from 'react';
+import React,{useState,useEffect} from 'react';
 
 const Hero = () => {
+  const [loading, setLoading] = useState(true);
+
+  // Simulate DOM/content load (or image/video load)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1500); // 1.5s delay for demo
+    return () => clearTimeout(timer);
+  }, []);
   return (
     <div className="flex flex-col-reverse md:flex-row gap-8 p-4 m-auto min-h-[65vh] overflow-hidden w-[90vw] ">
   {/* Text Content Section */}
@@ -29,25 +38,50 @@ const Hero = () => {
 
   {/* Media Content Section */}
   <div data-aos="fade-left" className="grid grid-cols-1 lg:grid-cols-3 gap-4 justify-center items-center">
+
+{/* Left Image */}
+<div className="h-[350px] w-full rounded-[20px] border-2 border-[orange] overflow-hidden hidden lg:block">
+  {loading ? (
+    <div className="h-full w-full bg-gray-300 animate-pulse"></div>
+  ) : (
     <img
       src="/tour-images/hero-img01.jpg"
       alt="A picturesque view of the destination"
-      className="h-[350px] w-full object-cover rounded-[20px] border-2 border-[orange] hidden lg:block"
+      className="h-full w-full object-cover"
     />
+  )}
+</div>
+
+{/* Video */}
+<div className="h-[350px] w-full rounded-[20px] border-2 border-[orange] shadow-lg overflow-hidden mt-10">
+  {loading ? (
+    <div className="h-full w-full bg-gray-300 animate-pulse"></div>
+  ) : (
     <video
       src="/tour-images/hero-video.mp4"
       autoPlay
       loop
       muted
-      className="h-[350px] mt-10 w-full object-cover rounded-[20px] border-2 border-[orange] shadow-lg"
+      className="h-full w-full object-cover"
       poster="/tour-images/video-poster.jpg"
-    ></video>
+    />
+  )}
+</div>
+
+{/* Right Image */}
+<div className="h-[350px] w-full rounded-[20px] border-2 border-[orange] overflow-hidden hidden lg:block mt-20">
+  {loading ? (
+    <div className="h-full w-full bg-gray-300 animate-pulse"></div>
+  ) : (
     <img
       src="/tour-images/hero-img02.jpg"
       alt="Breathtaking mountains"
-      className="h-[350px] w-full object-cover rounded-[20px] border-2 border-[orange] hidden lg:block mt-20"
+      className="h-full w-full object-cover"
     />
-  </div>
+  )}
+</div>
+
+</div>
 </div>
 
   );

@@ -8,38 +8,38 @@ const Gallery = () => {
     </p>
     <p data-aos="fade-right" className='text-4xl'>Visit Our Customers Tour Gallery</p>
 
-    <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 px-4" >
-  <img data-aos="zoom-in" 
+    <div data-aos="zoom-in" className="mt-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 px-4" >
+  <img  
     src="/tour-images/gallery-01.jpg"
     alt="Gallery Image 1"
-    className="rounded-lg object-cover h-[200px] w-full hover:scale-105 transition-transform duration-300 shadow-md"
+    className="rounded-lg object-cover h-[200px] w-full hover:scale-105 transition-transform ease-in-out duration-300 shadow-md"
   />
-  <img data-aos="zoom-in"
+  <img
     src="/tour-images/gallery-02.jpg"
     alt="Gallery Image 2"
     className="rounded-lg object-cover h-[200px] w-full hover:scale-105 transition-transform duration-300 shadow-md"
   />
-  <img data-aos="zoom-in"
+  <img
     src="/tour-images/gallery-03.jpg"
     alt="Gallery Image 3"
     className="rounded-lg object-cover h-[200px] w-full hover:scale-105 transition-transform duration-300 shadow-md"
   />
-  <img data-aos="zoom-in"
+  <img
     src="/tour-images/gallery-04.jpg"
     alt="Gallery Image 4"
     className="rounded-lg object-cover h-[200px] w-full hover:scale-105 transition-transform duration-300 shadow-md"
   />
-  <img data-aos="zoom-in"
+  <img
     src="/tour-images/gallery-05.jpg"
     alt="Gallery Image 5"
     className="rounded-lg object-cover h-[200px] w-full hover:scale-105 transition-transform duration-300 shadow-md"
   />
-  <img data-aos="zoom-in"
+  <img
     src="/tour-images/gallery-06.jpg"
     alt="Gallery Image 6"
     className="rounded-lg object-cover h-[200px] w-full hover:scale-105 transition-transform duration-300 shadow-md"
   />
-  <img data-aos="zoom-in"
+  <img
     src="/tour-images/gallery-07.jpg"
     alt="Gallery Image 7"
     className="rounded-lg object-cover h-[200px] w-full hover:scale-105 transition-transform duration-300 shadow-md"

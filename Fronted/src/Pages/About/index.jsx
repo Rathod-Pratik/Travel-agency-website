@@ -31,7 +31,7 @@ const About = () => {
   {/* Media Content Section */}
   <div data-aos="fade-left" className="w-full md:w-[45%] flex justify-end items-center">
     <img
-      src="/public/tour-images/logo1.png"
+      src="/tour-images/logo1.png"
       alt="A picturesque view of the destination"
       className="object-cover w-[90%] md:w-[75%]"
     />

@@ -49,7 +49,7 @@ const Booking = () => {
     try {
       const response = await apiClient.post("payment/refund", {
         payment_id: paymentId,
-        amount: totalPrice,
+        amount: totalPrice*100,
       });
       if (response.status === 200) {
         const response = await apiClient.post(`${CANCEL_BOOKING}/${_id}`);

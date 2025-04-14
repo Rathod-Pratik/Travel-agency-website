@@ -64,20 +64,26 @@ const Tours = () => {
     try {
       const response = await apiClient.post(
         `${DELETE_TOUR}/${extractPublicIdFromUrl(id)}`,
-        {
-          _id,
-        }
+        { _id }
       );
-      if (response.status == 200) {
+  
+      if (response.status === 200) {
         toast.success("Tour Deleted Successfully");
-        SetTour((prevTour) => prevTour.filter((tour) => tour._id !== _id));
+  
+        // Remove the deleted tour from local state
+        SetFilterTourData((prevTour) => prevTour.filter((tour) => tour._id !== _id));
+  
+        // Close the delete confirmation modal
+        HideDeleteModel();
       } else {
-        toast.error("Some error occured try again after some time");
+        toast.error("Some error occurred, try again later.");
       }
     } catch (error) {
       console.log(error);
+      toast.error("Failed to delete the tour. Please check the console.");
     }
   };
+  
 
   const [show, setShow] = useState(false);
   const HideDeleteModel = () => [setShow(!show)];
@@ -100,7 +106,7 @@ const Tours = () => {
             New
           </button>
           {TourModel && (
-            <CreateTour SetTour={SetTour} onClose={CloseNewTourModel} />
+            <CreateTour SetTour={SetFilterTourData} onClose={CloseNewTourModel} />
           )}
         </div>
         <div>
@@ -170,7 +176,7 @@ const Tours = () => {
                         <div className="absolute bottom-4 right-4">
                           <button
                             onClick={() => toggleExpand(index)}
-                            className="bg-[orange] rounded-full p-3 text-white transition"
+                            className="bg-[orange] rounded-full p-3 text-white transition cursor-pointer"
                           >
                             {expandedIndexes[index] ? (
                               <FaArrowUp />
@@ -257,20 +263,21 @@ const Tours = () => {
                         <div className="mt-2 flex gap-3">
                           <button
                             onClick={onClose}
-                            className="bg-[orange] text-white px-4 py-2 rounded-md transition"
+                            className="bg-[orange] cursor-pointer text-white px-4 py-2 rounded-md transition"
                           >
                             Update tour
                           </button>
 
                           <button
                             onClick={HideDeleteModel}
-                            className="bg-[orange] text-white px-4 py-2 rounded-md transition"
+                            className="bg-[orange] cursor-pointer text-white px-4 py-2 rounded-md transition"
                           >
                             Delete tour
                           </button>
                         </div>
                         {visibleModel && (
                           <EditTourModel
+                          SetTour={SetFilterTourData}
                             _id={TourData._id}
                             TourData={TourData}
                             onClose={onClose}
@@ -289,14 +296,14 @@ const Tours = () => {
 
                               <div className="mt-6 flex justify-center gap-4">
                                 <button
-                                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md transition hover:bg-gray-400"
+                                  className="bg-gray-300 cursor-pointer text-gray-700 px-4 py-2 rounded-md transition hover:bg-gray-400"
                                   onClick={HideDeleteModel}
                                 >
                                   Cancel
                                 </button>
 
                                 <button
-                                  className="bg-orange-500 text-white px-4 py-2 rounded-md transition hover:bg-orange-600"
+                                  className="bg-orange-500 text-white cursor-pointer px-4 py-2 rounded-md transition hover:bg-orange-600"
                                   onClick={() =>
                                     DeleteTour(TourData.images, TourData._id)
                                   }

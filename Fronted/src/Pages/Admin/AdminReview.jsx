@@ -15,14 +15,18 @@ const AdminReview = () => {
         userName: userName,
         userId: userId,
       });
+  
       if (response.status === 200) {
         toast.success("Review removed successfully");
+  
         SetReview((prevReviews) =>
           prevReviews.filter(
             (review) =>
-              review.TourId !== TourId ||
-              review.userName !== userName ||
-              review.userId !== userId
+              !(
+                review.TourId === TourId &&
+                review.userName === userName &&
+                review.userId === userId
+              )
           )
         );
       } else {
@@ -33,6 +37,7 @@ const AdminReview = () => {
       console.error(error);
     }
   };
+  
 
   const fetchReview = async () => {
     try {
@@ -134,7 +139,7 @@ const AdminReview = () => {
                     <CheckingModel
                       text={"Review"}
                       onClose={HideDeleteModel}
-                      funcion={()=>DeleteReview(
+                      functions={()=>DeleteReview(
                         review.userId,
                         review.userName,
                         review.TourId

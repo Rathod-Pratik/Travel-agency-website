@@ -68,12 +68,10 @@ const Account = () => {
       <div>
         <h2 className="font-medium text-lg mb-2">My Tours</h2>
         <div className="flex flex-col space-y-2 text-gray-500">
-          <Link to="/returns" className="hover:text-gray-700">My Traveled</Link>
+          <a className="hover:text-gray-700 cursor-pointer">My Traveled</a>
           <Link to="/cancelbooking" className="hover:text-gray-700">My Cancellations</Link>
         </div>
       </div>
-
-      <Link to="/wishlist" className="font-medium text-lg hover:text-gray-700">My Wishlist</Link>
     </div>
 
     {/* Profile Update Form */}

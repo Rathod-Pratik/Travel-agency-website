@@ -52,6 +52,7 @@ const CreateTour = ({ onClose,SetTour }) => {
       if (response.status === 201) {
         toast.success("Tour uploaded successfully");
         SetTour((prevTours) => [...prevTours, response.data.data]);
+        onClose()
       } else {
         toast.error("Some error occurred, try again later");
       }
@@ -315,7 +316,7 @@ const CreateTour = ({ onClose,SetTour }) => {
           >
             Cancel
           </button>
-          <button onClick={UploadTour} className="bg-[orange] text-white px-4 py-2 rounded-md hover:bg-orange-500 transition">
+          <button onClick={UploadTour} className="bg-[orange] cursor-pointer text-white px-4 py-2 rounded-md hover:bg-orange-500 transition">
             Create
           </button>
         </div>
