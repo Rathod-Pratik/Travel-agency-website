@@ -37,7 +37,7 @@ const Tour = () => {
       >
         All Tours
       </p>
-      <div className="grid grid-cols-1 place-items-center md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-4 sm:self-center">
+      <div className="overflow-hidden grid grid-cols-1 place-items-center md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-4 sm:self-center">
   {typeof tourData === "undefined" ? (
     // Skeleton loading state
     [...Array(8)].map((_, index) => (
