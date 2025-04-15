@@ -1,74 +1,91 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useLocation } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAppStore } from "../Store";
-import { FaPaperPlane } from "react-icons/fa";
-import { FaUser } from "react-icons/fa";
+import { FaPaperPlane, FaUser } from "react-icons/fa";
+import { BiLogOut } from "react-icons/bi";
 import { apiClient } from "../lib/api-Client";
 import { LOGOUT } from "../Utils/Constant";
 import { toast } from "react-toastify";
-import { BiLogOut } from "react-icons/bi";
 
 const Navbar = () => {
   const { userInfo, booking } = useAppStore();
-
   const location = useLocation();
-
-  const [isOpen, SetIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const {setUserInfo}=useAppStore();
+  const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  const ShowNavbar = () => {
-    SetIsOpen(!isOpen);
-  };
-  const hideNavbar = () => {
-    SetIsOpen(false);
-  };
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+  // Memoized functions
+  const handleScroll = useCallback(() => {
+    setIsScrolled(window.scrollY > 50);
   }, []);
 
-  const getInitial = (name) => {
-    return name ? name.charAt(0).toUpperCase() : "?";
-  };
-
-  const getBackgroundColor = (name) => {
-    const colors = ["bg-[orange]"];
-    const index = name ? name.charCodeAt(0) % colors.length : 0;
-    return colors[index];
-  };
-
-  function scrollToTop() {
+  const scrollToTop = useCallback(() => {
     window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
-  }
-const navigate=useNavigate()
-  const Logout = async () => {
+  }, []);
+
+  const getInitial = useCallback((name) => {
+    return name ? name.charAt(0).toUpperCase() : "?";
+  }, []);
+
+  const getBackgroundColor = useCallback(() => {
+    return "bg-[orange]"; // Simplified since you only have one color
+  }, []);
+
+  const toggleNavbar = useCallback(() => {
+    setIsOpen(prev => !prev);
+  }, []);
+
+  const hideNavbar = useCallback(() => {
+    setIsOpen(false);
+  }, []);
+
+  // Effects
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
+  // Handlers
+  const handleLogout = async () => {
     try {
-      const respone = await apiClient.post(LOGOUT);
-      if (respone.status === 200) {
-        toast.success("Logout successfully");
+      const response = await apiClient.post(LOGOUT);
+      if (response.status === 200) {
+        toast.success("Logged out successfully");
         localStorage.removeItem("Store-data");
-        navigate("/login")
+        navigate("/login");
+        setUserInfo(null)
       }
     } catch (error) {
-      console.log(error);
+      console.error("Logout error:", error);
+      toast.error("Failed to logout");
     }
   };
+
+  // Nav items configuration
+  const navItems = [
+    { path: "/", label: "Home" },
+    { path: "/about", label: "About" },
+    { path: "/tour", label: "Tour" },
+    { path: "/blog", label: "Blog" },
+  ];
+
   return (
     <header
-      className={`bg-white sticky top-0 z-50 ${isScrolled ? "shadow-md" : ""} `}
+      className={`bg-white sticky top-0 z-50 transition-shadow duration-300 ${
+        isScrolled ? "shadow-md" : ""
+      }`}
     >
       <div className="container flex justify-between w-[90%] h-16 mx-auto">
+        {/* Logo */}
         <Link
           to="/"
           aria-label="Back to homepage"
           className="flex items-center p-2"
+          onClick={scrollToTop}
         >
           <img
             height="100"
@@ -78,185 +95,170 @@ const navigate=useNavigate()
             alt="Logo"
           />
         </Link>
-        <ul
-          className={`z-50 flex flex-col font-semibold md:flex-row items-center md:static bg-white left-0 absolute m-auto md:w-auto transition-all duration-500 ease-in-out gap-3 w-full ${
-            isOpen ? "!top-16 h-[230px] rounded shadow-lg" : "top-[-100vh]"
-          }`}
+
+        {/* Mobile Menu Button */}
+        <button
+          className="p-4 md:hidden focus:outline-none"
+          onClick={toggleNavbar}
+          aria-label="Toggle menu"
         >
-          <li className="flex">
-            <Link
-              to="/"
-              onClick={() => (hideNavbar(), scrollToTop())}
-              className={`flex items-center px-4 ${
-                location.pathname === "/" ? "text-[Orange]" : ""
-              }`}
-            >
-              Home
-            </Link>
-          </li>
-          <li className="flex">
-            <Link
-              onClick={() => (hideNavbar(), scrollToTop())}
-              to="/about"
-              className={`flex items-center px-4 ${
-                location.pathname === "/about" ? "text-[Orange]" : ""
-              }`}
-            >
-              About
-            </Link>
-          </li>
-          <li className="flex">
-            <Link
-              onClick={() => (hideNavbar(), scrollToTop())}
-              to="/tour"
-              className={`flex items-center px-4 ${
-                location.pathname === "/tour" ? "text-[Orange]" : ""
-              }`}
-            >
-              Tour
-            </Link>
-          </li>
-          <li className="flex">
-            <Link
-              onClick={() => (hideNavbar(), scrollToTop())}
-              to="/blog"
-              className={`flex items-center px-4 ${
-                location.pathname === "/blog" ? "text-[Orange]" : ""
-              }`}
-            >
-              Blog
-            </Link>
-          </li>
-          <div className="items-center flex flex-col justify-center flex-shrink-0 gap-3 md:hidden">
-            {userInfo ? (
-              <div className="flex flex-row gap-2 items-center">
-                <div onClick={Logout}>
-                  <BiLogOut className="p-2 rounded-md bg-[orange] text-white text-sm font-medium" />
-                </div>
-                <div className="flex flex-row gap-2 items-center">
-                  <Link
-                    to="/account"
-                    className={`w-8 h-8 flex justify-center items-center text-lg font-bold text-white rounded-full ${getBackgroundColor(
-                      userInfo.name
-                    )}`}
-                  >
-                    {getInitial(userInfo.name)}
-                  </Link>
-                  <p>{userInfo.name}</p>
-                </div>
-                {userInfo.role === "admin" && (
-                  <Link
-                    to="/admin"
-                    className="flex items-center gap-2 p-2 rounded-md bg-[orange] text-white text-sm font-medium"
-                  >
-                    <FaUser className="text-lg" />
-                    Admin
-                  </Link>
-                )}
-              </div>
-            ) : (
-              <div className="flex">
-                <Link
-                  to="/login"
-                  onClick={scrollToTop}
-                  className="cursor-pointer self-center px-8 py-3 rounded text-[1.1rem] font-semibold"
-                >
-                  Login
-                </Link>
-                <Link
-                  onClick={scrollToTop}
-                  to="/signup"
-                  className="cursor-pointer self-center px-4 py-3 font-semibold rounded-3xl bg-[orange] text-white text-[1.1rem]"
-                >
-                  Register
-                </Link>
-              </div>
-            )}
-            <div></div>
-          </div>
-        </ul>
-        <div className="items-center md:justify-end flex-shrink-0 hidden md:flex gap-4">
-       { userInfo ? ( 
-         <div
-            onClick={Logout}
-            className="flex items-center flex-col gap-2 p-2 rounded-md bg-[orange] text-white cursor-pointer hover:bg-orange-600 transition"
-          >
-            <BiLogOut className="text-lg" />
-          </div>):(
-            <div className="hidden"></div>
-          )}
-         { userInfo ? (  <div className="relative">
-            <Link to={`${userInfo ? "/booking":"/login"}`} className="text-[orange] text-2xl relative">
-              {/* Notification Badge for Booking */}
-              <span className="absolute top-[-10px] right-[-12px] bg-[orange] text-white text-xs font-medium rounded-full px-2 py-0.5 shadow-md">
-                {booking.length}
-              </span>
-              <FaPaperPlane className="w-6 h-6" />
-            </Link>
-          </div>):(
-            <div className="hidden"></div>
-          )}
-
-          <div className="items-center md:justify-end flex-shrink-0 hidden md:flex gap-4">
-            {userInfo ? (
-              <div className="flex flex-row gap-2 items-center">
-                <Link
-                  onClick={scrollToTop}
-                  to={`${userInfo ?"/account":"/login"}`}
-                  className={`w-8 h-8 flex justify-center items-center text-lg font-bold text-white rounded-full ${getBackgroundColor(
-                    userInfo.name
-                  )}`}
-                >
-                  {getInitial(userInfo.name)}
-                </Link>
-                {userInfo.role === "admin" && (
-                  <Link
-                    to="/admin"
-                    className="flex items-center gap-2 p-2 rounded-md bg-[orange] text-white text-sm font-medium"
-                  >
-                    <FaUser className="text-lg" />
-                    Admin
-                  </Link>
-                )}
-              </div>
-            ) : (
-              <div className="flex">
-                <Link
-                  onClick={scrollToTop}
-                  to="/login"
-                  className="cursor-pointer self-center px-8 py-3 rounded text-[1.1rem] font-semibold"
-                >
-                  Login
-                </Link>
-                <Link
-                  onClick={scrollToTop}
-                  to="/signup"
-                  className="cursor-pointer self-center px-4 py-3 font-semibold rounded-3xl bg-[orange] text-white text-[1.1rem]"
-                >
-                  Register
-                </Link>
-              </div>
-            )}
-          </div>
-          <div></div>
-        </div>
-
-        <button className="p-4 md:hidden" onClick={ShowNavbar}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
-            className="w-6 h-6 dark:text-gray-800"
+            className="w-6 h-6"
           >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth="2"
               d="M4 6h16M4 12h16M4 18h16"
-            ></path>
+            />
           </svg>
         </button>
+
+        {/* Navigation Links */}
+        <nav
+          className={`z-50 flex flex-col font-semibold md:flex-row items-center md:static bg-white left-0 absolute m-auto md:w-auto transition-all duration-500 ease-in-out gap-3 w-full ${
+            isOpen ? "!top-16 h-[230px] rounded shadow-lg" : "top-[-100vh]"
+          }`}
+        >
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={() => {
+                hideNavbar();
+                scrollToTop();
+              }}
+              className={`flex items-center px-4 ${
+                location.pathname === item.path ? "text-[Orange]" : ""
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+
+          {/* Mobile Auth Buttons */}
+          <div className="items-center flex flex-col justify-center flex-shrink-0 gap-3 md:hidden">
+            {userInfo ? (
+              <div className="flex flex-row gap-2 items-center">
+                <button
+                  onClick={handleLogout}
+                  aria-label="Logout"
+                  className="p-2 rounded-md bg-[orange] text-white text-sm font-medium hover:bg-orange-600 transition"
+                >
+                  <BiLogOut className="text-lg" />
+                </button>
+                <div className="flex flex-row gap-2 items-center">
+                  <Link
+                    to="/account"
+                    className={`w-8 h-8 flex justify-center items-center text-lg font-bold text-white rounded-full ${getBackgroundColor()}`}
+                    aria-label="User account"
+                  >
+                    {getInitial(userInfo.name)}
+                  </Link>
+                  <p className="truncate max-w-[100px]">{userInfo.name}</p>
+                </div>
+                {userInfo.role === "admin" && (
+                  <Link
+                    to="/admin"
+                    className="flex items-center gap-2 p-2 rounded-md bg-[orange] text-white text-sm font-medium hover:bg-orange-600 transition"
+                  >
+                    <FaUser className="text-lg" />
+                    Admin
+                  </Link>
+                )}
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Link
+                  to="/login"
+                  onClick={scrollToTop}
+                  className="px-4 py-2 rounded text-sm font-semibold hover:bg-gray-100 transition"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  onClick={scrollToTop}
+                  className="px-4 py-2 font-semibold rounded-3xl bg-[orange] text-white text-sm hover:bg-orange-600 transition"
+                >
+                  Register
+                </Link>
+              </div>
+            )}
+          </div>
+        </nav>
+
+        {/* Desktop Auth Buttons */}
+        <div className="items-center md:justify-end flex-shrink-0 hidden md:flex gap-4">
+          {userInfo && (
+            <>
+              <button
+                onClick={handleLogout}
+                aria-label="Logout"
+                className="flex items-center flex-col gap-2 p-2 rounded-md bg-[orange] text-white cursor-pointer hover:bg-orange-600 transition"
+              >
+                <BiLogOut className="text-lg" />
+              </button>
+
+              <div className="relative">
+                <Link
+                  to="/booking"
+                  className="text-[orange] text-2xl relative"
+                  aria-label="Bookings"
+                >
+                  {booking.length > 0 && (
+                    <span className="absolute top-[-10px] right-[-12px] bg-[orange] text-white text-xs font-medium rounded-full px-2 py-0.5 shadow-md">
+                      {booking.length}
+                    </span>
+                  )}
+                  <FaPaperPlane className="w-6 h-6" />
+                </Link>
+              </div>
+
+              <div className="flex flex-row gap-2 items-center">
+                <Link
+                  to="/account"
+                  className={`w-8 h-8 flex justify-center items-center text-lg font-bold text-white rounded-full ${getBackgroundColor()}`}
+                  aria-label="User account"
+                >
+                  {getInitial(userInfo.name)}
+                </Link>
+                {userInfo.role === "admin" && (
+                  <Link
+                    to="/admin"
+                    className="flex items-center gap-2 p-2 rounded-md bg-[orange] text-white text-sm font-medium hover:bg-orange-600 transition"
+                  >
+                    <FaUser className="text-lg" />
+                    Admin
+                  </Link>
+                )}
+              </div>
+            </>
+          )}
+
+          {!userInfo && (
+            <div className="flex gap-2">
+              <Link
+                to="/login"
+                onClick={scrollToTop}
+                className="px-6 py-2 rounded text-sm font-semibold hover:bg-gray-100 transition"
+              >
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                onClick={scrollToTop}
+                className="px-6 py-2 font-semibold rounded-3xl bg-[orange] text-white text-sm hover:bg-orange-600 transition"
+              >
+                Register
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
