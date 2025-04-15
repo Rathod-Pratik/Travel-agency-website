@@ -54,7 +54,7 @@ const TourDatail = () => {
   const handlePayment = async () => {
     if (!userInfo) {
       toast.error("Please Login now");
-      navigate("/login");
+      return navigate("/login");
     }
     // ✅ Improved Input Validations
     if (name.length < 3) {
@@ -494,11 +494,12 @@ const TourDatail = () => {
           </div>
 
           <TourReview
-            TourId={tourdata._id}
-            TourData={tourdata}
-            userId={userInfo._id}
-            userName={userInfo.name}
-          />
+  TourId={tourdata._id}
+  TourData={tourdata}
+  userId={userInfo ? userInfo._id : null}
+  userName={userInfo ? userInfo.name : null}
+/>
+
         </div>
       )}
     </div>

@@ -38,7 +38,7 @@ const TourReview = ({ TourId, userName, userId,TourData }) => {
   const AddReview = async () => {
      if(!userInfo){
           toast.error("Please Login now")
-          navigate('/login')
+         return navigate('/login')
         }
     try {
       if (reviewText.length <= 10) {
@@ -183,12 +183,12 @@ const TourReview = ({ TourId, userName, userId,TourData }) => {
                   </div>
 
                   {/* Delete Button Positioned at Bottom Left */}
-                  {userId === ReviewData.userId && (
-                    <MdDelete
-                      onClick={() => DeleteReview(ReviewData.reviewText)}
-                      className="absolute bottom-2 left-2 text-red-500 cursor-pointer text-xl hover:text-red-700 transition"
-                    />
-                  )}
+                  {userId && userId === ReviewData.userId && (
+  <MdDelete
+    onClick={() => DeleteReview(ReviewData._id)}
+    className="absolute bottom-2 left-2 text-red-500 cursor-pointer text-xl hover:text-red-700 transition"
+  />
+)}
                 </div>
               </div>
             </div>
@@ -202,7 +202,3 @@ const TourReview = ({ TourId, userName, userId,TourData }) => {
 };
 
 export default TourReview;
-// "userId": "67e830d57d4f95fabf065daa",
-// "TourId": "67cc7d110bc2770fc8aac91e",
-// "rating": 5,
-// "reviewText": "Rathod Pratik is good boy",
