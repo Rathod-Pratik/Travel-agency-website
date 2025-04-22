@@ -109,4 +109,4 @@ const DeleteBlogImage = async (req, res, next) => {
   }
 };
 
-export { upload, uploadToCloudinary, updateBlogImage, DeleteBlogImage };
+export { uploadToCloudinary, updateBlogImage, DeleteBlogImage };
