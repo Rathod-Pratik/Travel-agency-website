@@ -4,14 +4,14 @@ import dotenv from 'dotenv'
 import cors from 'cors'
 const app=express();
 
-import ReviewRoutes from './Routes/review.routes.js'
-import authRoutes from "./Routes/auth.routes.js"
-import tourRoutes from './Routes/tours.routes.js'
-import PaymentRoutes from "./Routes/Payment.routes.js";
-import BookingRoutes from "./Routes/booking.routes.js"
-import AdminRoutes from "./Routes/admin.routes.js";
-import BlogRoutes from './Routes/blog.router.js'
-import contactRoutes from './Routes/contact.route.js'
+import ReviewRoutes from '../Routes/review.routes.js'
+import authRoutes from "../Routes/auth.routes.js"
+import tourRoutes from '../Routes/tours.routes.js'
+import PaymentRoutes from "../Routes/Payment.routes.js";
+import BookingRoutes from "../Routes/booking.routes.js"
+import AdminRoutes from "../Routes/admin.routes.js";
+import BlogRoutes from '../Routes/blog.router.js'
+import contactRoutes from '../Routes/contact.route.js'
 
 import cookieParser from 'cookie-parser';
 import Razorpay from 'razorpay';
