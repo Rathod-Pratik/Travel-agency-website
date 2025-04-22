@@ -44,7 +44,7 @@ export const razorpayInstance =new Razorpay({
     key_secret:process.env.RAZERPAY_API_SECRET
 })
 
-app.get('/api/health',(req,res)=>{
+app.get('/',(req,res)=>{
     res.send("Running");
 })
 
