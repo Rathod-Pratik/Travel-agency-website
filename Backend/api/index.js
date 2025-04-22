@@ -57,4 +57,4 @@ app.use('/Admin',AdminRoutes);
 app.use('/blog',BlogRoutes);
 app.use('/contact',contactRoutes);
 
-app.listen(5000,()=>console.log(`Server is running at ${5000}`));
+export default app
