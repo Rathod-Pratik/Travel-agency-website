@@ -1,6 +1,7 @@
 import express from "express";
-import { DeleteBlogImage, updateBlogImage, upload, uploadToCloudinary } from "../middlewares/Blog.middleware.js";
+import { DeleteBlogImage, updateBlogImage, uploadToCloudinary } from "../middlewares/Blog.middleware.js";
 import {CreateBlog, UpdateBlog, DeleteBlog, GetBlog} from '../Controller/blog.controller.js'
+import upload from "../middlewares/multer.middleware.js";
 
 const router = express.Router();
 
