@@ -1,17 +1,17 @@
 export const HOST=import.meta.env.VITE_API_HOST;
 
 export const TOURS='tour';
-export const GET_TOUR=`${HOST}/${TOURS}`;
-export const GET_TOUR_DETAIL=`${HOST}/${TOURS}/data`
+export const GET_TOUR=`${TOURS}`;
+export const GET_TOUR_DETAIL=`${TOURS}/data`
 export const CREATE_TOUR=`${TOURS}`
 export const UPDATE_TOUR=`${TOURS}`
 export const DELETE_TOUR=`${TOURS}`
 
 export const AUTH='auth';
-export const SIGNUP=`${HOST}/${AUTH}/signup`;
-export const LOGIN=`${HOST}/${AUTH}/login`;
-export const LOGOUT=`${HOST}/${AUTH}/logout`;
-export const UPDATE_PROFILE=`${HOST}/auth/user/profile`
+export const SIGNUP=`${AUTH}/signup`;
+export const LOGIN=`${AUTH}/login`;
+export const LOGOUT=`${AUTH}/logout`;
+export const UPDATE_PROFILE=`auth/user/profile`
 export const GET_USER='/Admin/getuser'
 export const REMOVE_USER='/Admin/reomveusers'
 export const GET_ALL_STATE=`/Admin/stats`
@@ -23,11 +23,11 @@ export const UPDATE_BLOG=`${BLOG}/update`
 export const DELETE_BLOG=`${BLOG}/delete`
 
 export const BOOKING=`booking`;
-export const CREATE_BOOKING=`${HOST}/${BOOKING}`
-export const UPDATE_BOOKING=`${HOST}/${BOOKING}`
-export const CANCEL_BOOKING=`${HOST}/${BOOKING}`
-export const GET_BOOKING=`${HOST}/${BOOKING}/user`
-export const GET_CANCEL_BOOKING=`${HOST}/${BOOKING}/user/cancel`
+export const CREATE_BOOKING=`${BOOKING}`
+export const UPDATE_BOOKING=`${BOOKING}`
+export const CANCEL_BOOKING=`${BOOKING}`
+export const GET_BOOKING=`${BOOKING}/user`
+export const GET_CANCEL_BOOKING=`${BOOKING}/user/cancel`
 export const GET_ALL_BOOKING=`${BOOKING}/getallbooking`
 export const DELETE_BOOKING=`${BOOKING}/deletebooking`
 
