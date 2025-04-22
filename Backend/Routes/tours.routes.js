@@ -1,6 +1,6 @@
 import express from 'express';
 import { getTours, getToursData, MakeTour, UpdateTour,DeleteTour } from '../Controller/tours.controller.js';
-import { upload } from '../middlewares/multer.middleware.js';
+import  upload  from '../middlewares/multer.middleware.js';
 import { checkAdminCookie } from '../middlewares/auth.middleware.js';
 import { DeleteBlogImage, updateBlogImage, uploadToCloudinary } from '../middlewares/Blog.middleware.js';
 

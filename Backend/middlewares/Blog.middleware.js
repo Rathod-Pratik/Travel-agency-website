@@ -1,4 +1,4 @@
-import cloudinary from "../utils/cloudinary";
+import cloudinary from "../utils/cloudinary.js";
 import streamifier from "streamifier";
 
 // Middleware to Handle Upload to Cloudinary
