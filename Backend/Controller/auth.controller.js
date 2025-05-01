@@ -2,6 +2,7 @@ import UserModel from "../Model/user.model.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
+// LOGIN FUNCTION
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -15,85 +16,97 @@ export const login = async (req, res) => {
     return res.status(400).send("User is not found");
   }
 
-  if (!user.password) {
-    return res.status(400).send("User password not found");
-  }
-
   const isPasswordMatch = await bcrypt.compare(password, user.password);
   if (!isPasswordMatch) {
     return res.status(401).send("Invalid credentials");
   }
 
-  const token = jwt.sign({ id: user._id, email }, process.env.JWT_SECRET, {
-    expiresIn: "2h",
-  });
-
-  user.token = token;
-  user.password = undefined;
+  // Create JWT token
+  const token = jwt.sign(
+    { id: user._id, email: user.email, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "2h" }
+  );
 
   const options = {
     httpOnly: true,
-    secure: true, // use true in production with HTTPS
-    sameSite: "None", // "Strict" or "Lax" can block cross-site cookies
+    secure: true, // should be true in production with HTTPS
+    sameSite: "None",
     maxAge: 24 * 60 * 60 * 1000, // 1 day
   };
 
+  // Set different cookie based on user role
   if (user.role === "admin") {
-    return res.status(200).cookie("admin", token, options).json({
-      success: true,
-      user,
-    });
+    res.cookie("admin_token", token, options);
   } else {
-    return res.status(200).cookie("jwt", token, options).json({
-      success: true,
-      user,
-    });
+    res.cookie("user_token", token, options);
   }
+
+  // Send response
+  user.password = undefined;
+  res.status(200).json({
+    success: true,
+    message: "Login successful",
+    user,
+  });
 };
 
+
+// SIGNUP FUNCTION
 export const signup = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
     if (!(name && email && password)) {
-      return res.status(400).send("All the crediantails is required");
+      return res.status(400).send("All the credentials are required");
     }
 
     const ifUserExist = await UserModel.findOne({ email });
-
     if (ifUserExist) {
-      return res.status(400).send("User is already exist");
+      return res.status(400).send("User already exists");
     }
 
-    const hashPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await UserModel.create({
-      name: name,
-      email: email,
-      password: hashPassword,
+      name,
+      email,
+      password: hashedPassword,
+      role: role || 'user',
     });
 
-    const token = jwt.sign({ id: user._id, email }, process.env.JWT_SECRET, {
-      expiresIn: "2h",
-    });
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "2h" }
+    );
 
-    user.token = token;
-    user.password = undefined;
-
-    //Cookie section
     const options = {
-      expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
       httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
     };
-    res.cookie("token", token, options).json({
-      success: true,
-    });
 
-    res.status(200).json({user});
+    // Set appropriate cookie
+    if (user.role === "admin") {
+      res.cookie("admin_token", token, options);
+    } else {
+      res.cookie("user_token", token, options);
+    }
+
+    user.password = undefined;
+    res.status(201).json({
+      success: true,
+      message: "Signup successful",
+      user,
+    });
   } catch (error) {
     console.log(error);
+    res.status(500).send("Something went wrong");
   }
 };
+
 
 export const UpdateProfile = async (req, res) => {
   try {

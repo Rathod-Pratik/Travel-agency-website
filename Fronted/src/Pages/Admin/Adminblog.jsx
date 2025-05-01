@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { apiClient } from "../../lib/api-Client";
-import { CREATE_BLOG, DELETE_BLOG, GET_BLOG, UPDATE_BLOG } from "../../Utils/Constant";
+import { CREATE_BLOG, GET_BLOG } from "../../Utils/Constant";
 import AdminblogCard from "../../Components/AdminblogCard";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const Adminblog = () => {
+  const navigate=useNavigate();
   const [blogData, SetBlogData] = useState();
   const [model, SetModel] = useState(false);
   const [title, SetTitle] = useState("");
@@ -35,6 +37,7 @@ const Adminblog = () => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
+        withCredentials:true
       });
 
       if (response.status === 200) {
@@ -49,6 +52,10 @@ const Adminblog = () => {
         toast.error("Some error occurred, try again after some time");
       }
     } catch (error) {
+      if (error.response && error.response.status === 403) {
+        toast.error("Access denied. Please login as admin.");
+        return navigate("/login");
+      }
       console.error("Upload failed:", error);
       toast.error("An error occurred. Please try again.");
     }
@@ -72,10 +79,10 @@ const Adminblog = () => {
 
   const OpenModel = () => {
     SetModel(!model);
-    // setPreview("");
-    // setDescription("");
-    // SetTitle("");
-    // setSelectedFile("");
+    setPreview("");
+    setDescription("");
+    SetTitle("");
+    setSelectedFile("");
   };
 
   const handleFileChange = (e) => {

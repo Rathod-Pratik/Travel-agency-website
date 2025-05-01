@@ -30,7 +30,7 @@ const AdminNavbar = () => {
         {/* User Section */}
         <div className="relative flex gap-2 items-center">
           <p className="rounded-full text-[orange] px-4 py-2">
-            Welcome, {userInfo.name}
+            Welcome, {userInfo?.name}
           </p>
           <Link to="/" className="p-2 rounded-full bg-orange-500 hover:bg-orange-600 transition">
   <FaHome className="text-white text-2xl" />

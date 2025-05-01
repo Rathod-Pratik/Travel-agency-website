@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { apiClient } from "../lib/api-Client";
-import { useAppStore } from "../Store";
-import { UPDATE_BOOKING, UPDATE_TOUR } from "../Utils/Constant";
+import {  UPDATE_TOUR } from "../Utils/Constant";
+import { useNavigate } from "react-router-dom";
 
 const EditTourModel = ({ onClose, TourData, SetTour }) => {
+  const navigate=useNavigate();
   const [preview, setPreview] = useState("");
   const [selectedfile, setSelectedFile] = useState();
   const [formData, setFormData] = useState({
@@ -97,6 +98,7 @@ const EditTourModel = ({ onClose, TourData, SetTour }) => {
           headers: {
             "Content-Type": "multipart/form-data",
           },
+          withCredentials:true
         }
       );
 
@@ -113,6 +115,11 @@ const EditTourModel = ({ onClose, TourData, SetTour }) => {
         toast.error("Failed to Update Tour");
       }
     } catch (error) {
+      if (error.response && error.response.status === 403) {
+        toast.error("Access denied. Please login as admin.");
+        return navigate("/login");
+      }
+      
       toast.error("Some error occurred");
       console.log(error);
     }

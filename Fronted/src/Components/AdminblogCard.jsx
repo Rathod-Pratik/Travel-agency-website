@@ -4,8 +4,10 @@ import { FaEdit } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { apiClient } from "../lib/api-Client";
 import { DELETE_BLOG, UPDATE_BLOG } from "../Utils/Constant";
+import { useNavigate } from "react-router-dom";
 
 const AdminblogCard = ({ data ,setBlogData}) => {
+  const navigate=useNavigate();
   const [title, SetTitle] = useState(data.Title);
   const [description, setDescription] = useState(data.BlogText);
   const [selectedFile, setSelectedFile] = useState();
@@ -54,6 +56,7 @@ const AdminblogCard = ({ data ,setBlogData}) => {
           headers: {
             "Content-Type": "multipart/form-data",
           },
+          withCredentials:true
         }
       );
       
@@ -70,6 +73,10 @@ const AdminblogCard = ({ data ,setBlogData}) => {
         toast.error("Some error occurred, try again after some time");
       }
     } catch (error) {
+      if (error.response && error.response.status === 403) {
+        toast.error("Access denied. Please login as admin.");
+        return navigate("/login");
+      }
       console.error("Upload failed:", error);
       toast.error("An error occurred. Please try again.");
     }
@@ -79,7 +86,7 @@ const AdminblogCard = ({ data ,setBlogData}) => {
       const response = await apiClient.post(
         `${DELETE_BLOG}/${extractPublicIdFromUrl(data.BlogImage)}`,{
           _id:data._id
-        });
+        },{withCredentials:true});
       
       if (response.status === 200) {
         setBlogData((prev) => prev.filter((item) => item._id !== data._id));
@@ -88,6 +95,10 @@ const AdminblogCard = ({ data ,setBlogData}) => {
         toast.error("Some error occurred, try again after some time");
       }
     } catch (error) {
+       if (error.response && error.response.status === 403) {
+        toast.error("Access denied. Please login as admin.");
+        return navigate("/login");
+      }
       console.error("Delete failed:", error);
       toast.error("An error occurred. Please try again.");
     }

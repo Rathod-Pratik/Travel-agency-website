@@ -5,7 +5,9 @@ import { toast } from "react-toastify";
 import { IoStar } from "react-icons/io5";
 import { MdDelete } from "react-icons/md";
 import CheckingModel from "../../Components/CheckingModel";
+import { useNavigate } from "react-router-dom";
 const AdminReview = () => {
+  const navigate=useNavigate();
   const [Review, SetReview] = useState();
 
   const DeleteReview = async (userId, userName, TourId) => {
@@ -14,7 +16,7 @@ const AdminReview = () => {
         TourId: TourId,
         userName: userName,
         userId: userId,
-      });
+      },{withCredentials:true});
   
       if (response.status === 200) {
         toast.success("Review removed successfully");
@@ -33,6 +35,10 @@ const AdminReview = () => {
         toast.error("Failed to delete review");
       }
     } catch (error) {
+      if (error.response && error.response.status === 403) {
+        toast.error("Access denied. Please login as admin.");
+        return navigate("/login");
+      }
       toast.error("Something went wrong. Please try again.");
       console.error(error);
     }
@@ -41,11 +47,15 @@ const AdminReview = () => {
 
   const fetchReview = async () => {
     try {
-      const response = await apiClient.get(GET_ALL_REVIEW);
+      const response = await apiClient.get(GET_ALL_REVIEW,{withCredentials:true});
       if (response.status === 200) {
         SetReview(response.data.reviews);
       }
     } catch (error) {
+      if (error.response && error.response.status === 403) {
+        toast.error("Access denied. Please login as admin.");
+        return navigate("/login");
+      }
       toast.error("Some error occured try again after some time");
     }
   };

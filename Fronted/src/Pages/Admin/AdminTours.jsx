@@ -8,19 +8,21 @@ import { FaArrowUp } from "react-icons/fa";
 import { FaArrowDown } from "react-icons/fa";
 import EditTourModel from "../../Components/EditTourModel";
 import CreateTour from "../../Components/CreateTour";
+import { useNavigate } from "react-router-dom";
 
-const Tours = () => {
+const AdminTour = () => {
+  const navigate=useNavigate();
   const [Tour, SetTour] = useState([]);
   const [FilterTourData, SetFilterTourData] = useState([]);
   const [expandedIndexes, setExpandedIndexes] = useState({});
   const [visibleModel, setVisibleModel] = useState();
   const [TourModel, SetTourModel] = useState();
   useEffect(() => {
-    const FetchBooking = async () => {
+    const FetchTour = async () => {
       try {
         const response = await apiClient.get(`${GET_TOUR}`);
         if (response.status === 200) {
-          SetFilterTourData(response.data.data)
+          SetFilterTourData(response.data.data);
           SetTour(response.data.data);
         } else {
           toast.error("Failed to fetch Data");
@@ -29,7 +31,7 @@ const Tours = () => {
         console.log(error);
       }
     };
-    FetchBooking();
+    FetchTour();
   }, []);
   const filterSearch = (searchValue) => {
     const lowerValue = searchValue.toLowerCase();
@@ -42,7 +44,7 @@ const Tours = () => {
       SetFilterTourData(filtered);
     }
   };
-  
+
   const toggleExpand = (index) => {
     setExpandedIndexes((prev) => ({
       ...prev,
@@ -64,37 +66,43 @@ const Tours = () => {
     try {
       const response = await apiClient.post(
         `${DELETE_TOUR}/${extractPublicIdFromUrl(id)}`,
-        { _id }
+        { _id },
+        {
+          withCredentials: true,
+        }
       );
-  
+
       if (response.status === 200) {
         toast.success("Tour Deleted Successfully");
-  
+
         // Remove the deleted tour from local state
-        SetFilterTourData((prevTour) => prevTour.filter((tour) => tour._id !== _id));
-  
+        SetFilterTourData((prevTour) =>
+          prevTour.filter((tour) => tour._id !== _id)
+        );
+
         // Close the delete confirmation modal
         HideDeleteModel();
       } else {
         toast.error("Some error occurred, try again later.");
       }
     } catch (error) {
+      if (error.response && error.response.status === 403) {
+        toast.error("Access denied. Please login as admin.");
+        return navigate("/login");
+      }
       console.log(error);
       toast.error("Failed to delete the tour. Please check the console.");
     }
   };
-  
 
   const [show, setShow] = useState(false);
   const HideDeleteModel = () => [setShow(!show)];
 
- 
   return (
     <div>
-      <div>
         <div className="flex justify-evenly gap-3 py-5">
           <input
-          onChange={(e) => filterSearch(e.target.value)}
+            onChange={(e) => filterSearch(e.target.value)}
             className="border-[orange] border-2 outline-none rounded-md px-4 py-2 w-[90%]"
             type="text"
             placeholder="Search Tour"
@@ -106,35 +114,38 @@ const Tours = () => {
             New
           </button>
           {TourModel && (
-            <CreateTour SetTour={SetFilterTourData} onClose={CloseNewTourModel} />
+            <CreateTour
+              SetTour={SetFilterTourData}
+              onClose={CloseNewTourModel}
+            />
           )}
         </div>
-        <div>
-        <div className="mt-4 mx-auto max-w-5xl min-h-[90vh]">
-  {typeof FilterTourData=="undefined"  ? (
-     Array.from({ length: 3 }).map((_, index) => (
-      <div
-        key={index}
-        className="border border-orange-300 rounded-md p-4 mb-6 shadow-md overflow-hidden animate-pulse"
-      >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Image Skeleton */}
-          <div className="h-64 bg-gray-200 rounded-lg"></div>
+          <div className="mt-4 mx-auto max-w-5xl min-h-[90vh]">
+            {typeof FilterTourData == "undefined" ? (
+              Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="border border-orange-300 rounded-md p-4 mb-6 shadow-md overflow-hidden animate-pulse"
+                >
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Image Skeleton */}
+                    <div className="h-64 bg-gray-200 rounded-lg"></div>
 
-          {/* Details Skeleton */}
-          <div className="p-3 flex flex-col justify-between">
-            <div>
-              <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/4 mb-3"></div>
-              <div className="h-10 w-10 bg-gray-200 rounded-full absolute bottom-4 right-4"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )) ) : FilterTourData.length >0 ? (
+                    {/* Details Skeleton */}
+                    <div className="p-3 flex flex-col justify-between">
+                      <div>
+                        <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/4 mb-3"></div>
+                        <div className="h-10 w-10 bg-gray-200 rounded-full absolute bottom-4 right-4"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : FilterTourData.length > 0 ? (
               FilterTourData.map((TourData, index) => (
                 <div
                   key={index}
@@ -277,7 +288,7 @@ const Tours = () => {
                         </div>
                         {visibleModel && (
                           <EditTourModel
-                          SetTour={SetFilterTourData}
+                            SetTour={SetFilterTourData}
                             _id={TourData._id}
                             TourData={TourData}
                             onClose={onClose}
@@ -318,17 +329,15 @@ const Tours = () => {
                     </>
                   )}
                 </div>
-              ))):(
-                <div className="text-center text-gray-500 text-lg py-10">
-              😕 No Tour found.
-            </div>
-              )
-            }
-            </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-500 text-lg py-10">
+                😕 No Tour found.
+              </div>
+            )}
           </div>
         </div>
-      </div>
   );
 };
 
-export default Tours;
+export default AdminTour;

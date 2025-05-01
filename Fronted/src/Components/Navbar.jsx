@@ -52,12 +52,12 @@ const Navbar = () => {
   // Handlers
   const handleLogout = async () => {
     try {
-      const response = await apiClient.post(LOGOUT);
+      const response = await apiClient.post(LOGOUT,{},{withCredentials:true});
       if (response.status === 200) {
         toast.success("Logged out successfully");
-        localStorage.removeItem("Store-data");
+        setUserInfo(undefined)
+        localStorage.removeItem('Store-data')
         navigate("/login");
-        setUserInfo(null)
       }
     } catch (error) {
       console.error("Logout error:", error);
@@ -142,7 +142,7 @@ const Navbar = () => {
 
           {/* Mobile Auth Buttons */}
           <div className="items-center flex flex-col justify-center flex-shrink-0 gap-3 md:hidden">
-            {userInfo ? (
+            {typeof userInfo !== "undefined" ? (
               <div className="flex flex-row gap-2 items-center">
                 <button
                   onClick={handleLogout}
@@ -161,15 +161,6 @@ const Navbar = () => {
                   </Link>
                   <p className="truncate max-w-[100px]">{userInfo.name}</p>
                 </div>
-                {userInfo.role === "admin" && (
-                  <Link
-                    to="/admin"
-                    className="flex items-center gap-2 p-2 rounded-md bg-[orange] text-white text-sm font-medium hover:bg-orange-600 transition"
-                  >
-                    <FaUser className="text-lg" />
-                    Admin
-                  </Link>
-                )}
               </div>
             ) : (
               <div className="flex gap-2">
@@ -194,7 +185,7 @@ const Navbar = () => {
 
         {/* Desktop Auth Buttons */}
         <div className="items-center md:justify-end flex-shrink-0 hidden md:flex gap-4">
-          {userInfo && (
+          {typeof userInfo !== "undefined" && (
             <>
               <button
                 onClick={handleLogout}
@@ -227,15 +218,6 @@ const Navbar = () => {
                 >
                   {getInitial(userInfo.name)}
                 </Link>
-                {userInfo.role === "admin" && (
-                  <Link
-                    to="/admin"
-                    className="flex items-center gap-2 p-2 rounded-md bg-[orange] text-white text-sm font-medium hover:bg-orange-600 transition"
-                  >
-                    <FaUser className="text-lg" />
-                    Admin
-                  </Link>
-                )}
               </div>
             </>
           )}

@@ -7,8 +7,10 @@ import { FaArrowUp } from "react-icons/fa";
 import { FaArrowDown } from "react-icons/fa";
 import { toast } from "react-toastify";
 import CheckingModel from "../../Components/CheckingModel";
+import { useNavigate } from "react-router-dom";
 
 const AdminBooking = () => {
+  const navigate=useNavigate();
   const [booking, setBooking] = useState([]);
   const [FilterBookingData, SetFilterBookingData] = useState([]);
   const [expandedIndexes, setExpandedIndexes] = useState({});
@@ -18,8 +20,7 @@ const AdminBooking = () => {
         const response = await apiClient.get(`${GET_ALL_BOOKING}`);
         console.log(response.data);
         if (response.status === 201) {
-          
-          SetFilterBookingData(response.data.getBooking)
+          SetFilterBookingData(response.data.getBooking);
           setBooking(response.data.getBooking);
         } else {
           toast.error("Failed to fetch Data");
@@ -50,8 +51,9 @@ const AdminBooking = () => {
 
   const DeleteBooking = async (_id) => {
     try {
-      const response = await apiClient.delete(`${DELETE_BOOKING}/${_id}`);
-      console.log(response.data);
+      const response = await apiClient.delete(`${DELETE_BOOKING}/${_id}`, {
+        withCredentials: true,
+      });
       if (response.status === 200) {
         toast.success("Booking Delete Successfully");
         setBooking((booking) =>
@@ -61,52 +63,54 @@ const AdminBooking = () => {
         toast.error("Failed to fetch Data");
       }
     } catch (error) {
-      console.log(error);
+      if (error.response && error.response.status === 403) {
+        toast.error("Access denied. Please login as admin.");
+        return navigate("/login");
+      }
+      toast.error("Failed to delete booking")
     }
   };
   const [show, setShow] = useState(false);
   const HideDeleteModel = () => [setShow(!show)];
   return (
-    <div className="mt-4 mx-auto w-[95vw] max-w-5xl min-h-[90vh]">
-<div className="flex justify-evenly gap-3 py-5">
-          <input
+    <div className="mt-4 mx-auto min-h-[90vh]">
+      <div className="flex justify-evenly gap-3 py-5">
+        <input
           onChange={(e) => filterSearch(e.target.value)}
-            className="border-[orange] border-2 outline-none rounded-md px-4 py-2 w-[90%]"
-            type="text"
-            placeholder="Search Booking"
-          />
-          <button
-            className="text-white bg-[orange] px-5 cursor-pointer py-2 rounded-md"
-          >
-           Search
-          </button>
-        </div>
+          className="border-[orange] border-2 outline-none rounded-md px-4 py-2 w-[90%]"
+          type="text"
+          placeholder="Search Booking"
+        />
+        <button className="text-white bg-[orange] px-5 cursor-pointer py-2 rounded-md">
+          Search
+        </button>
+      </div>
+      <div className="max-w-5xl">
+        {typeof FilterBookingData === "undefined" ? (
+          Array.from({ length: 3 }).map((_, index) => (
+            <div
+              key={index}
+              className="border border-orange-300 rounded-md p-4 mb-6 shadow-md overflow-hidden animate-pulse"
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Image Skeleton */}
+                <div className="h-64 bg-gray-200 rounded-lg"></div>
 
-      {typeof  FilterBookingData=== "undefined"
-        ?
-        Array.from({ length: 3 }).map((_, index) => (
-          <div
-            key={index}
-            className="border border-orange-300 rounded-md p-4 mb-6 shadow-md overflow-hidden animate-pulse"
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Image Skeleton */}
-              <div className="h-64 bg-gray-200 rounded-lg"></div>
-
-              {/* Details Skeleton */}
-              <div className="p-3 flex flex-col justify-between">
-                <div>
-                  <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/4 mb-3"></div>
-                  <div className="h-10 w-10 bg-gray-200 rounded-full absolute bottom-4 right-4"></div>
+                {/* Details Skeleton */}
+                <div className="p-3 flex flex-col justify-between">
+                  <div>
+                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/4 mb-3"></div>
+                    <div className="h-10 w-10 bg-gray-200 rounded-full absolute bottom-4 right-4"></div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div> 
-          )):FilterBookingData.length >0 ?(
+          ))
+        ) : FilterBookingData.length > 0 ? (
           FilterBookingData.map((TourData, index) => (
             <div
               key={index}
@@ -264,12 +268,14 @@ const AdminBooking = () => {
                 </button>
               )}
             </div>
-          ))) : (
-            // No data found case
-            <div className="text-center text-gray-500 text-lg py-10">
-              😕 No bookings found.
-            </div>
-          )}
+          ))
+        ) : (
+          // No data found case
+          <div className="text-center text-gray-500 text-lg py-10">
+            😕 No bookings found.
+          </div>
+        )}
+      </div>
     </div>
   );
 };

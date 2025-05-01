@@ -3,13 +3,15 @@ import { apiClient } from "../../lib/api-Client";
 import { GET_USER, REMOVE_USER } from "../../Utils/Constant";
 import { toast } from "react-toastify";
 import { MdDelete } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
 
 const AdminUsers = () => {
+  const navigate=useNavigate();
   const [userData, SetUserData] = useState();
     const [FilterUserData, SetFilterUserData] = useState([]);
   const FetchUser = async () => {
     try {
-      const response = await apiClient.get(GET_USER);
+      const response = await apiClient.get(GET_USER,{withCredentials:true});
       if (response.status === 200) {
         SetFilterUserData(response.data.users)
         SetUserData(response.data.users);
@@ -17,6 +19,10 @@ const AdminUsers = () => {
         toast.error("Failed to fetch user");
       }
     } catch (error) {
+      if (error.response && error.response.status === 403) {
+        toast.error("Access denied. Please login as admin.");
+        return navigate("/login");
+      }
       toast.error("Some error occured try again after some time");
     }
   };
@@ -46,7 +52,7 @@ const AdminUsers = () => {
 
   const DeleteUser = async (_id) => {
     try {
-      const response = await apiClient.delete(`${REMOVE_USER}/${_id}`);
+      const response = await apiClient.delete(`${REMOVE_USER}/${_id}`,{withCredentials:true});
 
       if (response.status===201) {
         toast.success("Contact Deleted successfully");
@@ -59,6 +65,11 @@ const AdminUsers = () => {
         toast.error("Failed to delete contact");
       }
     } catch (error) {
+      if (error.response && error.response.status === 403) {
+        toast.error("Access denied. Please login as admin.");
+        return navigate("/login");
+      }
+      
       // Handle errors, log them for debugging
       console.error("Error deleting contact:", error);
       toast.error("Some error occurred. Please try again later.");

@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { apiClient } from "../lib/api-Client";
 import { CREATE_TOUR } from "../Utils/Constant";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const CreateTour = ({ onClose,SetTour }) => {
+  const navigate=useNavigate();
   const [preview, setPreview] = useState("");
   const [selectedfile, setSelectedFile] = useState();
   const [formData, setFormData] = useState({
@@ -46,6 +48,7 @@ const CreateTour = ({ onClose,SetTour }) => {
           headers: {
             "Content-Type": "multipart/form-data",
           },
+          withCredentials:true
         }
       );
   
@@ -57,7 +60,11 @@ const CreateTour = ({ onClose,SetTour }) => {
         toast.error("Some error occurred, try again later");
       }
     } catch (error) {
-      console.log(error);
+      if (error.response && error.response.status === 403) {
+        toast.error("Access denied. Please login as admin.");
+        return navigate("/login");
+      }
+      console.log("Failed to upload tour");
     }
   };
   

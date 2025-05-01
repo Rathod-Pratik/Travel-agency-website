@@ -3,13 +3,15 @@ import { apiClient } from "../../lib/api-Client";
 import { DELETE_CONTECT, GET_CONTECT } from "../../Utils/Constant";
 import { toast } from "react-toastify";
 import { MdDelete } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
 
 const AdminContect = () => {
+  const navigate=useNavigate()
   const [contact, setContact] = useState();
       const [FilterContactData, SetFilterContactData] = useState([]);
   const FetchContect = async () => {
     try {
-      const response = await apiClient.get(GET_CONTECT);
+      const response = await apiClient.get(GET_CONTECT,{withCredentials:true});
       if (response.status === 200) {
         SetFilterContactData(response.data.Contect)
         setContact(response.data.Contect);
@@ -17,7 +19,11 @@ const AdminContect = () => {
         toast.error("Failed to fetch Contact");
       }
     } catch (error) {
-      toast.error(error);
+      if (error.response && error.response.status === 403) {
+        toast.error("Access denied. Please login as admin.");
+        return navigate("/login");
+      }
+      toast.error("Failed to fetch contact");
     }
   };
   useEffect(() => {
@@ -38,7 +44,7 @@ const AdminContect = () => {
 
   const DeleteContect = async (_id) => {
     try {
-      const response = await apiClient.delete(`${DELETE_CONTECT}/${_id}`);
+      const response = await apiClient.delete(`${DELETE_CONTECT}/${_id}`,{withCredentials:true});
   
       if (response.status === 200) {
         toast.success("Contact deleted successfully");
@@ -51,6 +57,10 @@ const AdminContect = () => {
         toast.error("Failed to delete contact");
       }
     } catch (error) {
+      if (error.response && error.response.status === 403) {
+        toast.error("Access denied. Please login as admin.");
+        return navigate("/login");
+      }
       console.error("Error deleting contact:", error);
       toast.error("Some error occurred. Please try again later.");
     } finally {

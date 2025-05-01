@@ -11,7 +11,7 @@ const Admin = () => {
   const {userInfo}=useAppStore();
   const FetchData = async () => {
     try {
-      const response = await apiClient.get(GET_ALL_STATE);
+      const response = await apiClient.get(GET_ALL_STATE,{withCredentials:true});
 
       if (response.status === 200) {
         SetStat(response.data);
@@ -26,7 +26,7 @@ const Admin = () => {
   };
 
   useEffect(() => {
-    if(userInfo.role !=="admin"){
+    if(typeof userInfo=="undefined" || userInfo.role !=="admin"){
       navigate('/')
     }
     FetchData();

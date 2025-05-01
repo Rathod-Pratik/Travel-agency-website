@@ -7,8 +7,8 @@ import {toast} from 'react-toastify'
 
 const AdminSetting = () => {
   const { userInfo,setUserInfo } = useAppStore();
-  const [address, setAddress] = useState("");
-  const [phone, SetPhone] = useState("");
+  const [address, setAddress] = useState(userInfo.address);
+  const [phone, SetPhone] = useState(userInfo.phone);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -93,40 +93,23 @@ const AdminSetting = () => {
 
           <div className="w-full">
             <p className="text-black">Moblie No:</p>
-            {userInfo.phone ? (
-              <input
-                disabled
-                value={userInfo.phone}
-                className="bg-[#F5F5F5] p-3 border-none w-full outline-none text-gray-500"
-                type="text"
-              />
-            ) : (
+        
               <input
                 value={phone}
                 onChange={(e) => SetPhone(e.target.value)}
                 className="bg-[#F5F5F5] p-3 border-none w-full outline-none text-gray-500"
                 type="text"
               />
-            )}
           </div>
 
           <div className="w-full">
             <p className="text-black">Address</p>
-            {userInfo.address ? (
-              <input
-                disabled
-                value={userInfo.address}
-                className="bg-[#F5F5F5] p-3 border-none w-full outline-none text-gray-500"
-                type="text"
-              />
-            ) : (
               <input
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 className="bg-[#F5F5F5] p-3 border-none w-full outline-none text-gray-500"
                 type="text"
               />
-            )}
           </div>
         </div>
 

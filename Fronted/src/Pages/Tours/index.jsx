@@ -1,12 +1,12 @@
 import React from 'react'
 import Tour from '../../Components/Tour'
 
-const AdminTours = () => {
+const Tours = () => {
   return (
-    <div>
+    <div className='overflow-hidden' >
       <Tour/>
     </div>
   )
 }
 
-export default AdminTours
+export default Tours

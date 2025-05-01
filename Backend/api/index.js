@@ -30,9 +30,9 @@ ConnectToMongo(process.env.Database).then(()=>{
 })
 
 app.use(cors({
-    origin: process.env.origin, // Allow only requests from this origin
+    origin: process.env.origin,
     methods: 'GET,POST,PUT,DELETE,PATCH',
-    credentials: true  // Allow only these methods
+    credentials: true  
 }))
 
 app.use(express.json());
