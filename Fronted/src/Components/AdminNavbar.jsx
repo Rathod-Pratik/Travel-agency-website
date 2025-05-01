@@ -5,14 +5,6 @@ import { FaHome } from "react-icons/fa";
 
 const AdminNavbar = () => {
   const { userInfo } = useAppStore();
-  const [isScrolled, setIsScrolled] = useState(false);
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
   return (
     <div className="backdrop-blur-lg border-b border-gray-200 py-3 sticky top-0 z-50">
       <div className="flex justify-between items-center mx-auto w-[90vw]">

@@ -3,8 +3,10 @@ import { FaBars, FaTimes, FaHome, FaRegAddressBook, FaUser, FaBlog, FaStar } fro
 import { IoLocationOutline, IoSettings } from "react-icons/io5";
 import { FaMessage } from "react-icons/fa6";
 import { Link, useLocation } from "react-router-dom";
+import { useAppStore } from "../Store";
 
 function Sidebar() {
+  const {userInfo}=useAppStore();
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
 
