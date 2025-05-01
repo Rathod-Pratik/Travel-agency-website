@@ -33,6 +33,9 @@ function Sidebar() {
         >
           {isOpen ? <FaTimes /> : <FaBars />}
         </button>
+        <p className="rounded-full text-[orange] px-4 py-2 md:hidden">
+            Welcome, {userInfo?.name}
+          </p>
       </div>
 
       {/* Sidebar */}
