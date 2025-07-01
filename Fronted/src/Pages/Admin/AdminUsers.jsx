@@ -94,13 +94,13 @@ const AdminUsers = () => {
       <table className="min-w-[1000px] w-full text-sm text-left rtl:text-right text-gray-500">
   <thead className="text-xs text-gray-700 uppercase bg-gray-50">
     <tr>
-      <th className="px-6 py-3">Sr no</th>
-      <th className="px-6 py-3">User name</th>
-      <th className="px-6 py-3">Mobile</th>
-      <th className="px-6 py-3">Email</th>
-      <th className="px-6 py-3">Address</th>
-      <th className="px-6 py-3">Created At</th>
-      <th className="px-6 py-3"></th>
+      <th className="text-center px-6 py-3">Sr no</th>
+      <th className="text-center px-6 py-3">User name</th>
+      <th className="text-center px-6 py-3">Mobile</th>
+      <th className="text-center px-6 py-3">Email</th>
+      <th className="text-center px-6 py-3">Address</th>
+      <th className="text-center px-6 py-3">Created At</th>
+      <th className="text-center px-6 py-3"></th>
     </tr>
   </thead>
   <tbody>
@@ -119,25 +119,25 @@ const AdminUsers = () => {
       // Actual Data rows
       FilterUserData.map((data, index) => (
         <tr className="bg-white border-b border-gray-200" key={index}>
-          <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+          <td className="text-center font-medium text-gray-900 whitespace-nowrap px-6 py-3">
             {index + 1}
           </td>
-          <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+          <td className="text-center font-medium text-gray-900 whitespace-nowrap px-6 py-3">
             {data.name}
           </td>
-          <td className="px-6 py-4 text-gray-900 whitespace-nowrap">
-            {data.phone}
+          <td className=" text-gray-900 text-center px-6 py-3">
+            {data.phone ? data.phone : '-' }
           </td>
-          <td className="px-6 py-4 text-gray-900 break-words">
+          <td className="text-center text-gray-900 break-words px-6 py-3">
             {data.email}
           </td>
-          <td className="px-6 py-4 text-gray-900 break-words">
-            {data.address}
+          <td className="text-center text-gray-900 break-words  px-6 py-3">
+            {data.address ? data.address : '-'}
           </td>
-          <td className="px-6 py-4 text-gray-900 break-words">
+          <td className="text-center text-gray-900 break-words px-6 py-3">
             {ConvertTime(data.createdAt)}
           </td>
-          <td>
+          <td className="text-center">
             <MdDelete
               onClick={() => DeleteUser(data._id)}
               className="text-[orange] cursor-pointer text-2xl hover:text-orange-400 transition"

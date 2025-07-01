@@ -87,7 +87,7 @@ const Testimonial = () => {
             <img
               src={review.image}
               alt={`${review.name}'s avatar`}
-              className="w-[80px] h-[80px] rounded-full mb-4 object-cover shadow-lg"
+              className="w-[80px] h-[80px] m-auto rounded-full mb-4 object-cover shadow-lg"
             />
             <p className="italic text-gray-700 mb-4">"{review.review}"</p>
             <h4 className="font-bold text-lg text-[orange]">{review.name}</h4>

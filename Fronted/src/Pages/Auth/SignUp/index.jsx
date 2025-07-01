@@ -25,6 +25,10 @@ const SignUp = () => {
       return;
     }
   
+    if(!email){
+     return  toast.error("Please Enter Email")
+    }
+
     try {
       const response = await apiClient.post(SIGNUP, {
         name: name,
@@ -40,8 +44,15 @@ const SignUp = () => {
         toast.error("User already exists.");
       }
     } catch (error) {
-      toast.error("Some error occured try again after some time.");
-      console.log("Signup failed:", error.response?.data || error.message);
+
+      const {data,status}=error.response;
+      if(data.AlreadyExist && status==400){
+        toast.error("User Already Exist with this email")
+      }
+      else{
+        toast.error("Some error occured try again after some time.");
+        console.log("Signup failed:", error.response?.data || error.message);
+      }
     }
   };
 
@@ -94,7 +105,7 @@ const SignUp = () => {
               value={password}
               onChange={(e)=>setPassword(e.target.value)}
             />
-            <button onClick={HandleSignUp} className="bg-[#0b2727] text-white px-4 py-2 rounded-lg w-full hover:bg-[#083c3c] transition">
+            <button onClick={HandleSignUp} className="bg-[#0b2727] cursor-pointer text-white px-4 py-2 rounded-lg w-full hover:bg-[#083c3c] transition">
             Register
             </button>
           </div>

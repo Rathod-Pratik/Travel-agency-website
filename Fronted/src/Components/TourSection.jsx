@@ -3,15 +3,27 @@ import { apiClient } from "../lib/api-Client";
 import {GET_TOUR} from "../Utils/Constant";
 import TourCard from "./TourCard";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import Loading from "./Loading";
 
 const TourSection = () => {
   const [tourData, setTourData] = useState([]);
+  const [loading,setLoading]=useState(true)
   useEffect(() => {
     const FetchTour = async () => {
-      const response = await apiClient.get(`${GET_TOUR}`);
-      if (response.status === 200) {
-        setTourData(response.data.data);
-      } else {
+      setLoading(true)
+      try {
+        const response = await apiClient.get(`${GET_TOUR}`);
+        if (response.status === 200) {
+          setTourData(response.data.data);
+        } 
+      } catch (error) {
+        const {data,status}=error.response;
+        if(data.success==false && status==500){
+          toast.error("Server is Down try again after some time")
+        }
+      }finally{
+        setLoading(false)
       }
     };
     FetchTour();
@@ -30,6 +42,12 @@ const TourSection = () => {
   </div>
 
   {/* Featured Tours List */}
+  {
+    loading ==true ? (
+     <div className="flex justify-center items-center h-[45vh]">
+        <Loading/>
+      </div>
+    ):(
   <div className="grid grid-cols-1 place-items-center md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-4 sm:self-center">
     {tourData.map((data, index) => (
       <div data-aos="fade-down" key={index} className="w-full sm:w-[300px] rounded-lg shadow-sm">
@@ -37,6 +55,9 @@ const TourSection = () => {
       </div>
     ))}
   </div>
+    )
+  }
+
 
   {/* View All Tours Link */}
   <div className="text-center">

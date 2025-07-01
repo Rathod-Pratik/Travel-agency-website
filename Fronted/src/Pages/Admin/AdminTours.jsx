@@ -9,6 +9,7 @@ import { FaArrowDown } from "react-icons/fa";
 import EditTourModel from "../../Components/EditTourModel";
 import CreateTour from "../../Components/CreateTour";
 import { useNavigate } from "react-router-dom";
+import Loading from "../../Components/Loading";
 
 const AdminTour = () => {
   const navigate=useNavigate();
@@ -17,18 +18,22 @@ const AdminTour = () => {
   const [expandedIndexes, setExpandedIndexes] = useState({});
   const [visibleModel, setVisibleModel] = useState();
   const [TourModel, SetTourModel] = useState();
+  const [loading,SetLoading]=useState(true)
   useEffect(() => {
     const FetchTour = async () => {
+      SetLoading(true)
       try {
         const response = await apiClient.get(`${GET_TOUR}`);
         if (response.status === 200) {
           SetFilterTourData(response.data.data);
           SetTour(response.data.data);
-        } else {
-          toast.error("Failed to fetch Data");
         }
       } catch (error) {
+        toast.error("Server is Down Try again after someTime")
         console.log(error);
+      }
+      finally{
+        SetLoading(false)
       }
     };
     FetchTour();
@@ -120,7 +125,14 @@ const AdminTour = () => {
             />
           )}
         </div>
-          <div className="mt-4 mx-auto max-w-5xl min-h-[90vh]">
+
+          {
+            loading == true ? (
+              <div className="flex justify-center items-center h-[70vh]">
+          <Loading />
+        </div>
+            ):(
+ <div className="mt-4 mx-auto max-w-5xl min-h-[90vh]">
             {typeof FilterTourData == "undefined" ? (
               Array.from({ length: 3 }).map((_, index) => (
                 <div
@@ -336,6 +348,10 @@ const AdminTour = () => {
               </div>
             )}
           </div>
+            )
+          }
+
+         
         </div>
   );
 };

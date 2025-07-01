@@ -28,11 +28,11 @@ export const GetContact = async (req, res) => {
       if (Contects && Contects.length > 0) {
         return res.status(200).json({ Contect:Contects });
       } else {
-        return res.status(200).send("No contacts found");
+        return res.status(400).send({NotFound:true,message:"No contacts found"});
       }
     } catch (error) {
       // Send error response in case of failure
-      return res.status(400).json({ error: error.message });
+      return res.status(500).json({ error: error.message });
     }
   };
 

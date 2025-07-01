@@ -2,11 +2,16 @@ import { useState } from "react";
 import { FaBars, FaTimes, FaHome, FaRegAddressBook, FaUser, FaBlog, FaStar } from "react-icons/fa";
 import { IoLocationOutline, IoSettings } from "react-icons/io5";
 import { FaMessage } from "react-icons/fa6";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAppStore } from "../Store";
+import { apiClient } from "../lib/api-Client";
+import { LOGOUT } from "../Utils/Constant";
+import { toast } from "react-toastify";
+import { FiLogOut } from "react-icons/fi";
 
 function Sidebar() {
-  const {userInfo}=useAppStore();
+  const navigate =useNavigate()
+  const {userInfo,setUserInfo}=useAppStore();
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
 
@@ -24,6 +29,20 @@ function Sidebar() {
     { to: "/admin/Review", icon: <FaStar />, label: "Review" },
     { to: "/admin/setting", icon: <IoSettings />, label: "Settings" },
   ];
+   const handleLogout = async () => {
+      try {
+        const response = await apiClient.post(LOGOUT,{},{withCredentials:true});
+        if (response.status === 200) {
+          toast.success("Logged out successfully");
+          setUserInfo(undefined)
+          localStorage.removeItem('Store-data')
+          navigate("/login");
+        }
+      } catch (error) {
+        console.error("Logout error:", error);
+        toast.error("Failed to logout");
+      }
+    };
 
   return (
     <div>
@@ -73,6 +92,15 @@ function Sidebar() {
               </span>
             </Link>
           ))}
+          <button
+            onClick={handleLogout}
+            className={`flex items-center gap-4 py-3 px-3 rounded-md transition-all duration-150 text-gray-800 hover:bg-orange-400 hover:text-white`}
+          >
+            <div className="text-xl shrink-0 text-orange-500">
+              <FiLogOut />
+            </div>
+            <span className="whitespace-nowrap font-medium">Logout</span>
+          </button>
         </div>
       </div>
     </div>

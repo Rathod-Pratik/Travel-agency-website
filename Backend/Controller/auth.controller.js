@@ -13,12 +13,12 @@ export const login = async (req, res) => {
   const user = await UserModel.findOne({ email });
 
   if (!user) {
-    return res.status(400).send("User is not found");
+    return res.status(400).json({NotFound:true,message:"User is not found"});
   }
 
   const isPasswordMatch = await bcrypt.compare(password, user.password);
   if (!isPasswordMatch) {
-    return res.status(401).send("Invalid credentials");
+    return res.status(401).json({WrongPass:true,message:"Invalid credentials"});
   }
 
   // Create JWT token
@@ -63,7 +63,7 @@ export const signup = async (req, res) => {
 
     const ifUserExist = await UserModel.findOne({ email });
     if (ifUserExist) {
-      return res.status(400).send("User already exists");
+      return res.status(400).json({AlreadyExist:true,mesage:"User already exists"});
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -87,14 +87,9 @@ export const signup = async (req, res) => {
       sameSite: "None",
       maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
     };
-
-    // Set appropriate cookie
-    if (user.role === "admin") {
-      res.cookie("admin_token", token, options);
-    } else {
+  
       res.cookie("user_token", token, options);
-    }
-
+  
     user.password = undefined;
     res.status(201).json({
       success: true,
@@ -149,6 +144,7 @@ export const UpdateProfile = async (req, res) => {
 };
 
 export const logout = (req, res) => {
-  res.clearCookie("jwt", { httpOnly: true, secure: true, sameSite: "None" });
+  res.clearCookie("user_token", { httpOnly: true, secure: true, sameSite: "None" });
+  res.clearCookie("admin_token", { httpOnly: true, secure: true, sameSite: "None" });
   res.status(200).json({ success: true, message: "Logged out successfully" });
 };

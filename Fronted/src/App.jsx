@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import About from "./Pages/About";
 import Booking from "./Pages/Booking";
 import Tours from "./Pages/Tours";
@@ -13,7 +13,7 @@ import Footer from "./Components/Footer";
 import Account from "./Pages/Account";
 import TourDatail from "./Pages/Tours/TourDatail";
 import "./App.css";
-import { ToastContainer } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import RazorpayPayment from "./Components/PaymentPage";
 import CancelBooking from "./Pages/Cancelbooking";
 
@@ -28,17 +28,29 @@ import AdminLayout from "./Pages/Admin/AdminLayout";
 import AdminSetting from "./Pages/Admin/adminSetting";
 import BlogDetail from "./Pages/Blog/blogDetail";
 
-import AOS from 'aos';
-import 'aos/dist/aos.css'; // You can also use <link> for styles
+import AOS from "aos";
+import "aos/dist/aos.css"; // You can also use <link> for styles
+import { useAppStore } from "./Store";
+
+const PrivateRoute = ({ children }) => {
+  const { userInfo } = useAppStore();
+  const isAuthenticated = userInfo?.role === "admin";
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast.warn("Better Luck next Time Bro");
+    }
+  }, [isAuthenticated]);
+  return isAuthenticated ? children : <Navigate to="/" />;
+};
+
 const App = () => {
-  useEffect(()=>{
+  useEffect(() => {
     AOS.init();
-  },[])
+  }, []);
   const location = useLocation();
   const isAdminPage = location.pathname.startsWith("/admin");
   return (
-    <div className="">
-      {" "}
+    <div>
       {!isAdminPage && <Navbar />}
       {isAdminPage && <AdminNavbar />}
       <Routes>
@@ -56,16 +68,79 @@ const App = () => {
         <Route path="/about" element={<About />} />
         <Route path="/account" element={<Account />} />
 
-        {/* Pages for admin */}
-        <Route path="/admin" element={<AdminLayout />}>
-           <Route index element={<Admin />} />
-          <Route path="tours" element={<AdminTours />} />
-          <Route path="bookings" element={<AdminBooking />} />
-          <Route path="users" element={<AdminUsers />} />
-          <Route path="review" element={<AdminReview />} />
-          <Route path="blog" element={<Adminblog />} />
-          <Route path="contacts" element={<AdminContect />} /> 
-          <Route path="setting" element={<AdminSetting />} /> 
+        {/* Pages for admin (protected) */}
+        <Route
+          path="/admin"
+          element={
+            <PrivateRoute>
+              <AdminLayout />
+            </PrivateRoute>
+          }
+        >
+          <Route
+            index
+            element={
+              <PrivateRoute>
+                <Admin />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="tours"
+            element={
+              <PrivateRoute>
+                <AdminTours />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="bookings"
+            element={
+              <PrivateRoute>
+                <AdminBooking />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="users"
+            element={
+              <PrivateRoute>
+                <AdminUsers />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="review"
+            element={
+              <PrivateRoute>
+                <AdminReview />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="blog"
+            element={
+              <PrivateRoute>
+                <Adminblog />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="contacts"
+            element={
+              <PrivateRoute>
+                <AdminContect />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="setting"
+            element={
+              <PrivateRoute>
+                <AdminSetting />
+              </PrivateRoute>
+            }
+          />
         </Route>
         <Route path="*" element={<div>Page not found</div>} />
       </Routes>

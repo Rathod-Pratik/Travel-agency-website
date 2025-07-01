@@ -10,23 +10,27 @@ import EditBookingModal from "../../Components/EditBookingModal";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 import CheckingModel from "../../Components/CheckingModel";
+import Loading from "../../Components/Loading";
 
 const Booking = () => {
   const { userInfo, setBooking, booking, removeBooking } = useAppStore();
   const [expandedIndexes, setExpandedIndexes] = useState({});
   const [visibleModel, setVisibleModel] = useState();
+   const [loading,setLoading]=useState(false)
   const [CheckModel, setCheckeModel] = useState();
   useEffect(() => {
     const FetchBooking = async () => {
       try {
+        setLoading(true)
         const response = await apiClient.get(`${GET_BOOKING}/${userInfo._id}`);
         if (response.status === 201) {
           setBooking(response.data.getBooking);
-        } else {
-          toast.error("Failed to fetch Data");
-        }
+        } 
       } catch (error) {
         console.log(error);
+        toast.error("Server is Down")
+      }finally{
+        setLoading(false)
       }
     };
     FetchBooking();
@@ -68,7 +72,15 @@ const Booking = () => {
     }
   };
   return (
-    <div className="mt-4 mx-auto w-[95vw] max-w-5xl min-h-[90vh]">
+    <div>
+
+    {
+      loading == true ? (
+        <div className="flex justify-center items-center h-[80vh]">
+        <Loading/>
+      </div>
+      ):(
+ <div className="mt-4 mx-auto w-[95vw] max-w-5xl min-h-[90vh]">
       {booking.length > 0 ? (
         booking.map((TourData, index) => (
           <div
@@ -246,6 +258,10 @@ const Booking = () => {
           </Link>
         </div>
       )}
+    </div>
+      )
+    }
+   
     </div>
   );
 };

@@ -14,10 +14,14 @@ const AdminBooking = () => {
   const [booking, setBooking] = useState([]);
   const [FilterBookingData, SetFilterBookingData] = useState([]);
   const [expandedIndexes, setExpandedIndexes] = useState({});
+  const [loading,SetLoading]=useState(false)
   useEffect(() => {
     const FetchBooking = async () => {
+      SetLoading(true)
       try {
-        const response = await apiClient.get(`${GET_ALL_BOOKING}`);
+        const response = await apiClient.get(`${GET_ALL_BOOKING}`,{
+          withCredentials:true
+        });
         console.log(response.data);
         if (response.status === 201) {
           SetFilterBookingData(response.data.getBooking);
@@ -27,6 +31,9 @@ const AdminBooking = () => {
         }
       } catch (error) {
         console.log(error);
+      }
+      finally{
+        SetLoading(false)
       }
     };
     FetchBooking();
@@ -85,8 +92,8 @@ const AdminBooking = () => {
           Search
         </button>
       </div>
-      <div className="max-w-5xl">
-        {typeof FilterBookingData === "undefined" ? (
+      <div className="mt-4 mx-auto max-w-5xl min-h-[90vh]">
+        {loading == true ? (
           Array.from({ length: 3 }).map((_, index) => (
             <div
               key={index}
@@ -110,7 +117,9 @@ const AdminBooking = () => {
               </div>
             </div>
           ))
-        ) : FilterBookingData.length > 0 ? (
+        ) :(
+        <>
+       { FilterBookingData.length > 0 ? (
           FilterBookingData.map((TourData, index) => (
             <div
               key={index}
@@ -268,13 +277,17 @@ const AdminBooking = () => {
                 </button>
               )}
             </div>
-          ))
-        ) : (
-          // No data found case
-          <div className="text-center text-gray-500 text-lg py-10">
+          )
+          )):(
+             <div className="text-center text-gray-500 text-lg py-10">
             😕 No bookings found.
           </div>
-        )}
+          )
+        }
+          </>
+          )}
+        
+      
       </div>
     </div>
   );

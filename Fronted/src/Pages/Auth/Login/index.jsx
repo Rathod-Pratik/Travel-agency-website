@@ -13,7 +13,12 @@ const Login = () => {
   const navigate=useNavigate();
 
   const HandleLogin= async () => {
-    if (!password || password.length < 8) {
+
+    if(!email){
+      return toast.error("Please Enter Email")
+    }
+
+    if (!password) {
       toast.error("Password must be at least 8 characters long.");
       return;
     }
@@ -39,12 +44,16 @@ const Login = () => {
         toast.error("Please enter valid credentials");
       }
     } catch (error) {
-      if (error.response && error.response.status === 401) {
-        toast.error( "Please enter valid credentials.");
-      } else {
+      const {data,status}=error.response;
+      if (data.NotFound && status === 400) {
+        toast.error( "Your Account Not Found.");
+      }
+     else if(data.WrongPass && status === 401) {
+        toast.error("Please Enter Currect Password.");
+      }
+       else {
         toast.error( error.response?.data?.message || "Login failed. Please try again.");
       }
-      console.error("Login failed:", error.response?.data || error.message);
     }
   };
 
