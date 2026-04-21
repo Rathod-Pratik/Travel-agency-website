@@ -15,6 +15,9 @@ const UserSchema = new mongoose.Schema(
       type:String,
       default:null
     },
+    otp: { type: String, default: null },
+    otpExpiry: { type: Date, default: null },
+    otpType: { type: String, enum: ["login", "forgotPassword"], default: null },
     createdAt: { type: Date, default: Date.now },
   },
  
