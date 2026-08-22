@@ -1,5 +1,5 @@
 import mongoose, { type HydratedDocument } from "mongoose";
-import type { IBlog } from "./Booking.types";
+import type { IBlog } from "./Blog.types";
 
 const blogSchema = new mongoose.Schema<IBlog>(
   {

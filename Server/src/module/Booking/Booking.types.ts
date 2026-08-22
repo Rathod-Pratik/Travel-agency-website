@@ -13,7 +13,8 @@ export interface IBooking {
   travellerDetails: ITravellerDetails[];
   date: Date;
   amount: number;
-  paymentId: string;
+  noOfSeats: number;
+  paymentId: mongoose.Types.ObjectId;
   status: "Booked" | "Cancelled" | "Pending";
   cancellation?: {
     reason: string;

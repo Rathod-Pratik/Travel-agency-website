@@ -15,6 +15,11 @@ const bookingSchema = new mongoose.Schema<IBooking>(
             required: [true, "Tour ID is required"],
         },
 
+        noOfSeats:{
+            type: Number,
+            required: [true, "Number of seats is required"],
+            min: [1, "Number of seats must be at least 1"]
+        },
         travellerDetails: {
             name: {
                 type: String,
@@ -47,9 +52,10 @@ const bookingSchema = new mongoose.Schema<IBooking>(
         },
 
         paymentId: {
-            type: String,
+            type: mongoose.Schema.Types.ObjectId,
             required: [true, "Payment ID is required"],
             trim: true,
+            ref: "Payment",
         },
 
         status: {

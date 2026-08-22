@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import BookingModel from './Booking.model';
 import { AuthModel } from '@modules/Auth/Auth.model';
+import { TourModel } from '@modules/Tour/Tour.model';
 
 export const GetBookings = async (req: Request, res: Response) => {
     try {
@@ -106,7 +107,7 @@ export const UpdateBooking = async (req: Request, res: Response) => {
 export const CancelBooking = async (req: Request, res: Response) => {
     try {
         const { all } = req.params;
-        const { id,tourId, reason, description, cancelledBy, refundAmount, refundStatus } = req.body;
+        const { id, tourId, reason, description, cancelledBy, refundAmount, refundStatus } = req.body;
 
         const user = await AuthModel.findById(id);
         if (!user) {
@@ -128,7 +129,9 @@ export const CancelBooking = async (req: Request, res: Response) => {
                         refundStatus: refundStatus
                     }
                 });
+                await TourModel.findByIdAndUpdate(tourId, { status: "Cancelled" });
             } else {
+
                 booking = await BookingModel.findByIdAndUpdate(tourId, {
                     status: "cancelled", cancellation: {
                         reason: reason,
@@ -138,7 +141,23 @@ export const CancelBooking = async (req: Request, res: Response) => {
                         refundStatus: refundStatus
                     }
                 }, { new: true });
+                if (!booking) {
+                    return res.status(404).json({
+                        success: false,
+                        message: "Booking not found"
+                    });
+                }
+
+                await TourModel.findByIdAndUpdate(
+                    tourId,
+                    {
+                        $inc: {
+                            seatsAvailable: booking.noOfSeats
+                        }
+                    }
+                );
             }
+
         } else if (user.role === "User") {
             booking = await BookingModel.findByIdAndUpdate(tourId, {
                 status: "cancelled", cancellation: {
@@ -149,6 +168,20 @@ export const CancelBooking = async (req: Request, res: Response) => {
                     refundStatus: refundStatus
                 }
             }, { new: true });
+            if (!booking) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Booking not found"
+                });
+            }
+            await TourModel.findByIdAndUpdate(
+                tourId,
+                {
+                    $inc: {
+                        seatsAvailable: booking.noOfSeats
+                    }
+                }
+            );
         }
 
         if (!booking) {

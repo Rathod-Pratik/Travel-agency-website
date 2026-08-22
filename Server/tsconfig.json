@@ -10,7 +10,9 @@
     "paths": {
       "@modules/*": ["./src/module/*"],
       "@middleware/*": ["./src/Middleware/*"],
-      "@utils/*": ["./src/utils/*"]
+      "@utils/*": ["./src/utils/*"],
+      "@config/*": ["./src/config/*"],
+      "@api/*": ["./src/api/*"]
     },
 
     "strict": true,

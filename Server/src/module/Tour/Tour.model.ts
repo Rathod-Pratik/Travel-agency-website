@@ -141,7 +141,7 @@ const TourSchema = new mongoose.Schema<ITour>(
 
     status: {
       type: String,
-      enum: ["draft", "active", "inactive", "completed"],
+      enum: ["draft", "active", "inactive", "completed","Cancelled"],
       default: "draft"
     },
 

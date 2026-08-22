@@ -3,6 +3,7 @@ import { AuthModel } from "./Auth.model";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { getUploadedFile, uploadFileToS3 } from "@utils/Function";
+import { getCache, getCacheVersion, incrementCacheVersion, setCache } from "@utils/cache";
 
 export const Login = async (req: Request, res: Response) => {
     try {
@@ -105,43 +106,82 @@ export const SignUp = async (req: Request, res: Response) => {
 }
 
 export const GetProfile = async (req: Request, res: Response) => {
-    const { id } = req.body;
+  const { id } = req.body;
 
     try {
 
         if (!id) {
-            return res.status(401).json({
+            return res.status(400).json({
                 success: false,
-                message: "Unauthorized access",
+                message: "User ID is required"
             });
         }
 
-        const user = await AuthModel.findById(id).select("-password");
+        // Get current user cache version
+        const version = await getCacheVersion(
+            `user:${id}`
+        );
+
+        const cacheKey =
+            `user:${id}:profile:v${version}`;
+
+        // Check Redis
+        const cachedUser =
+            await getCache(cacheKey);
+
+        if (cachedUser) {
+
+            return res.status(200).json({
+                success: true,
+                message: "Profile retrieved successfully",
+                source: "redis",
+                user: cachedUser
+            });
+        }
+
+        // MongoDB
+        const user = await AuthModel
+            .findById(id)
+            .select("-password")
+            .lean();
 
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: "User profile not found",
+                message: "User profile not found"
             });
         }
+
+        // Cache profile for 10 minutes
+        await setCache(
+            cacheKey,
+            user,
+            600
+        );
 
         return res.status(200).json({
             success: true,
             message: "Profile retrieved successfully",
-            user,
+            source: "mongodb",
+            user
         });
+
     } catch (error) {
-        console.error("GetProfile Error:", error);
+
+        console.error(
+            "GetProfile Error:",
+            error
+        );
+
         return res.status(500).json({
             success: false,
-            message: "Internal server error",
+            message: "Internal server error"
         });
     }
 
-
 }
 
-export const DeleteProfile = (req: Request, res: Response) => {
+export const DeleteProfile = async (req: Request, res: Response) => {
     const { id } = req.body;
     try {
         if (!id) {
@@ -157,6 +197,8 @@ export const DeleteProfile = (req: Request, res: Response) => {
                 message: "User profile not found",
             });
         }
+
+        await incrementCacheVersion(`user:${id}`);
         return res.status(200).json({
             success: true,
             message: "Profile deleted successfully",
@@ -200,11 +242,13 @@ export const UpdateProfile = async (req: Request, res: Response) => {
                 message: "User profile not found",
             });
         }
+        await incrementCacheVersion(`user:${id}`);
         return res.status(200).json({
             success: true,
             message: "Profile updated successfully",
             user,
         });
+
     } catch (error) {
         console.error("UpdateProfile Error:", error);
         return res.status(500).json({
