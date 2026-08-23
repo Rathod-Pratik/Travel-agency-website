@@ -25,6 +25,14 @@ const AuthSchema = new mongoose.Schema<IAuth>({
     },
     address: {
         type: String
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
+    DeletedAt: {
+        type: Date,
+        default: null
     }
 },
     {

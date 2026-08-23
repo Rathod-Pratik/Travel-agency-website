@@ -17,4 +17,6 @@ export interface IHotel {
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
+    isDeleted?: boolean;
+    DeletedAt?: Date;
 }

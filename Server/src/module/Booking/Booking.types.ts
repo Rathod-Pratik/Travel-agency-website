@@ -24,4 +24,6 @@ export interface IBooking {
     refundAmount: number;
     refundStatus: "PENDING" | "REFUNDED" | "FAILED";
   };
+  isDeleted?: boolean;
+  DeletedAt?: Date;
 }

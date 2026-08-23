@@ -15,7 +15,7 @@ const bookingSchema = new mongoose.Schema<IBooking>(
             required: [true, "Tour ID is required"],
         },
 
-        noOfSeats:{
+        noOfSeats: {
             type: Number,
             required: [true, "Number of seats is required"],
             min: [1, "Number of seats must be at least 1"]
@@ -76,7 +76,14 @@ const bookingSchema = new mongoose.Schema<IBooking>(
                 type: String,
                 enum: ["NOT_APPLICABLE", "PENDING", "PROCESSING", "REFUNDED", "FAILED"]
             }
-        }
+        },
+        isDeleted: {
+            type: Boolean,
+            default: false,
+        }, DeletedAt: {
+            type: Date,
+            default: null,
+        },
     },
     {
         timestamps: true,

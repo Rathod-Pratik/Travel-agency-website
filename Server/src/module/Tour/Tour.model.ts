@@ -156,7 +156,15 @@ const TourSchema = new mongoose.Schema<ITour>(
 
     endDate: {
       type: Date
-    }
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false
+  },
+  DeletedAt: {
+      type: Date,
+      default: null
+  }
   },
   {
     timestamps: true

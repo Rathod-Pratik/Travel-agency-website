@@ -1,4 +1,4 @@
-import mongoose,{type HydratedDocument} from "mongoose";
+import mongoose, { type HydratedDocument } from "mongoose";
 import type { IContact } from "./Contact.types";
 
 const ContactSchema = new mongoose.Schema<IContact>(
@@ -26,7 +26,15 @@ const ContactSchema = new mongoose.Schema<IContact>(
     message: {
       type: String,
       required: [true, "Message is required"],
-    }
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    DeletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

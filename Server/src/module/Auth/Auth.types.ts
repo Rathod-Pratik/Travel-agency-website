@@ -6,6 +6,8 @@ export interface IAuth{
     phone:string,
     role:string,
     address:string,
+    isDeleted:boolean,
+    DeletedAt:Date
 }
 
 export interface ILogin{

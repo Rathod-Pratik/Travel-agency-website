@@ -10,8 +10,13 @@ import { BlogModel } from "./Blog.model";
 
 import {
     getCacheVersion,
-    incrementCacheVersion, BlogCacheKeys, setCache, getCache
+    incrementCacheVersion,
+    BlogCacheKeys,
+    setCache,
+    getCache
 } from "@utils/index";
+
+import { logger } from "@modules/log/logger";
 
 
 export const CreateBlog = async (
@@ -26,6 +31,13 @@ export const CreateBlog = async (
         const file = getUploadedFile(req);
 
         if (!file) {
+
+            logger.warn("Blog creation failed - image missing", {
+                metadata: {
+                    title
+                }
+            });
+
             return res.status(400).json({
                 success: false,
                 message: "Image is required",
@@ -49,6 +61,13 @@ export const CreateBlog = async (
             BlogCacheKeys.listVersion()
         );
 
+        logger.info("Blog created successfully", {
+            metadata: {
+                blogId: blog._id.toString(),
+                title
+            }
+        });
+
         return res.status(201).json({
             success: true,
             message: "Blog created successfully",
@@ -57,7 +76,14 @@ export const CreateBlog = async (
 
     } catch (err) {
 
-        console.error("CreateBlog Error:", err);
+        logger.error("CreateBlog error", {
+            metadata: {
+                title,
+                error: err instanceof Error
+                    ? err.message
+                    : String(err)
+            }
+        });
 
         return res.status(500).json({
             success: false,
@@ -82,6 +108,13 @@ export const UpdateBlog = async (
         const blog = await BlogModel.findById(id);
 
         if (!blog) {
+
+            logger.warn("Blog update failed - blog not found", {
+                metadata: {
+                    blogId: id
+                }
+            });
+
             return res.status(404).json({
                 success: false,
                 message: "Blog not found",
@@ -129,6 +162,13 @@ export const UpdateBlog = async (
             );
 
         if (!updatedBlogData) {
+
+            logger.warn("Blog update failed - blog not found", {
+                metadata: {
+                    blogId: id
+                }
+            });
+
             return res.status(404).json({
                 success: false,
                 message: "Blog not found",
@@ -143,6 +183,12 @@ export const UpdateBlog = async (
             BlogCacheKeys.listVersion()
         );
 
+        logger.info("Blog updated successfully", {
+            metadata: {
+                blogId: id
+            }
+        });
+
         return res.status(200).json({
             success: true,
             message: "Blog updated successfully",
@@ -151,7 +197,14 @@ export const UpdateBlog = async (
 
     } catch (err) {
 
-        console.error("UpdateBlog Error:", err);
+        logger.error("UpdateBlog error", {
+            metadata: {
+                blogId: id,
+                error: err instanceof Error
+                    ? err.message
+                    : String(err)
+            }
+        });
 
         return res.status(500).json({
             success: false,
@@ -173,17 +226,26 @@ export const DeleteBlog = async (
         const blog = await BlogModel.findById(id);
 
         if (!blog) {
+
+            logger.warn("Blog deletion failed - blog not found", {
+                metadata: {
+                    blogId: id
+                }
+            });
+
             return res.status(404).json({
                 success: false,
                 message: "Blog not found",
             });
         }
 
-        if (blog.image) {
-            await deleteFile(blog.image);
-        }
-
-        await BlogModel.findByIdAndDelete(id);
+        await BlogModel.findByIdAndUpdate(
+            id,
+            {
+                isDeleted: true,
+                DeletedAt: new Date()
+            }
+        );
 
         await incrementCacheVersion(
             BlogCacheKeys.detailsVersion(id as string)
@@ -193,6 +255,12 @@ export const DeleteBlog = async (
             BlogCacheKeys.listVersion()
         );
 
+        logger.info("Blog deleted successfully", {
+            metadata: {
+                blogId: id
+            }
+        });
+
         return res.status(200).json({
             success: true,
             message: "Blog deleted successfully",
@@ -200,7 +268,14 @@ export const DeleteBlog = async (
 
     } catch (err) {
 
-        console.error("DeleteBlog Error:", err);
+        logger.error("DeleteBlog error", {
+            metadata: {
+                blogId: id,
+                error: err instanceof Error
+                    ? err.message
+                    : String(err)
+            }
+        });
 
         return res.status(500).json({
             success: false,
@@ -245,6 +320,15 @@ export const GetBlog = async (
         const cachedData = await getCache(cacheKey);
 
         if (cachedData) {
+
+            logger.info("Blogs retrieved from cache", {
+                metadata: {
+                    page,
+                    limit,
+                    source: "cache"
+                }
+            });
+
             return res.status(200).json({
                 success: true,
                 message: "Blogs retrieved successfully",
@@ -255,13 +339,23 @@ export const GetBlog = async (
             });
         }
 
-        const blogs = await BlogModel.find()
+        const blogs = await BlogModel.find({
+            isDeleted: false
+        })
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(limit)
             .lean();
 
         if (blogs.length === 0) {
+
+            logger.warn("No blogs found", {
+                metadata: {
+                    page,
+                    limit
+                }
+            });
+
             return res.status(404).json({
                 success: false,
                 message: "No blogs found",
@@ -274,6 +368,15 @@ export const GetBlog = async (
             600
         );
 
+        logger.info("Blogs retrieved from database", {
+            metadata: {
+                count: blogs.length,
+                page,
+                limit,
+                source: "database"
+            }
+        });
+
         return res.status(200).json({
             success: true,
             message: "Blogs retrieved successfully",
@@ -285,7 +388,13 @@ export const GetBlog = async (
 
     } catch (err) {
 
-        console.error("GetBlog Error:", err);
+        logger.error("GetBlog error", {
+            metadata: {
+                error: err instanceof Error
+                    ? err.message
+                    : String(err)
+            }
+        });
 
         return res.status(500).json({
             success: false,
@@ -305,6 +414,9 @@ export const GetBlogById = async (
     try {
 
         if (!id) {
+
+            logger.warn("Get blog failed - blog ID missing");
+
             return res.status(400).json({
                 success: false,
                 message: "Blog ID is required",
@@ -323,6 +435,14 @@ export const GetBlogById = async (
         const cachedData = await getCache(cacheKey);
 
         if (cachedData) {
+
+            logger.info("Blog retrieved from cache", {
+                metadata: {
+                    blogId: id,
+                    source: "cache"
+                }
+            });
+
             return res.status(200).json({
                 success: true,
                 message: "Blog retrieved successfully",
@@ -336,6 +456,13 @@ export const GetBlogById = async (
             .lean();
 
         if (!blog) {
+
+            logger.warn("Blog not found", {
+                metadata: {
+                    blogId: id
+                }
+            });
+
             return res.status(404).json({
                 success: false,
                 message: "Blog not found",
@@ -348,6 +475,13 @@ export const GetBlogById = async (
             600
         );
 
+        logger.info("Blog retrieved from database", {
+            metadata: {
+                blogId: id,
+                source: "database"
+            }
+        });
+
         return res.status(200).json({
             success: true,
             message: "Blog retrieved successfully",
@@ -357,7 +491,14 @@ export const GetBlogById = async (
 
     } catch (err) {
 
-        console.error("GetBlogById Error:", err);
+        logger.error("GetBlogById error", {
+            metadata: {
+                blogId: id,
+                error: err instanceof Error
+                    ? err.message
+                    : String(err)
+            }
+        });
 
         return res.status(500).json({
             success: false,

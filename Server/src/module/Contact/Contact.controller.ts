@@ -3,8 +3,10 @@ import { ContactModel } from "./Contact.model";
 
 import {
     ContactCacheKeys, getCacheVersion, getCache,
-    setCache,incrementCacheVersion
+    setCache, incrementCacheVersion
 } from "@utils/index";
+
+import { logger } from "@modules/log/logger";
 
 export const AddContact = async (
     req: Request,
@@ -18,6 +20,7 @@ export const AddContact = async (
         mobile,
         message
     } = req.body;
+
     try {
         const contact = await ContactModel.create({
             userid,
@@ -29,6 +32,13 @@ export const AddContact = async (
 
         if (!contact) {
 
+            logger.warn("Contact creation failed", {
+                metadata: {
+                    email,
+                    userid
+                }
+            });
+
             return res.status(400).json({
                 success: false,
                 message: "Failed to add contact"
@@ -38,6 +48,15 @@ export const AddContact = async (
         await incrementCacheVersion(
             ContactCacheKeys.listVersion()
         );
+
+        logger.info("Contact added successfully", {
+            metadata: {
+                contactId: contact._id.toString(),
+                userid,
+                email
+            }
+        });
+
         return res.status(201).json({
             success: true,
             message: "Contact added successfully",
@@ -45,6 +64,16 @@ export const AddContact = async (
         });
 
     } catch (err) {
+
+        logger.error("Error adding contact", {
+            metadata: {
+                userid,
+                email,
+                error: err instanceof Error
+                    ? err.message
+                    : String(err)
+            }
+        });
 
         return res.status(500).json({
             success: false,
@@ -68,12 +97,15 @@ export const GetContact = async (
         if (page < 1) {
             page = 1;
         }
+
         if (limit < 1) {
             limit = 10;
         }
+
         if (limit > 100) {
             limit = 100;
         }
+
         const version = await getCacheVersion(
             ContactCacheKeys.listVersion()
         );
@@ -84,8 +116,15 @@ export const GetContact = async (
         const cachedContacts =
             await getCache(cacheKey);
 
-
         if (cachedContacts) {
+
+            logger.info("Contacts retrieved from Redis", {
+                metadata: {
+                    page,
+                    limit,
+                    source: "redis"
+                }
+            });
 
             return res.status(200).json({
                 success: true,
@@ -96,13 +135,19 @@ export const GetContact = async (
         }
 
         const contacts = await ContactModel
-            .find()
+            .find({ isDeleted: false })
             .skip((page - 1) * limit)
             .limit(limit)
             .lean();
 
-
         if (!contacts || contacts.length === 0) {
+
+            logger.warn("No contacts found", {
+                metadata: {
+                    page,
+                    limit
+                }
+            });
 
             return res.status(404).json({
                 success: false,
@@ -113,9 +158,17 @@ export const GetContact = async (
         await setCache(
             cacheKey,
             contacts,
-            300 // 5 minutes
+            300
         );
 
+        logger.info("Contacts retrieved from MongoDB", {
+            metadata: {
+                count: contacts.length,
+                page,
+                limit,
+                source: "mongodb"
+            }
+        });
 
         return res.status(200).json({
             success: true,
@@ -125,6 +178,16 @@ export const GetContact = async (
         });
 
     } catch (err) {
+
+        logger.error("Error retrieving contacts", {
+            metadata: {
+                page: req.query.page,
+                limit: req.query.limit,
+                error: err instanceof Error
+                    ? err.message
+                    : String(err)
+            }
+        });
 
         return res.status(500).json({
             success: false,
@@ -144,10 +207,24 @@ export const DeleteContact = async (
     try {
 
         const contact =
-            await ContactModel.findByIdAndDelete(id);
-
+            await ContactModel.findByIdAndUpdate(
+                id,
+                {
+                    isDeleted: true,
+                    DeletedAt: new Date()
+                },
+                {
+                    new: true
+                }
+            );
 
         if (!contact) {
+
+            logger.warn("Contact deletion failed - contact not found", {
+                metadata: {
+                    contactId: id
+                }
+            });
 
             return res.status(404).json({
                 success: false,
@@ -159,6 +236,12 @@ export const DeleteContact = async (
             ContactCacheKeys.listVersion()
         );
 
+        logger.info("Contact deleted successfully", {
+            metadata: {
+                contactId: id,
+                userid: contact.userid
+            }
+        });
 
         return res.status(200).json({
             success: true,
@@ -166,6 +249,15 @@ export const DeleteContact = async (
         });
 
     } catch (err) {
+
+        logger.error("Error deleting contact", {
+            metadata: {
+                contactId: id,
+                error: err instanceof Error
+                    ? err.message
+                    : String(err)
+            }
+        });
 
         return res.status(500).json({
             success: false,

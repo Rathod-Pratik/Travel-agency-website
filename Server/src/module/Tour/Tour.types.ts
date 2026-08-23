@@ -75,4 +75,6 @@ export interface ITour {
   endDate?: Date;
 
   createdBy: string;
+  isDeleted?: boolean;
+  DeletedAt?: Date;
 }

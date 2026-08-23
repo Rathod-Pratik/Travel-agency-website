@@ -70,7 +70,15 @@ const HotelSchema = new mongoose.Schema<IHotel>(
     isActive: {
       type: Boolean,
       default: true
-    }
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false
+  },
+  DeletedAt: {
+      type: Date,
+      default: null
+  }
   },
   {
     timestamps: true

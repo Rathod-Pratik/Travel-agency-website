@@ -5,5 +5,7 @@ export interface IContact {
     email: string,
     mobile: string,
     message: string,
-    userid: mongoose.Schema.Types.ObjectId
+    userid: mongoose.Schema.Types.ObjectId,
+    isDeleted?: boolean,
+    DeletedAt?: Date
 }

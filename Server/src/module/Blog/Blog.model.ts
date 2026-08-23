@@ -20,6 +20,14 @@ const blogSchema = new mongoose.Schema<IBlog>(
       required: [true, "Description is required"],
       trim: true,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    DeletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
