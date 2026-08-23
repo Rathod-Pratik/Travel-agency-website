@@ -15,5 +15,5 @@ export const UpdateReviewSchema = z.object({
 });
 
 export const ReviewIdSchema = z.object({
-    _id: z.string().uuid()
+    id: z.string().uuid()
 });

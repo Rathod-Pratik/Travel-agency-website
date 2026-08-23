@@ -3,7 +3,7 @@ import { AuthModel } from "./Auth.model";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { getUploadedFile, uploadFileToS3 } from "@utils/Function";
-import { getCache, getCacheVersion, incrementCacheVersion, setCache } from "@utils/cache";
+import { AuthCacheKeys, getCache, getCacheVersion, incrementCacheVersion, setCache } from "@utils/index";
 
 export const Login = async (req: Request, res: Response) => {
     try {
@@ -106,7 +106,7 @@ export const SignUp = async (req: Request, res: Response) => {
 }
 
 export const GetProfile = async (req: Request, res: Response) => {
-  const { id } = req.body;
+    const { id } = req.body;
 
     try {
 
@@ -116,15 +116,9 @@ export const GetProfile = async (req: Request, res: Response) => {
                 message: "User ID is required"
             });
         }
+        const version = await getCacheVersion(AuthCacheKeys.detailsVersion(id as string));
 
-        // Get current user cache version
-        const version = await getCacheVersion(
-            `user:${id}`
-        );
-
-        const cacheKey =
-            `user:${id}:profile:v${version}`;
-
+        const cacheKey = AuthCacheKeys.details(id as string, version);
         // Check Redis
         const cachedUser =
             await getCache(cacheKey);
@@ -198,7 +192,7 @@ export const DeleteProfile = async (req: Request, res: Response) => {
             });
         }
 
-        await incrementCacheVersion(`user:${id}`);
+        await incrementCacheVersion(AuthCacheKeys.detailsVersion(id as string));
         return res.status(200).json({
             success: true,
             message: "Profile deleted successfully",
@@ -213,7 +207,7 @@ export const DeleteProfile = async (req: Request, res: Response) => {
 }
 
 export const UpdateProfile = async (req: Request, res: Response) => {
-    const { id, name, email } = req.body;
+    const { id, name, email, address } = req.body;
     const file = getUploadedFile(req);
 
     try {
@@ -235,14 +229,14 @@ export const UpdateProfile = async (req: Request, res: Response) => {
             folderType: "Blog",
         });
 
-        const user = AuthModel.findByIdAndUpdate({ _id: id }, { name, email, coverImage: uploadedFile.url }, { new: true }).select("-password");
+        const user = AuthModel.findByIdAndUpdate({ _id: id }, { name, email, image: uploadedFile.url, address }, { new: true }).select("-password");
         if (!user) {
             return res.status(404).json({
                 success: false,
                 message: "User profile not found",
             });
         }
-        await incrementCacheVersion(`user:${id}`);
+        await incrementCacheVersion(AuthCacheKeys.detailsVersion(id as string));
         return res.status(200).json({
             success: true,
             message: "Profile updated successfully",

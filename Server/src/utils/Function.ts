@@ -61,19 +61,9 @@ export interface SanitizedUploadInput {
 	fileType: string;
 }
 
-export interface SignUrlResponse {
-	url: string;
-	fields: Record<string, string>;
-	key: string;
-}
-
 export interface GetSignedUrlRequestBody {
 	key: string;
 	downloadFileName?: string;
-}
-
-export interface GetSignedUrlResponse {
-	url: string;
 }
 
 export interface UploadFileRequestBody {
@@ -209,7 +199,7 @@ export const create_sign_url = async ({
   fileName,
   fileType,
   folderType,
-}: SignUrlRequestBody): Promise<SignUrlResponse> => {
+}: SignUrlRequestBody) => {
   if (!fileName || !folderType || !fileType) {
     throw new Error("fileName, fileType and folderType are required");
   }
@@ -247,7 +237,7 @@ export const create_sign_url = async ({
   };
 };
 
-export const Get_Signed_Url = async ({ key, downloadFileName }: GetSignedUrlRequestBody): Promise<GetSignedUrlResponse> => {
+export const Get_Signed_Url = async ({ key, downloadFileName }: GetSignedUrlRequestBody) => {
   if (!key) {
     throw new Error("key is required");
   }

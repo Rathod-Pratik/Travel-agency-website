@@ -1,135 +1,367 @@
-import { deleteFile, getUploadedFile, uploadFileToS3 } from "@utils/Function";
+import {
+    deleteFile,
+    getUploadedFile,
+    uploadFileToS3,
+} from "@utils/Function";
+
 import { Request, Response } from "express";
+
 import { BlogModel } from "./Blog.model";
 
-export const CreateBlog = async (req: Request, res: Response) => {
+import {
+    getCacheVersion,
+    incrementCacheVersion, BlogCacheKeys, setCache, getCache
+} from "@utils/index";
+
+
+export const CreateBlog = async (
+    req: Request,
+    res: Response
+) => {
+
     const { title, description } = req.body;
-    const file = getUploadedFile(req);
+
     try {
+
+        const file = getUploadedFile(req);
+
         if (!file) {
-            return res.status(400).json({ message: "Image is required" });
+            return res.status(400).json({
+                success: false,
+                message: "Image is required",
+            });
         }
 
-        const uploadedFile = await uploadFileToS3
-            ({
-                buffer: file.buffer,
-                fileName: file.originalname,
-                fileType: file.mimetype,
-                folderType: "Blog",
-            });
+        const uploadedFile = await uploadFileToS3({
+            buffer: file.buffer,
+            fileName: file.originalname,
+            fileType: file.mimetype,
+            folderType: "Blog",
+        });
 
-        const newBlog = {
+        const blog = await BlogModel.create({
             title,
             description,
             image: uploadedFile.url,
-        };
-        const blog = await BlogModel.create(newBlog);
+        });
+
+        await incrementCacheVersion(
+            BlogCacheKeys.listVersion()
+        );
+
         return res.status(201).json({
             success: true,
             message: "Blog created successfully",
             data: blog,
         });
+
     } catch (err) {
+
+        console.error("CreateBlog Error:", err);
+
         return res.status(500).json({
             success: false,
             message: "Error creating blog",
-            data: err,
         });
     }
-}
-export const UpdateBlog = async (req: Request, res: Response) => {
+};
+
+
+export const UpdateBlog = async (
+    req: Request,
+    res: Response
+) => {
+
     const { id } = req.params;
-    const file = getUploadedFile(req);
+    const { title, description } = req.body;
+
     try {
-        const blog = await BlogModel.findById({ _id: id });
+
+        const file = getUploadedFile(req);
+
+        const blog = await BlogModel.findById(id);
+
         if (!blog) {
-            return res.status(404).json({ message: "Blog not found" });
+            return res.status(404).json({
+                success: false,
+                message: "Blog not found",
+            });
         }
+
+        const updatedBlog: {
+            title?: string;
+            description?: string;
+            image?: string;
+        } = {};
+
+        if (title !== undefined) {
+            updatedBlog.title = title;
+        }
+
+        if (description !== undefined) {
+            updatedBlog.description = description;
+        }
+
         if (file) {
+
             const uploadedFile = await uploadFileToS3({
                 buffer: file.buffer,
                 fileName: file.originalname,
                 fileType: file.mimetype,
                 folderType: "Blog",
             });
-            blog.image = uploadedFile.url;
 
-            await deleteFile(blog.image);
+            updatedBlog.image = uploadedFile.url;
+
+            if (blog.image) {
+                await deleteFile(blog.image);
+            }
         }
-        await blog.save();
+
+        const updatedBlogData =
+            await BlogModel.findByIdAndUpdate(
+                id,
+                updatedBlog,
+                {
+                    new: true,
+                    runValidators: true,
+                }
+            );
+
+        if (!updatedBlogData) {
+            return res.status(404).json({
+                success: false,
+                message: "Blog not found",
+            });
+        }
+
+        await incrementCacheVersion(
+            BlogCacheKeys.detailsVersion(id as string)
+        );
+
+        await incrementCacheVersion(
+            BlogCacheKeys.listVersion()
+        );
+
         return res.status(200).json({
             success: true,
             message: "Blog updated successfully",
-            data: blog,
+            data: updatedBlogData,
         });
+
     } catch (err) {
+
+        console.error("UpdateBlog Error:", err);
+
         return res.status(500).json({
             success: false,
             message: "Error updating blog",
-            data: err,
         });
     }
-}
-export const DeleteBlog = async (req: Request, res: Response) => {
+};
+
+
+export const DeleteBlog = async (
+    req: Request,
+    res: Response
+) => {
+
     const { id } = req.params;
+
     try {
-        const blog = await BlogModel.findById({ _id: id });
+
+        const blog = await BlogModel.findById(id);
+
         if (!blog) {
-            return res.status(404).json({ message: "Blog not found" });
+            return res.status(404).json({
+                success: false,
+                message: "Blog not found",
+            });
         }
-        await deleteFile(blog.image);
-        await BlogModel.findByIdAndDelete({ _id: id });
+
+        if (blog.image) {
+            await deleteFile(blog.image);
+        }
+
+        await BlogModel.findByIdAndDelete(id);
+
+        await incrementCacheVersion(
+            BlogCacheKeys.detailsVersion(id as string)
+        );
+
+        await incrementCacheVersion(
+            BlogCacheKeys.listVersion()
+        );
+
         return res.status(200).json({
             success: true,
             message: "Blog deleted successfully",
         });
+
     } catch (err) {
+
+        console.error("DeleteBlog Error:", err);
+
         return res.status(500).json({
             success: false,
             message: "Error deleting blog",
-            data: err,
         });
     }
-}
-export const GetBlog = async (req: Request, res: Response) => {
+};
+
+
+export const GetBlog = async (
+    req: Request,
+    res: Response
+) => {
+
     try {
-        const { page = 1, limit = 10 } = req.query;
-        const blogs = await BlogModel.find()
-            .skip((Number(page) - 1) * Number(limit))
-            .limit(Number(limit));
-        if (!blogs || blogs.length === 0) {
-            return res.status(404).json({ message: "Blog not found" });
+
+        let page = Number(req.query.page) || 1;
+        let limit = Number(req.query.limit) || 10;
+
+        if (page < 1) {
+            page = 1;
         }
+
+        if (limit < 1) {
+            limit = 10;
+        }
+
+        if (limit > 100) {
+            limit = 100;
+        }
+
+        const version = await getCacheVersion(
+            BlogCacheKeys.listVersion()
+        );
+
+        const cacheKey = BlogCacheKeys.list(
+            version,
+            page,
+            limit
+        );
+
+        const cachedData = await getCache(cacheKey);
+
+        if (cachedData) {
+            return res.status(200).json({
+                success: true,
+                message: "Blogs retrieved successfully",
+                source: "cache",
+                page,
+                limit,
+                data: cachedData,
+            });
+        }
+
+        const blogs = await BlogModel.find()
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .lean();
+
+        if (blogs.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No blogs found",
+            });
+        }
+
+        await setCache(
+            cacheKey,
+            blogs,
+            600
+        );
+
         return res.status(200).json({
             success: true,
-            message: "Blog retrieved successfully",
+            message: "Blogs retrieved successfully",
+            source: "database",
+            page,
+            limit,
             data: blogs,
         });
+
     } catch (err) {
+
+        console.error("GetBlog Error:", err);
+
         return res.status(500).json({
             success: false,
-            message: "Error retrieving blog",
-            data: err,
+            message: "Error retrieving blogs",
         });
     }
-}
-export const GetBlogById = async (req: Request, res: Response) => {
+};
+
+
+export const GetBlogById = async (
+    req: Request,
+    res: Response
+) => {
+
     const { id } = req.params;
+
     try {
-        const blog = await BlogModel.findById({ _id: id });
-        if (!blog) {
-            return res.status(404).json({ message: "Blog not found" });
+
+        if (!id) {
+            return res.status(400).json({
+                success: false,
+                message: "Blog ID is required",
+            });
         }
+
+        const version = await getCacheVersion(
+            BlogCacheKeys.detailsVersion(id as string)
+        );
+
+        const cacheKey = BlogCacheKeys.details(
+            id as string,
+            version
+        );
+
+        const cachedData = await getCache(cacheKey);
+
+        if (cachedData) {
+            return res.status(200).json({
+                success: true,
+                message: "Blog retrieved successfully",
+                source: "cache",
+                data: cachedData,
+            });
+        }
+
+        const blog = await BlogModel
+            .findById(id)
+            .lean();
+
+        if (!blog) {
+            return res.status(404).json({
+                success: false,
+                message: "Blog not found",
+            });
+        }
+
+        await setCache(
+            cacheKey,
+            blog,
+            600
+        );
+
         return res.status(200).json({
             success: true,
             message: "Blog retrieved successfully",
+            source: "database",
             data: blog,
         });
+
     } catch (err) {
+
+        console.error("GetBlogById Error:", err);
+
         return res.status(500).json({
             success: false,
             message: "Error retrieving blog",
-            data: err,
         });
     }
-}
+};

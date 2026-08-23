@@ -3,7 +3,7 @@ import upload from '@middleware/Multer.middleware';
 import express from 'express'
 import { CreateBlog, UpdateBlog, DeleteBlog, GetBlog, GetBlogById } from './Blog.controller';
 import { Validate } from '@middleware/Validation.middleware';
-import { IBlogSchema, IGetBlogSchema, IUpdateBlogSchema } from './Blog.validation';
+import { IBlogSchema, IGetBlogSchema, IGetBlogsSchema, IUpdateBlogSchema } from './Blog.validation';
 
 const Route = express.Router();
 
@@ -32,6 +32,7 @@ Route.delete(
 
 Route.get(
     "/blogs?page=:page&limit=:limit",
+    Validate(IGetBlogsSchema),
     GetBlog
 );
 

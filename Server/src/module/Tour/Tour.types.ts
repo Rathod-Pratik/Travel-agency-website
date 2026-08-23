@@ -66,7 +66,7 @@ export interface ITour {
 
   totalReviews: number;
 
-  status: "draft" | "active" | "inactive" | "completed";
+  status: "draft" | "active" | "inactive" | "completed" | "Cancelled";
 
   featured: boolean;
 

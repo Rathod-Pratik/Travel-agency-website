@@ -2,11 +2,9 @@ import { Request, Response } from "express";
 import { ContactModel } from "./Contact.model";
 
 import {
-    getCache,
-    setCache,
-    getCacheVersion,
-    incrementCacheVersion
-} from "@utils/cache";
+    ContactCacheKeys, getCacheVersion, getCache,
+    setCache,incrementCacheVersion
+} from "@utils/index";
 
 export const AddContact = async (
     req: Request,
@@ -20,10 +18,7 @@ export const AddContact = async (
         mobile,
         message
     } = req.body;
-
     try {
-
-        // Create contact in MongoDB
         const contact = await ContactModel.create({
             userid,
             name,
@@ -40,9 +35,9 @@ export const AddContact = async (
             });
         }
 
-        await incrementCacheVersion("contact");
-
-
+        await incrementCacheVersion(
+            ContactCacheKeys.listVersion()
+        );
         return res.status(201).json({
             success: true,
             message: "Contact added successfully",
@@ -66,16 +61,25 @@ export const GetContact = async (
 
     try {
 
-        const page = Number(req.query.page) || 1;
+        let page = Number(req.query.page) || 1;
 
-        const limit = Number(req.query.limit) || 10;
+        let limit = Number(req.query.limit) || 10;
 
+        if (page < 1) {
+            page = 1;
+        }
+        if (limit < 1) {
+            limit = 10;
+        }
+        if (limit > 100) {
+            limit = 100;
+        }
         const version = await getCacheVersion(
-            "contact"
+            ContactCacheKeys.listVersion()
         );
 
         const cacheKey =
-            `contact:list:v${version}:page:${page}:limit:${limit}`;
+            ContactCacheKeys.list(version, page, limit);
 
         const cachedContacts =
             await getCache(cacheKey);
@@ -152,7 +156,7 @@ export const DeleteContact = async (
         }
 
         await incrementCacheVersion(
-            "contact"
+            ContactCacheKeys.listVersion()
         );
 
 

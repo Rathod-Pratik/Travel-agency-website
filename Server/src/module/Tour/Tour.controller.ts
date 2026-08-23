@@ -1,15 +1,38 @@
 import { Request, Response } from 'express';
 import { TourModel } from './Tour.model';
-import { getMultipleUploadedFiles, uploadFileToS3 } from '@utils/index';
+import { getCache, getCacheVersion, getMultipleUploadedFiles, incrementCacheVersion, setCache, TourCacheKeys, uploadFileToS3 } from '@utils/index';
 
 export const GetTours = async (req: Request, res: Response) => {
-    const { page = 1, limit = 10 } = req.query;
     try {
+        let page = Number(req.query.page) || 1;
+        let limit = Number(req.query.limit) || 10;
+
+        if (page < 1) {
+            page = 1;
+        }
+        if (limit < 1) {
+            limit = 10;
+        }
+        if (limit > 100) {
+            limit = 100;
+        }
+        const version = await getCacheVersion(TourCacheKeys.listVersion());
+        const cacheKey = TourCacheKeys.list(version, page, limit);
+        const cachedData = await getCache(cacheKey);
+        if (cachedData) {
+            return res.status(200).json({
+                success: true,
+                message: "Tours retrieved successfully",
+                data: cachedData,
+            });
+        }
         const tours = await TourModel.find()
             .skip((Number(page) - 1) * Number(limit))
             .limit(Number(limit));
         const totalTours = await TourModel.countDocuments();
         const totalPages = Math.ceil(totalTours / Number(limit));
+
+        await setCache(cacheKey, tours, 3600);
         return res.status(200).json({
             success: true,
             message: "Tours retrieved successfully",
@@ -28,6 +51,17 @@ export const GetTours = async (req: Request, res: Response) => {
 export const GetToursDetails = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
+        const version = await getCacheVersion(TourCacheKeys.detailsVersion(id as string));
+        const cacheKey = TourCacheKeys.details(id as string, version);
+        const cachedData = await getCache(cacheKey);
+        if (cachedData) {
+            return res.status(200).json({
+                success: true,
+                message: "Tour retrieved successfully",
+                source: "cache",
+                deata: cachedData
+            })
+        }
         const tour = await TourModel.findById(id);
         if (!tour) {
             return res.status(404).json({
@@ -35,6 +69,8 @@ export const GetToursDetails = async (req: Request, res: Response) => {
                 message: "Tour not found"
             });
         }
+
+        await setCache(cacheKey, tour, 3600);
         return res.status(200).json({
             success: true,
             message: "Tour retrieved successfully",
@@ -100,7 +136,7 @@ export const CreateTour = async (req: Request, res: Response) => {
                 message: "Error creating tour"
             });
         } else {
-
+            await incrementCacheVersion(TourCacheKeys.listVersion());
             return res.status(201).json({
                 success: true,
                 message: "Tour created successfully",
@@ -149,6 +185,9 @@ export const UpdateTour = async (req: Request, res: Response) => {
                 message: "Tour not found"
             });
         }
+        await incrementCacheVersion(TourCacheKeys.listVersion());
+        await incrementCacheVersion(TourCacheKeys.detailsVersion(id as string));
+
         return res.status(200).json({
             success: true,
             message: "Tour updated successfully",
@@ -172,6 +211,9 @@ export const DeleteTour = async (req: Request, res: Response) => {
                 message: "Tour not found"
             });
         }
+
+        await incrementCacheVersion(TourCacheKeys.detailsVersion(id as string));
+        await incrementCacheVersion(TourCacheKeys.listVersion());
         return res.status(200).json({
             success: true,
             message: "Tour deleted successfully"
