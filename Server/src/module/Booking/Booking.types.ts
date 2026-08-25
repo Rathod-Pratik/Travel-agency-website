@@ -8,6 +8,7 @@ export interface ITravellerDetails {
 }
 
 export interface IBooking {
+  code: string;
   userId: mongoose.Types.ObjectId;
   tourId: mongoose.Types.ObjectId;
   travellerDetails: ITravellerDetails[];

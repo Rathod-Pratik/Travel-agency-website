@@ -11,6 +11,7 @@ import ReviewRoutes from "@modules/Review/Review.routes"
 import BlogRoutes from "@modules/Blog/Blog.routes"
 import HotelRoutes from "@modules/Hotel/Hotel.routes"
 import logRoutes from "@modules/log/Log.routes"
+import CategoryRoutes from "@modules/Category/Cotegory.routes"
 
 import { ConnectToMongo } from '@utils/Connection';
 import { connectRedis } from '@config/redis';
@@ -50,5 +51,7 @@ app.use('/payment',paymentRoutes);
 app.use('/review',ReviewRoutes);
 app.use('/hotel',HotelRoutes);
 app.use('/tour',tourRoutes);
+app.use('/category', CategoryRoutes);
 app.use('/logs', logRoutes);
+
 export default app

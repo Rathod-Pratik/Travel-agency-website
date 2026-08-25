@@ -2,82 +2,168 @@ import { Request, Response } from 'express';
 import BookingModel from './Booking.model';
 import { AuthModel } from '@modules/Auth/Auth.model';
 import { TourModel } from '@modules/Tour/Tour.model';
-import { BookingCacheKeys, getCacheVersion, getCache, setCache, incrementCacheVersion, uploadFileToS3 } from '@utils/index';
+import { AdminBookingCacheKeys, getCacheVersion, getCache, setCache, incrementCacheVersion, uploadFileToS3, UserBookingCacheKeys } from '@utils/index';
 import { logger } from '@modules/log/logger';
 
 export const GetBookings = async (req: Request, res: Response) => {
+    const { id } = req.params;
+
     try {
         let page = Number(req.query.page) || 1;
         let limit = Number(req.query.limit) || 10;
-        if (page < 1) {
-            page = 1;
-        }
-        if (limit < 1) {
-            limit = 10;
-        }
-        if (limit > 100) {
-            limit = 100;
-        }
-        const version = await getCacheVersion(BookingCacheKeys.listVersion());
-        const cacheKey = BookingCacheKeys.list(version, page, limit);
-        const cachedData = await getCache(cacheKey);
-        if (cachedData) {
 
-            logger.info("Bookings fetched from cache", {
+        if (page < 1) page = 1;
+        if (limit < 1) limit = 10;
+        if (limit > 100) limit = 100;
+
+        const user = await AuthModel.findById(id).select("role");
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found",
+            });
+        }
+
+        if (user.role === "User") {
+            const version = await getCacheVersion(
+                UserBookingCacheKeys.detailsVersion(id as string)
+            );
+
+            const cacheKey = UserBookingCacheKeys.list(
+                version,
+                page,
+                limit,
+                id as string,
+            );
+
+            const cachedData = await getCache(cacheKey);
+
+            if (cachedData) {
+                logger.info("User bookings fetched from cache", {
+                    metadata: {
+                        userId: id as string,
+                        page,
+                        limit,
+                        source: "cache",
+                    },
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    message: "Bookings fetched successfully",
+                    data: cachedData,
+                });
+            }
+
+            const bookings = await BookingModel.find({
+                userId: id as string,
+                isDeleted: false,
+            })
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit);
+
+            await setCache(cacheKey, bookings, 1800);
+
+            logger.info("User bookings fetched from database", {
                 metadata: {
+                    userId: id as string,
+                    count: bookings.length,
                     page,
                     limit,
-                    source: "cache"
-                }
+                    source: "database",
+                },
             });
 
             return res.status(200).json({
                 success: true,
                 message: "Bookings fetched successfully",
-                data: cachedData,
-            })
+                data: bookings,
+            });
         }
 
-        const bookings = await BookingModel.find({ isDeleted: false }).skip((Number(page) - 1) * Number(limit)).limit(Number(limit));
-        await setCache(cacheKey, bookings, 1800);
+        if (user.role === "Admin") {
+            const version = await getCacheVersion(
+                AdminBookingCacheKeys.listVersion()
+            );
 
-        logger.info("Bookings fetched from database", {
-            metadata: {
-                count: bookings.length,
+            const cacheKey = AdminBookingCacheKeys.list(
+                version,
                 page,
-                limit,
-                source: "database"
+                limit
+            );
+
+            const cachedData = await getCache(cacheKey);
+
+            if (cachedData) {
+                logger.info("Admin bookings fetched from cache", {
+                    metadata: {
+                        page,
+                        limit,
+                        source: "cache",
+                    },
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    message: "Bookings fetched successfully",
+                    data: cachedData,
+                });
             }
+
+            const bookings = await BookingModel.find({
+                isDeleted: false,
+            })
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit);
+
+            await setCache(cacheKey, bookings, 1800);
+
+            logger.info("Admin bookings fetched from database", {
+                metadata: {
+                    count: bookings.length,
+                    page,
+                    limit,
+                    source: "database",
+                },
+            });
+
+            return res.status(200).json({
+                success: true,
+                message: "Bookings fetched successfully",
+                data: bookings,
+            });
+        }
+
+        return res.status(403).json({
+            success: false,
+            message: "Unauthorized role",
         });
 
-        return res.status(200).json({
-            success: true,
-            message: "Bookings fetched successfully",
-            data: bookings
-        })
     } catch (err) {
-
         logger.error("Error fetching bookings", {
             metadata: {
-                error: err instanceof Error
-                    ? err.message
-                    : String(err)
-            }
+                error:
+                    err instanceof Error
+                        ? err.message
+                        : String(err),
+            },
         });
 
         return res.status(500).json({
             success: false,
             message: "Error fetching bookings",
-            data: err
-        })
+        });
     }
-}
+};
 
 export const GetBookingDetails = async (req: Request, res: Response) => {
     try {
         const { tourId } = req.params;
-        const version = await getCacheVersion(BookingCacheKeys.detailsVersion(tourId as string));
-        const cacheKey = BookingCacheKeys.details(tourId as string, version);
+        const version = await getCacheVersion(AdminBookingCacheKeys.detailsVersion(tourId as string));
+        const cacheKey = AdminBookingCacheKeys.details(tourId as string, version);
         const cachedData = await getCache(cacheKey);
 
         if (cachedData) {
@@ -144,6 +230,15 @@ export const GetBookingDetails = async (req: Request, res: Response) => {
         })
     }
 }
+const generateBookingCode = () => {
+    const year = new Date().getFullYear();
+    const number = Math.floor(10000 + Math.random() * 50000);
+    const existingBooking = BookingModel.findOne({ code: `TRV-${year}-${number}` });
+    if (existingBooking === null) {
+        return generateBookingCode();
+    }
+    return `TRV-${year}-${number}`;
+};
 
 export const CreateBooking = async (req: Request, res: Response) => {
     try {
@@ -167,10 +262,11 @@ export const CreateBooking = async (req: Request, res: Response) => {
             date,
             amount,
             paymentId,
-            status
+            status,
+            code: generateBookingCode()
         });
 
-        await incrementCacheVersion(BookingCacheKeys.listVersion());
+        await incrementCacheVersion(AdminBookingCacheKeys.listVersion());
 
         logger.info("Booking created successfully", {
             metadata: {
@@ -207,69 +303,47 @@ export const CreateBooking = async (req: Request, res: Response) => {
     }
 };
 
-export const UpdateBooking = async (req: Request, res: Response) => {
+export const AcceptBooking = async (req: Request, res: Response) => {
     try {
-        const { id } = req.body;
-        const { userId, tourId, travellerDetails, date, amount, paymentId, status } = req.body;
+        const { id, tourId } = req.body;
 
-        const booking = await BookingModel.findByIdAndUpdate(id, {
-            userId,
-            tourId,
-            travellerDetails,
-            date,
-            amount,
-            paymentId,
-            status
-        }, { new: true });
+        const booking = await BookingModel.findByIdAndUpdate(tourId, { status: "accepted" }, { new: true });
 
         if (!booking) {
-
-            logger.warn("Booking update failed - booking not found", {
+            logger.warn("Booking acceptance failed - booking not found", {
                 metadata: {
-                    bookingId: id
+                    bookingId: tourId,
+                    userId: id
                 }
             });
-
             return res.status(404).json({
                 success: false,
                 message: "Booking not found"
             });
         }
+        const tour = await TourModel.findByIdAndUpdate(tourId, { status: "Accepted" }, { new: true });
 
-        await incrementCacheVersion(BookingCacheKeys.detailsVersion(tourId as string));
-
-        logger.info("Booking updated successfully", {
-            metadata: {
-                bookingId: id,
-                userId,
-                tourId,
-                status
-            }
-        });
-
+        await incrementCacheVersion(AdminBookingCacheKeys.listVersion());
+        await incrementCacheVersion(AdminBookingCacheKeys.detailsVersion(tourId as string));
+        await incrementCacheVersion(UserBookingCacheKeys.detailsVersion(id as string));
         return res.status(200).json({
             success: true,
-            message: "Booking updated successfully",
+            message: "Booking accepted successfully",
             data: booking
         });
     } catch (err) {
 
-        logger.error("Error updating booking", {
+        logger.error("Error accepting booking", {
             metadata: {
-                bookingId: req.body.id,
+                userId: req.body.userId,
+                bookingId: req.body.tourId,
                 error: err instanceof Error
                     ? err.message
                     : String(err)
             }
         });
-
-        return res.status(500).json({
-            success: false,
-            message: "Error updating booking",
-            data: err
-        });
     }
-};
+}
 
 export const CancelBooking = async (req: Request, res: Response) => {
     try {
@@ -390,9 +464,9 @@ export const CancelBooking = async (req: Request, res: Response) => {
             );
         }
 
-        await incrementCacheVersion(BookingCacheKeys.listVersion());
-        await incrementCacheVersion(BookingCacheKeys.detailsVersion(tourId as string));
-
+        await incrementCacheVersion(AdminBookingCacheKeys.listVersion());
+        await incrementCacheVersion(AdminBookingCacheKeys.detailsVersion(tourId as string));
+        await incrementCacheVersion(UserBookingCacheKeys.detailsVersion(id as string));
         logger.info("Booking cancelled successfully", {
             metadata: {
                 bookingId: tourId,

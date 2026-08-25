@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 
 import { useAppStore } from "@store";
 import { apiClient } from "@apiClient";
-import { LOGOUT } from "@utils";
+import { LOGOUT_URL } from "@utils";
 
 const Navbar = () => {
   const { userInfo, setUserInfo } = useAppStore();
@@ -21,20 +21,12 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // -----------------------------------
-  // Navigation Items
-  // -----------------------------------
-
   const navItems = [
-    { href: "/", label: "Home" },
+    { href: "/home", label: "Home" },
     { href: "/about", label: "About" },
     { href: "/tour", label: "Tour" },
     { href: "/blog", label: "Blog" },
   ];
-
-  // -----------------------------------
-  // Active Link
-  // -----------------------------------
 
   const isActiveLink = useCallback(
     (path: string) => {
@@ -46,10 +38,6 @@ const Navbar = () => {
     },
     [pathname]
   );
-
-  // -----------------------------------
-  // Scroll Handler
-  // -----------------------------------
 
   useEffect(() => {
     const handleScroll = () => {
@@ -63,10 +51,6 @@ const Navbar = () => {
     };
   }, []);
 
-  // -----------------------------------
-  // Prevent Body Scroll
-  // -----------------------------------
-
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "auto";
 
@@ -75,17 +59,9 @@ const Navbar = () => {
     };
   }, [isOpen]);
 
-  // -----------------------------------
-  // Close Mobile Navbar
-  // -----------------------------------
-
   const closeNavbar = useCallback(() => {
     setIsOpen(false);
   }, []);
-
-  // -----------------------------------
-  // Scroll To Top
-  // -----------------------------------
 
   const scrollToTop = useCallback(() => {
     window.scrollTo({
@@ -94,22 +70,16 @@ const Navbar = () => {
     });
   }, []);
 
-  // -----------------------------------
-  // Get User Initial
-  // -----------------------------------
 
   const getInitial = useCallback((name?: string) => {
     return name ? name.charAt(0).toUpperCase() : "?";
   }, []);
 
-  // -----------------------------------
-  // Logout
-  // -----------------------------------
 
   const handleLogout = async () => {
     try {
       const response = await apiClient.post(
-        LOGOUT,
+        LOGOUT_URL,
         {},
         {
           withCredentials: true,
@@ -133,10 +103,6 @@ const Navbar = () => {
     }
   };
 
-  // -----------------------------------
-  // Navigation Click
-  // -----------------------------------
-
   const handleNavigation = () => {
     closeNavbar();
     scrollToTop();
@@ -144,9 +110,6 @@ const Navbar = () => {
 
   return (
     <>
-      {/* =====================================
-          MOBILE OVERLAY
-      ===================================== */}
 
       {isOpen && (
         <div
@@ -155,22 +118,15 @@ const Navbar = () => {
         />
       )}
 
-      {/* =====================================
-          NAVBAR
-      ===================================== */}
-
       <header
-        className={`fixed top-0 left-0 right-0 z-50 bg-white border-b transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 bg-white transition-all duration-300 ${
           isScrolled ? "shadow-md" : ""
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          {/* =====================================
-              LOGO
-          ===================================== */}
 
           <Link
-            href="/"
+            href="/home"
             onClick={handleNavigation}
             aria-label="Back to homepage"
             className="flex items-center"
@@ -183,10 +139,6 @@ const Navbar = () => {
               className="w-12 h-12 rounded-full object-cover"
             />
           </Link>
-
-          {/* =====================================
-              DESKTOP NAVIGATION
-          ===================================== */}
 
           <nav className="hidden md:flex items-center gap-8">
             {navItems.map((item) => (
@@ -204,10 +156,6 @@ const Navbar = () => {
               </Link>
             ))}
           </nav>
-
-          {/* =====================================
-              DESKTOP AUTH
-          ===================================== */}
 
           <div className="hidden md:flex items-center gap-4">
             {userInfo ? (
@@ -257,7 +205,7 @@ const Navbar = () => {
                 <Link
                   href="/login"
                   onClick={handleNavigation}
-                  className="px-5 py-2 rounded-md text-sm font-semibold text-gray-700 hover:bg-gray-100 transition"
+                  className="px-5 py-2 rounded-md text-sm font-semibold text-gray-700 hover:bg-[orange] hover:text-white transition"
                 >
                   Login
                 </Link>
@@ -267,17 +215,13 @@ const Navbar = () => {
                 <Link
                   href="/signup"
                   onClick={handleNavigation}
-                  className="px-5 py-2 rounded-full bg-orange-500 text-white text-sm font-semibold hover:bg-orange-600 transition"
+                  className="px-5 py-2 rounded-full bg-orange-400 text-white text-sm font-semibold hover:bg-[orange] transition"
                 >
                   Register
                 </Link>
               </>
             )}
           </div>
-
-          {/* =====================================
-              MOBILE MENU BUTTON
-          ===================================== */}
 
           <button
             onClick={() => setIsOpen(true)}
@@ -288,10 +232,6 @@ const Navbar = () => {
           </button>
         </div>
 
-        {/* =====================================
-            MOBILE SIDEBAR
-        ===================================== */}
-
         <div
           className={`fixed top-0 right-0 h-screen w-[80vw] max-w-[320px] bg-white z-50 transition-transform duration-500 md:hidden ${
             isOpen ? "translate-x-0" : "translate-x-full"
@@ -299,7 +239,7 @@ const Navbar = () => {
         >
           {/* Close Button */}
 
-          <div className="p-5 flex justify-end border-b">
+          <div className="p-5 flex justify-end">
             <button
               onClick={closeNavbar}
               aria-label="Close menu"
@@ -327,10 +267,6 @@ const Navbar = () => {
               </Link>
             ))}
           </nav>
-
-          {/* =====================================
-              MOBILE AUTH
-          ===================================== */}
 
           <div className="px-8 mt-10">
             {userInfo ? (
@@ -406,7 +342,6 @@ const Navbar = () => {
           </div>
         </div>
       </header>
-      <div className="h-16" />
     </>
   );
 };

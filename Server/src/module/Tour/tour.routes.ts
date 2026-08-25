@@ -7,10 +7,10 @@ import { Validate } from '@middleware/Validation.middleware';
 
 const Route=express.Router();
 
-Route.get('/tour?page=:page&limit=:limit',GetTours);
-Route.get('/tour/:id',Validate(TourIdValidation),GetToursDetails);
-Route.post('/tour',verifyAdmin,upload.array('image',10),Validate(TourValidation),CreateTour);
-Route.put('/tour/:id',Validate(TourIdValidation),verifyAdmin,upload.array('image',10),UpdateTour);
-Route.delete('/tour/:id',Validate(TourIdValidation),verifyAdmin,DeleteTour);
+Route.get('/',GetTours);
+Route.get('/:id',Validate(TourIdValidation),GetToursDetails);
+Route.post('',verifyAdmin,upload.array('image',10),Validate(TourValidation),CreateTour);
+Route.put('/:id',Validate(TourIdValidation),verifyAdmin,upload.array('image',10),UpdateTour);
+Route.delete('/:id',Validate(TourIdValidation),verifyAdmin,DeleteTour);
 
 export default Route;

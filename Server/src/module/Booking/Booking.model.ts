@@ -3,6 +3,12 @@ import type { IBooking } from "./Booking.types";
 
 const bookingSchema = new mongoose.Schema<IBooking>(
     {
+        code:{
+            type: String,
+            required: [true, "Booking code is required"],
+            unique: true,
+            trim: true,
+        },
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",

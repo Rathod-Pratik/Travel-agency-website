@@ -8,7 +8,7 @@ import { IBlogSchema, IGetBlogSchema, IGetBlogsSchema, IUpdateBlogSchema } from 
 const Route = express.Router();
 
 Route.post(
-    "/blogs",
+    "/",
     verifyAdmin,
     Validate(IBlogSchema),
     upload.single("image"),
@@ -16,7 +16,7 @@ Route.post(
 );
 
 Route.put(
-    "/blogs/:id",
+    "/:id",
     verifyAdmin,
     Validate(IUpdateBlogSchema),
     upload.single("image"),
@@ -24,20 +24,20 @@ Route.put(
 );
 
 Route.delete(
-    "/blogs/:id",
+    "/:id",
     verifyAdmin,
     Validate(IGetBlogSchema),
     DeleteBlog
 );
 
 Route.get(
-    "/blogs?page=:page&limit=:limit",
+    "/",
     Validate(IGetBlogsSchema),
     GetBlog
 );
 
 Route.get(
-    "/blogs/:id",
+    "/:id",
     Validate(IGetBlogSchema),
     GetBlogById
 );

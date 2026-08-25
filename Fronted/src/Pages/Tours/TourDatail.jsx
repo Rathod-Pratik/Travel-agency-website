@@ -11,10 +11,9 @@ import { toast } from "react-toastify";
 import TourReview from "../../Components/TourReview";
 
 const TourDatail = () => {
-  const navigate = useNavigate();
   const { _id } = useParams();
   const [tourdata, SetTourData] = useState();
-  const { userInfo, AddBookingData } = useAppStore();
+  const { userInfo } = useAppStore();
   const [name, setName] = useState("");
   const [phone, SetPhone] = useState("");
   const [date, SetDate] = useState("");
@@ -36,191 +35,8 @@ const TourDatail = () => {
     };
     fetchTourData();
   }, []);
-
-  const loadScript = (src) => {
-    return new Promise((resolve) => {
-      const script = document.createElement("script");
-      script.src = src;
-      script.onload = () => {
-        resolve(true);
-      };
-      script.onerror = () => {
-        resolve(false);
-      };
-      document.body.appendChild(script);
-    });
-  };
-
-  const handlePayment = async () => {
-    if (!userInfo) {
-      toast.error("Please Login now");
-      return navigate("/login");
-    }
-    // ✅ Improved Input Validations
-    if (name.length < 3) {
-      return toast.error("Please enter a valid name (minimum 3 characters).");
-    } else if (!/^\d{10}$/.test(phone)) {
-      return toast.error("Please enter a valid 10-digit phone number.");
-    } else if (!date) {
-      return toast.error("Please select a date for the tour.");
-    } else if (groupsize < 1) {
-      return toast.error("Please select a valid group size.");
-    }
-
-    try {
-      // ✅ Load Razorpay Script Dynamically
-      const res = await loadScript(
-        "https://checkout.razorpay.com/v1/checkout.js"
-      );
-      if (!res) {
-        return toast.error(
-          "Razorpay SDK failed to load. Please check your network."
-        );
-      }
-
-      // ✅ Create Order on Backend
-      const { data } = await apiClient.post("payment/create-order", {
-        amount: tourdata.price * groupsize + tourdata.tax,
-        currency: "INR",
-        receipt: `receipt_${Date.now()}`,
-        notes: {
-          productName: tourdata.title,
-          userId: userInfo._id,
-        },
-      });
-
-      // ✅ Razorpay Payment Options
-      const options = {
-        key: data.key,
-        amount: data.order.amount,
-        currency: data.order.currency,
-        name: "Easy Travel",
-        description: `Payment for ${tourdata.title}`,
-        image: "/tour-images/logo-travel2.jpg",
-        order_id: data.order.id,
-
-        // ✅ Payment Handler Function
-        handler: async function (response) {
-          try {
-            // 🔹 Verify payment with backend
-            const verifyRes = await apiClient.post("payment/verify-order", {
-              orderId: response.razorpay_order_id,
-              paymentId: response.razorpay_payment_id,
-              signature: response.razorpay_signature,
-            });
-
-            if (!verifyRes.data.success) {
-              return toast.error("Payment verification failed.");
-            }
-
-            toast.success(
-              `Payment Successful! Payment ID: ${response.razorpay_payment_id}`
-            );
-            // 🔹 Create booking after successful payment
-            const bookingRes = await apiClient.post(CREATE_BOOKING, {
-              paymentId: response.razorpay_payment_id,
-              price: tourdata.price,
-              userId: userInfo._id,
-              BookedBy: userInfo.name,
-              userName: name,
-              userEmail: userInfo.email,
-              userPhone: phone,
-              tourData: tourdata,
-              tourDate: new Date(),
-              numberOfPeople: groupsize,
-            });
-            if (bookingRes.status === 200) {
-              AddBookingData(bookingRes.data.data);
-              setName("");
-              SetGroupSize("");
-              SetDate("");
-              SetPhone("");
-              toast.success("Booking confirmed successfully!");
-            } else {
-              toast.error(
-                "Payment succeeded, but booking failed. Please contact support."
-              );
-            }
-          } catch (error) {
-            console.error("Error in payment processing:", error);
-            toast.error("Something went wrong. Please try again.");
-          }
-        },
-
-        prefill: {
-          name: name,
-          email: userInfo.email,
-          contact: phone,
-        },
-        notes: {
-          address: userInfo.address,
-        },
-        theme: {
-          color: "#3399cc",
-        },
-      };
-
-      // ✅ Open Razorpay Checkout
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (error) {
-      console.error("Payment Error:", error);
-      toast.error("Payment failed. Please try again.");
-    }
-  };
-
-  const [Alert, setAlert] = useState(true);
-  const hideAlert = () => {
-    setAlert(false);
-  };
   return (
     <div>
-      {Alert && (
-        <div
-          class="flex items-center transition-all duration-300 w-[90%] m-auto my-3 p-4 mb-4 text-[orange] rounded-lg bg-orange-50"
-          role="alert"
-        >
-          <svg
-            class="shrink-0 w-4 h-4"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
-          </svg>
-          <span class="sr-only">Info</span>
-          <div class="ms-3 text-sm font-medium">
-            Please don't use the Scan and Pay option — use another provided
-            payment method instead.
-          </div>
-          <button
-            onClick={hideAlert}
-            type="button"
-            class="ms-auto -mx-1.5 -my-1.5 bg-orange-50 text-orange-500 rounded-lg focus:ring-2 focus:ring-orange-400 p-1.5 hover:bg-orange-200 inline-flex items-center justify-center h-8 w-8 "
-            data-dismiss-target="#alert-1"
-            aria-label="Close"
-          >
-            <span class="sr-only">Close</span>
-            <svg
-              class="w-3 h-3"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 14 14"
-            >
-              <path
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
-              />
-            </svg>
-          </button>
-        </div>
-      )}
-
       {typeof tourdata == "undefined" ? (
         <div className="lg:grid flex flex-col lg:grid-cols-3 gap-4 w-[90vw] m-auto mt-4">
           {/* Main Content (Left Side - col-span-2) */}
@@ -466,7 +282,7 @@ const TourDatail = () => {
             <div>
               <div className="flex flex-row justify-between px-5 mt-4 font-semibold text-gray-500">
                 <p className="flex flex-row gap-2 items-center">
-                ₹{tourdata.price} <IoClose /> 1 Person
+                  ₹{tourdata.price} <IoClose /> 1 Person
                 </p>
                 <p>₹{tourdata.price}</p>
               </div>
@@ -477,7 +293,7 @@ const TourDatail = () => {
               <div className="flex flex-row justify-between px-5 mt-4 font-semibold">
                 <p className="flex flex-row gap-2 items-center">Total</p>
                 <p>
-                ₹
+                  ₹
                   {tourdata.price * (groupsize < 1 ? 1 : groupsize) +
                     tourdata.tax}
                 </p>
@@ -494,11 +310,11 @@ const TourDatail = () => {
           </div>
 
           <TourReview
-  TourId={tourdata._id}
-  TourData={tourdata}
-  userId={userInfo ? userInfo._id : null}
-  userName={userInfo ? userInfo.name : null}
-/>
+            TourId={tourdata._id}
+            TourData={tourdata}
+            userId={userInfo ? userInfo._id : null}
+            userName={userInfo ? userInfo.name : null}
+          />
 
         </div>
       )}

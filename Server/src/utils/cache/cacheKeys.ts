@@ -8,9 +8,10 @@ export const createCacheKeys = (module: string) => {
         list: (
             version: number,
             page: number,
-            limit: number
+            limit: number,
+            id?: string
         ) =>
-            `${module}:list:${version}:page:${page}:limit:${limit}`,
+            `${module}:list:${version}:${id || 'all'}:page:${page}:limit:${limit}`,
 
         detailsVersion: (
             id: string
@@ -55,10 +56,14 @@ export const ReviewCacheKeys =
 
 
 // Booking module
-export const BookingCacheKeys =
+export const AdminBookingCacheKeys =
     createCacheKeys("booking");
-
+export const UserBookingCacheKeys =
+    createCacheKeys("user-booking");
 
 // Otp module
 export const OtpCacheKeys =
     createCacheKeys("otp");
+
+export const CategoryCacheKeys =
+    createCacheKeys("category");

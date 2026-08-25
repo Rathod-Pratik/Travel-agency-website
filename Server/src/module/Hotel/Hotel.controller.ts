@@ -175,6 +175,14 @@ export const CreateHotel = async (req: Request, res: Response) => {
             res.status(201).json(hotel);
         }
     } catch (error) {
+        logger.error("Error creating hotel", {
+            metadata: {
+                name,
+                error: error instanceof Error
+                    ? error.message
+                    : String(error),
+            },
+        });
         res.status(500).json({ message: "Error creating hotel" });
     }
 };

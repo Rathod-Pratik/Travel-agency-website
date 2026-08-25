@@ -7,10 +7,10 @@ import { HotelIdSchema, HotelSchema } from "./Hotel.validation";
 
 const Route = express.Router();
 
-Route.get("/hotel?page=:page&limit=:limit",verifyUser, GetHotels);
-Route.get("/hotel/:id",verifyUser,Validate(HotelIdSchema), GetHotelDetails);
-Route.post("/hotel",verifyAdmin,upload.array("image", 10),Validate(HotelSchema), CreateHotel);
-Route.put("/hotel/:id", verifyAdmin,upload.array("image", 10),Validate(HotelIdSchema), UpdateHotel);
-Route.delete("/hotel/:id", verifyAdmin, Validate(HotelIdSchema), DeleteHotel);
+Route.get("/",verifyUser, GetHotels);
+Route.get("/:id",verifyUser,Validate(HotelIdSchema), GetHotelDetails);
+Route.post("/",verifyAdmin,upload.array("image", 10),Validate(HotelSchema), CreateHotel);
+Route.put("/:id", verifyAdmin,upload.array("image", 10),Validate(HotelIdSchema), UpdateHotel);
+Route.delete("/:id", verifyAdmin, Validate(HotelIdSchema), DeleteHotel);
 
 export default Route;

@@ -7,7 +7,7 @@ import { IoLocationOutline } from "react-icons/io5";
 import Link from 'next/link';
 
 
-const Footer = () => {
+export const Footer = () => {
   return (
     <footer className="py-10 bg-gray-100 text-gray-700">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8 px-6 text-center md:text-left">
@@ -86,5 +86,3 @@ const Footer = () => {
     </footer>
   );
 };
-
-export default Footer;
