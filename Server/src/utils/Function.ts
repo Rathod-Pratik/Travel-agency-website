@@ -277,9 +277,9 @@ export const getUploadedFile = (req: Request) => {
 };
 
 export const getMultipleUploadedFiles = (req: Request): Express.Multer.File[] => {
-  const files = req.files as Express.Multer.File[] | undefined;
+  const files = req.files as Express.Multer.File[] ;
 
-  return files ?? [];
+  return files;
 };
 
 export const Get_Signed_url = Get_Signed_Url;

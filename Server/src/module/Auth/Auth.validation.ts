@@ -15,14 +15,9 @@ export const SignupValidation = z.object({
         .min(8, "Password must contain at least 8 characters")
         .max(16, "Password maximum length is 16 characters"),
 
-    mobile: z
+    phone: z
         .string()
-        .regex(/^[6-9]\d{9}$/, "Invalid Indian mobile number"),
-
-    address: z
-        .string()
-        .min(10, "Address must contain at least 10 characters")
-        .max(50, "Address maximum length is 50 characters")
+        .regex(/^[6-9]\d{9}$/, "Invalid Indian mobile number")
 });
 
 export const LoginValidation = z.object({

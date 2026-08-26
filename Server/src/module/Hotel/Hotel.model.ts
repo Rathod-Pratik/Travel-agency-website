@@ -3,7 +3,7 @@ import { IHotel } from "./Hotel.types";
 
 const HotelSchema = new mongoose.Schema<IHotel>(
   {
-    images:{
+    image:{
         type: [String],
     },
       name: {

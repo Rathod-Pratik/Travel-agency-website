@@ -5,13 +5,13 @@ import { DeleteProfileValidation, GetProfileValidation, LoginValidation, SignupV
 import upload from '@middleware/Multer.middleware';
 import { verifyUser } from '@middleware/Auth.middleware';
 
-const Route=express.Router();
+const Route = express.Router();
 
-Route.post("/auth/login",Validate(LoginValidation),Login);
-Route.post("/auth/signup",Validate(SignupValidation),SignUp);
-Route.post("/auth/logout",Logout);
-Route.get("/auth/me",Validate(GetProfileValidation),verifyUser,GetProfile);
-Route.patch("/auth/me",Validate(UpdateProfileValidation),verifyUser,upload.single('image'),UpdateProfile);
-Route.delete('/auth/me',Validate(DeleteProfileValidation),verifyUser,DeleteProfile);
+Route.post("/login", Validate(LoginValidation), Login);
+Route.post("/signup", Validate(SignupValidation), SignUp);
+Route.post("/logout", Logout);
+Route.get("/me", Validate(GetProfileValidation), verifyUser, GetProfile);
+Route.patch("/me", Validate(UpdateProfileValidation), verifyUser, upload.single('image'), UpdateProfile);
+Route.delete('/me', Validate(DeleteProfileValidation), verifyUser, DeleteProfile);
 
 export default Route

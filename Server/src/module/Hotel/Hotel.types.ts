@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 export interface IHotel {
-    images: string[];
+    image: string[];
     name: string;
     rating: number;
     address: string;

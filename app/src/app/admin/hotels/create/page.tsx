@@ -21,10 +21,11 @@ import {
 } from "@components";
 import { apiClient } from "@apiClient";
 import { CREATE_HOTEL_URL, hotelValidationSchema } from "@utils";
+import { FiImage, FiX } from "react-icons/fi";
 
 export default function CreateHotelPage() {
   const router = useRouter();
-
+  const [images, setImages] = useState<File[]>([]);
   const amenities = [
     "High-speed Free WiFi",
     "Infinity Swimming Pool",
@@ -55,40 +56,65 @@ export default function CreateHotelPage() {
       isActive: true,
     },
     validationSchema: hotelValidationSchema,
-    onSubmit: async (values, { setSubmitting }) => {
-      try {
-        const payload = {
-          name: values.name,
-          address: values.address,
-          city: values.city,
-          country: values.country,
-          rating: Number(values.rating),
-          roomType: values.roomType,
-          pricePerPerson: Number(values.pricePerPerson),
-          availableRooms: Number(values.availableRooms),
-          meal: {
-            breakfast: values.breakfast,
-            lunch: values.lunch,
-            dinner: values.dinner,
-          },
-          isActive: values.isActive,
-          description: values.description,
-          amenities: selectedAmenities,
-        };
+   onSubmit: async (values, { setSubmitting }) => {
+  try {
+    const formData = new FormData();
 
-        const res = await apiClient.post(CREATE_HOTEL_URL, payload, {
-          withCredentials: true,
-        });
+    formData.append("name", values.name);
+    formData.append("address", values.address);
+    formData.append("city", values.city);
+    formData.append("country", values.country);
+    formData.append("rating", String(Number(values.rating)));
+    formData.append("roomType", values.roomType);
+    formData.append(
+      "pricePerPerson",
+      String(Number(values.pricePerPerson))
+    );
+    formData.append(
+      "availableRooms",
+      String(Number(values.availableRooms))
+    );
 
-        toast.success("Hotel partner added successfully!");
-        router.push("/admin/hotels");
-      } catch (err: any) {
-        toast.success("Hotel partner saved!");
-        router.push("/admin/hotels");
-      } finally {
-        setSubmitting(false);
-      }
-    },
+    formData.append(
+      "meal",
+      JSON.stringify({
+        breakfast: values.breakfast,
+        lunch: values.lunch,
+        dinner: values.dinner,
+      })
+    );
+
+    formData.append("isActive", String(values.isActive));
+    formData.append("description", values.description);
+    formData.append(
+      "amenities",
+      JSON.stringify(selectedAmenities)
+    );
+
+    // Multiple images
+    images.forEach((image) => {
+      formData.append("image", image);
+    });
+
+    const response = await apiClient.post(CREATE_HOTEL_URL, formData, {
+      withCredentials: true,
+    });
+    if (response.status === 201) {
+      toast.success("Hotel partner added successfully!");
+      router.push("/admin/hotels");
+    }
+
+  } catch (err: any) {
+    console.error("Create hotel error:", err);
+
+    toast.error(
+      err?.response?.data?.message ||
+        "Failed to create hotel. Please try again."
+    );
+  } finally {
+    setSubmitting(false);
+  }
+},
   });
 
   const toggleAmenity = (item: string) => {
@@ -142,6 +168,99 @@ export default function CreateHotelPage() {
       <form onSubmit={formik.handleSubmit} className="space-y-8">
         {/* Section 1: Property Details */}
         <AdminCard title="Property Details" icon={FiHome}>
+          <div className="space-y-4 mb-6">
+            {/* Upload Card */}
+            <label
+              htmlFor="hotel-images"
+              className="flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center transition hover:border-orange-400 hover:bg-orange-50"
+            >
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-500">
+                <FiImage size={24} />
+              </div>
+
+              <p className="text-sm font-semibold text-gray-700">
+                Upload Hotel Images
+              </p>
+
+              <p className="mt-1 text-xs text-gray-500">
+                Click to select multiple images
+              </p>
+
+              <p className="mt-2 text-xs text-gray-400">
+                PNG, JPG, JPEG up to 5MB each
+              </p>
+
+              <input
+                id="hotel-images"
+                type="file"
+                accept="image/png,image/jpeg,image/jpg"
+                multiple
+                hidden
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+
+                  setImages((prev) => [...prev, ...files]);
+
+                  // Allows selecting the same image again
+                  e.target.value = "";
+                }}
+              />
+            </label>
+
+            {/* Image Preview */}
+            {images.length > 0 && (
+              <div>
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-gray-700">
+                    Selected Images ({images.length})
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => setImages([])}
+                    className="text-xs font-medium text-red-500 hover:text-red-600"
+                  >
+                    Remove All
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                  {images.map((file, index) => (
+                    <div
+                      key={`${file.name}-${index}`}
+                      className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white"
+                    >
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={file.name}
+                        className="h-32 w-full object-cover"
+                      />
+
+                      {/* Remove Image */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setImages((prev) =>
+                            prev.filter((_, i) => i !== index)
+                          )
+                        }
+                        className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100 hover:bg-red-500"
+                      >
+                        <FiX size={14} />
+                      </button>
+
+                      {/* Image Number */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 px-2 py-1">
+                        <p className="truncate text-[10px] text-white">
+                          {file.name}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="md:col-span-2">
               <FormField
@@ -318,18 +437,16 @@ export default function CreateHotelPage() {
               <label
                 key={item}
                 onClick={() => toggleAmenity(item)}
-                className={`flex items-center gap-2.5 rounded-lg border p-3 text-xs font-medium cursor-pointer transition ${
-                  selectedAmenities.includes(item)
-                    ? "border-orange-500 bg-orange-50 text-orange-700"
-                    : "border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300"
-                }`}
+                className={`flex items-center gap-2.5 rounded-lg border p-3 text-xs font-medium cursor-pointer transition ${selectedAmenities.includes(item)
+                  ? "border-orange-500 bg-orange-50 text-orange-700"
+                  : "border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300"
+                  }`}
               >
                 <div
-                  className={`flex h-4 w-4 items-center justify-center rounded border ${
-                    selectedAmenities.includes(item)
-                      ? "border-orange-500 bg-orange-500 text-white"
-                      : "border-gray-300 bg-white"
-                  }`}
+                  className={`flex h-4 w-4 items-center justify-center rounded border ${selectedAmenities.includes(item)
+                    ? "border-orange-500 bg-orange-500 text-white"
+                    : "border-gray-300 bg-white"
+                    }`}
                 >
                   {selectedAmenities.includes(item) && <FiCheck size={12} />}
                 </div>

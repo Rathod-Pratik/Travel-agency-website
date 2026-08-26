@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { toast } from "react-toastify";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 import { apiClient } from "@apiClient";
 import { SIGNUP_URL } from "@utils";
@@ -18,6 +19,9 @@ const SignUp = () => {
   const { setUserInfo } = useAppStore();
   const router = useRouter();
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const validationSchema = Yup.object({
     name: Yup.string()
       .min(5, "Name must be at least 5 characters long")
@@ -27,16 +31,26 @@ const SignUp = () => {
       .email("Please enter a valid email address")
       .required("Email is required"),
 
+    phone: Yup.string()
+      .matches(/^[6-9]\d{9}$/, "Please enter a valid 10-digit phone number")
+      .required("phone number is required"),
+
     password: Yup.string()
       .min(8, "Password must be at least 8 characters long")
       .required("Password is required"),
+
+    confirmPassword: Yup.string()
+      .oneOf([Yup.ref("password")], "Passwords must match")
+      .required("Confirm password is required"),
   });
 
   const formik = useFormik({
     initialValues: {
       name: "",
       email: "",
+      phone: "",
       password: "",
+      confirmPassword: "",
     },
 
     validationSchema,
@@ -48,6 +62,7 @@ const SignUp = () => {
           {
             name: values.name,
             email: values.email,
+            phone: values.phone,
             password: values.password,
           },
           {
@@ -74,7 +89,7 @@ const SignUp = () => {
               "Some error occurred. Please try again later."
           );
 
-          console.error(
+          console.log(
             "Signup failed:",
             data || error.message
           );
@@ -158,24 +173,98 @@ const SignUp = () => {
               }
             />
 
-            {/* Password */}
+            {/* phone Number */}
 
             <Input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={formik.values.password}
+              type="tel"
+              name="phone"
+              placeholder="phone Number"
+              value={formik.values.phone}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               isRedBorder={
-                !!(formik.touched.password && formik.errors.password)
+                !!(formik.touched.phone && formik.errors.phone)
               }
               error={
-                formik.touched.password
-                  ? formik.errors.password
+                formik.touched.phone
+                  ? formik.errors.phone
                   : undefined
               }
             />
+
+            {/* Password */}
+
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Password"
+                value={formik.values.password}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                isRedBorder={
+                  !!(
+                    formik.touched.password &&
+                    formik.errors.password
+                  )
+                }
+                error={
+                  formik.touched.password
+                    ? formik.errors.password
+                    : undefined
+                }
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? (
+                  <FiEyeOff size={18} />
+                ) : (
+                  <FiEye size={18} />
+                )}
+              </button>
+            </div>
+
+            {/* Confirm Password */}
+
+            <div className="relative">
+              <Input
+                type={showConfirmPassword ? "text" : "password"}
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                value={formik.values.confirmPassword}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                isRedBorder={
+                  !!(
+                    formik.touched.confirmPassword &&
+                    formik.errors.confirmPassword
+                  )
+                }
+                error={
+                  formik.touched.confirmPassword
+                    ? formik.errors.confirmPassword
+                    : undefined
+                }
+              />
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowConfirmPassword(!showConfirmPassword)
+                }
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showConfirmPassword ? (
+                  <FiEyeOff size={18} />
+                ) : (
+                  <FiEye size={18} />
+                )}
+              </button>
+            </div>
 
             {/* Register Button */}
 

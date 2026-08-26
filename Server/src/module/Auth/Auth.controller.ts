@@ -13,89 +13,138 @@ import {
 import { logger } from "@modules/log/logger";
 
 export const Login = async (req: Request, res: Response) => {
-    try {
-        const { email, password } = req.body;
-
-        if (!process.env.JWT_SECRET) {
-            throw new Error("JWT_SECRET is not configured on the server");
-        }
-
-        const user = await AuthModel.findOne({ email }).select("+password");
-
-        if(user && user.isDeleted) {
-            logger.warn("User login failed - account deleted", {
-                metadata: {
-                    email
-                }
-            });
-            return res.status(403).json({
-                success: false,
-                message: "Account has been deleted. Please contact support.",
-            });
-        }
-
-
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-            logger.warn("User login failed", {
-                metadata: {
-                    email
-                }
-            });
-
-            return res.status(401).json({
-                success: false,
-                message: "Invalid email or password",
-            });
-        }
-
-        const token = jwt.sign(
-            { id: user._id, email: user.email, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: "24h" }
-        );
-
-        const isProduction = process.env.NODE_ENV === "production";
-
-        const cookieOptions = {
-            httpOnly: true,
-            secure: isProduction,
-            sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
-            maxAge: 24 * 60 * 60 * 1000,
-        };
-
-        res.cookie("token", token, cookieOptions);
-
-        logger.info("User login successful", {
-            metadata: {
-                userId: user._id.toString(),
-                email: user.email
-            }
-        });
-
-        return res.status(200).json({
-            success: true,
-            message: "Login successful",
-            token,
-        });
-    } catch (error) {
-        logger.error("Login error", {
-            metadata: {
-                error: error instanceof Error
-                    ? error.message
-                    : String(error)
-            }
-        });
-
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error",
-        });
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required",
+      });
     }
+
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is not configured on the server");
+    }
+
+    const user = await AuthModel.findOne({ email });
+
+    // User not found
+    if (!user) {
+      logger.warn("User login failed - user not found", {
+        metadata: {
+          email,
+        },
+      });
+
+      return res.status(401).json({
+        success: false,
+        NotFound: true,
+        message: "Invalid email or password",
+      });
+    }
+
+    // Account deleted
+    if (user.isDeleted) {
+      logger.warn("User login failed - account deleted", {
+        metadata: {
+          email,
+        },
+      });
+
+      return res.status(403).json({
+        success: false,
+        message: "Account has been deleted. Please contact support.",
+      });
+    }
+
+    // Compare password
+    const comparePassword = await bcrypt.compare(
+      password,
+      user.password
+    );
+
+    if (!comparePassword) {
+      logger.warn("User login failed - wrong password", {
+        metadata: {
+          email,
+        },
+      });
+
+      return res.status(401).json({
+        success: false,
+        WrongPass: true,
+        message: "Invalid email or password",
+      });
+    }
+
+    // Create JWT
+    const token = jwt.sign(
+      {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "24h",
+      }
+    );
+
+    const isProduction = process.env.NODE_ENV === "production";
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: (isProduction ? "none" : "lax") as
+        | "none"
+        | "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    };
+
+    res.cookie("token", token, cookieOptions);
+
+    logger.info("User login successful", {
+      metadata: {
+        userId: user._id.toString(),
+        email: user.email,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+
+    logger.error("Login error", {
+      metadata: {
+        error:
+          error instanceof Error
+            ? error.message
+            : String(error),
+      },
+    });
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
 };
 
 export const SignUp = async (req: Request, res: Response) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, phone } = req.body;
 
         if (!process.env.JWT_SECRET) {
             throw new Error("JWT_SECRET is not configured on the server");
@@ -122,6 +171,7 @@ export const SignUp = async (req: Request, res: Response) => {
             name,
             email,
             password: hashedPassword,
+            phone
         });
 
         const token = jwt.sign(

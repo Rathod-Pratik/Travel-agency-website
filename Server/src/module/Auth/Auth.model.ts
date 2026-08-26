@@ -18,6 +18,10 @@ const AuthSchema = new mongoose.Schema<IAuth>({
         type: String,
         required: [true, "Phone Number is required"]
     },
+    password: {
+        type: String,
+        required: [true, "Password is required"]
+    },
     role: {
         type: String,
         enum: ["admin", "user"],
