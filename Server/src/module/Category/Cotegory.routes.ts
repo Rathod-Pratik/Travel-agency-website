@@ -3,12 +3,12 @@ import { GetCategory, DeleteCategory, UpdateCategory, CreateCategory } from "./C
 import { } from "./Category.controller";
 import { verifyAdmin } from "@middleware/Auth.middleware";
 import { Validate } from "@middleware/Validation.middleware";
-import { CategoryIdSchema, CategorySchema } from "./Category.validation";
+import { CategoryIdSchema, CategorySchema, UpdateCategorySchema } from "./Category.validation";
 
 const Route = express.Router();
 
 Route.post("/",verifyAdmin,Validate(CategorySchema), CreateCategory);
-Route.put("/:id",verifyAdmin, Validate(CategoryIdSchema), UpdateCategory);
+Route.put("/:id",verifyAdmin, Validate(UpdateCategorySchema), UpdateCategory);
 Route.delete("/:id",verifyAdmin, Validate(CategoryIdSchema), DeleteCategory);
 Route.get("/", GetCategory);
 

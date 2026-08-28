@@ -1,8 +1,35 @@
 import { Request, Response } from "express";
 import { HotelModel } from "./Hotel.model";
-import { getMultipleUploadedFiles, HotelCacheKeys, uploadFileToS3 } from "@utils/index";
+import { Get_Signed_Url, getMultipleUploadedFiles, HotelCacheKeys, uploadWithRetry } from "@utils/index";
 import { getCache, getCacheVersion, incrementCacheVersion, setCache } from "@utils/index";
 import { logger } from "@modules/log/logger";
+import { IHotel } from "./Hotel.types";
+import { hotelCreationQueue, hotelDeleteQueue, hotelUpdateQueue } from "./hotel.queue";
+
+const GetSignedImages = async (images: string[]) => {
+    return Promise.all(
+        images.map(async (key) => {
+            const url = await Get_Signed_Url({ key });
+            return url;
+        })
+    );
+};
+
+export const HotelResponse = async (hotel: IHotel) => {
+    return {
+        ...hotel,
+        image: await GetSignedImages(hotel.image),
+    };
+};
+
+export const HotelsResponse = async (hotels: IHotel[]) => {
+    return Promise.all(
+        hotels.map(async (hotel) => ({
+            ...hotel,
+            image: await GetSignedImages(hotel.image.slice(0, 1)),
+        }))
+    );
+};
 
 export const GetHotels = async (req: Request, res: Response) => {
     try {
@@ -54,8 +81,11 @@ export const GetHotels = async (req: Request, res: Response) => {
                     source: "mongodb",
                 },
             });
-            await setCache(cacheKey, hotels, 1800);
-            res.status(200).json(hotels);
+            HotelsResponse(hotels).then(async (hotels: IHotel[]) => {
+                await setCache(cacheKey, hotels, 3600);
+                res.status(200).json(hotels);
+            })
+
         }
     } catch (error) {
         logger.error("Error fetching hotels", {
@@ -105,8 +135,17 @@ export const GetHotelDetails = async (req: Request, res: Response) => {
             });
             return res.status(404).json({ message: "Hotel not found" });
         }
-        await setCache(cacheKey, hotel, 1800);
-        res.status(200).json(hotel);
+        logger.info("Hotel details fetched successfully", {
+            metadata: {
+                hotelId: id,
+                source: "mongodb",
+            },
+        });
+        HotelResponse(hotel).then(async (hotel: IHotel) => {
+            await setCache(cacheKey, hotel, 3600);
+            res.status(200).json({ data: hotel });
+        })
+
     } catch (error) {
         logger.error("Error fetching hotel details", {
             metadata: {
@@ -120,164 +159,332 @@ export const GetHotelDetails = async (req: Request, res: Response) => {
     }
 };
 
-export const CreateHotel = async (req: Request, res: Response) => {
-    const { name, rating, address, roomType, meal, pricePerPerson, availableRooms, isActive } = req.body;
+export const CreateHotel = async (
+    req: Request,
+    res: Response
+) => {
+    const {
+        name,
+        rating,
+        address,
+        city,
+        country,
+        description,
+        roomType,
+        meal,
+        pricePerPerson,
+        availableRooms,
+        isActive,
+        amenities
+    } = req.body;
 
+    const requestId = crypto.randomUUID();
     const files = getMultipleUploadedFiles(req);
+
     try {
         if (!files.length) {
             logger.warn("Hotel creation failed - images missing", {
                 metadata: {
                     name,
-                },
+                    requestId
+                }
             });
 
-            return res.status(400).json({ message: "Images are required" });
+            return res.status(400).json({
+                success: false,
+                message: "Images are required"
+            });
         }
+
         const uploadedFiles = await Promise.all(
-            files.map(async (file) => {
-                return await uploadFileToS3({
-                    buffer: file.buffer,
-                    fileName: file.originalname,
-                    fileType: file.mimetype,
-                    folderType: "Blog",
-                });
-            })
+            files.map((file) =>
+                uploadWithRetry(file, 3)
+            )
         );
-        const hotel = await HotelModel.create({
-            images: uploadedFiles.map((file) => file.url),
+
+        const imagekeys = uploadedFiles.map(
+            (file) => file.key
+        );
+
+        const hotelData = {
             name,
             rating,
             address,
+            city,
+            country,
+            description,
             roomType,
             meal,
             pricePerPerson,
             availableRooms,
+            amenities,
             isActive
-        });
-        if (!hotel) {
-            logger.error("Hotel creation failed", {
-                metadata: {
-                    name,
-                },
-            });
-            return res.status(400).json({ message: "Error creating hotel" });
-        } else {
+        };
 
-            await incrementCacheVersion(HotelCacheKeys.listVersion());
-            logger.info("Hotel created successfully", {
-                metadata: {
-                    hotelId: hotel._id.toString(),
-                    name: hotel.name,
-                    imagesCount: uploadedFiles.length,
+        const job = await hotelCreationQueue.add(
+            "hotel-creation",
+            {
+                requestId,
+                hotelData,
+                imagekeys
+            },
+            {
+                attempts: 5,
+                backoff: {
+                    type: "exponential",
+                    delay: 5000
                 },
-            });
-            res.status(201).json(hotel);
-        }
+                removeOnComplete: {
+                    age: 3600
+                },
+                removeOnFail: {
+                    age: 86400
+                }
+            }
+        );
+
+        logger.info("Hotel creation job added to queue", {
+            metadata: {
+                name,
+                requestId,
+                jobId: job.id
+            }
+        });
+
+        return res.status(202).json({
+            success: true,
+            message: "Hotel creation is being processed",
+            data: {
+                jobId: job.id,
+                requestId
+            }
+        });
+
     } catch (error) {
         logger.error("Error creating hotel", {
             metadata: {
                 name,
+                requestId,
                 error: error instanceof Error
                     ? error.message
-                    : String(error),
-            },
+                    : String(error)
+            }
         });
-        res.status(500).json({ message: "Error creating hotel" });
+
+        return res.status(500).json({
+            success: false,
+            message: "Error creating hotel"
+        });
     }
 };
 
-export const UpdateHotel = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const files = getMultipleUploadedFiles(req);
-    if (files.length) {
-        try {
-            const uploadedFiles = await Promise.all(
-                files.map(async (file) => {
-                    return await uploadFileToS3({
-                        buffer: file.buffer,
-                        fileName: file.originalname,
-                        fileType: file.mimetype,
-                        folderType: "Blog",
-                    });
-                })
-            );
-            req.body.images = uploadedFiles.map((file) => file.url);
-        } catch (error) {
-            logger.error("Hotel image upload failed", {
-                metadata: {
-                    hotelId: id,
-                    error: error instanceof Error
-                        ? error.message
-                        : String(error),
-                },
-            });
+export const UpdateHotel = async (
+    req: Request,
+    res: Response
+) => {
+    const {
+        name,
+        rating,
+        address,
+        city,
+        country,
+        description,
+        roomType,
+        meal,
+        pricePerPerson,
+        availableRooms,
+        isActive,
+        amenities
+    } = req.body;
 
+    const { id } = req.params as { id: string };
+    const requestId = crypto.randomUUID();
 
-            return res.status(500).json({
-                success: false,
-                message: "Error uploading images",
-                data: error
-            });
-        }
-    }
-    const updateData = req.body;
     try {
+        const existingHotel =
+            await HotelModel.findById(id);
 
-        const hotel = await HotelModel.findByIdAndUpdate(id, updateData, { new: true }).lean();
-        if (!hotel) {
-            logger.warn("Hotel update failed - hotel not found", {
-                metadata: {
-                    hotelId: id,
-                },
+        if (!existingHotel) {
+            return res.status(404).json({
+                success: false,
+                message: "Hotel not found"
             });
-            return res.status(404).json({ message: "Hotel not found" });
         }
-        await incrementCacheVersion(HotelCacheKeys.listVersion());
-        await incrementCacheVersion(HotelCacheKeys.detailsVersion(id as string));
-        res.status(200).json(hotel);
+
+        if (existingHotel.isDeleted) {
+            return res.status(400).json({
+                success: false,
+                message: "Hotel is already deleted"
+            });
+        }
+
+        const files = getMultipleUploadedFiles(req);
+
+        let imagekeys: string[] | undefined;
+
+        if (files.length > 0) {
+            const uploadedFiles = await Promise.all(
+                files.map((file) =>
+                    uploadWithRetry(file, 3)
+                )
+            );
+
+            imagekeys = uploadedFiles.map(
+                (file) => file.key
+            );
+        }
+
+        const hotelData = {
+            name,
+            rating,
+            address,
+            city,
+            country,
+            description,
+            roomType,
+            pricePerPerson,
+            availableRooms,
+            meal,
+            isActive,
+            amenities
+        };
+
+        const job = await hotelUpdateQueue.add(
+            "hotel-update",
+            {
+                requestId,
+                hotelData,
+                imagekeys,
+                id
+            },
+            {
+                attempts: 5,
+                backoff: {
+                    type: "exponential",
+                    delay: 5000
+                },
+                removeOnComplete: {
+                    age: 3600
+                },
+                removeOnFail: {
+                    age: 86400
+                }
+            }
+        );
+
+        logger.info("Hotel update job added to queue", {
+            metadata: {
+                hotelId: id,
+                requestId,
+                jobId: job.id,
+                hasNewImages: Boolean(imagekeys?.length)
+            }
+        });
+
+        return res.status(202).json({
+            success: true,
+            message: "Hotel update is being processed",
+            data: {
+                jobId: job.id,
+                requestId
+            }
+        });
+
     } catch (error) {
         logger.error("Error updating hotel", {
             metadata: {
                 hotelId: id,
+                requestId,
                 error: error instanceof Error
                     ? error.message
-                    : String(error),
-            },
+                    : String(error)
+            }
         });
-        res.status(500).json({ message: "Error updating hotel" });
+
+        return res.status(500).json({
+            success: false,
+            message: "Error updating hotel"
+        });
     }
 };
 
-export const DeleteHotel = async (req: Request, res: Response) => {
-    const { id } = req.params;
+export const DeleteHotel = async (
+    req: Request,
+    res: Response
+) => {
+    const { id } = req.params as { id: string };
+    const requestId = crypto.randomUUID();
+
     try {
-        const hotel = await HotelModel.findByIdAndUpdate(id, { isDeleted: true, DeletedAt: new Date() }, { new: true });
-        if (!hotel) {
-            logger.warn("Hotel deletion failed - hotel not found", {
-                metadata: {
-                    hotelId: id,
-                },
+        const existingHotel =
+            await HotelModel.findById(id);
+
+        if (!existingHotel) {
+            return res.status(404).json({
+                success: false,
+                message: "Hotel not found"
             });
-            return res.status(404).json({ message: "Hotel not found" });
         }
-        await incrementCacheVersion(HotelCacheKeys.listVersion());
-        await incrementCacheVersion(HotelCacheKeys.detailsVersion(id as string));
-        logger.info("Hotel deleted successfully", {
+
+        if (existingHotel.isDeleted) {
+            return res.status(400).json({
+                success: false,
+                message: "Hotel is already deleted"
+            });
+        }
+
+        const job = await hotelDeleteQueue.add(
+            "hotel-delete",
+            {
+                requestId,
+                id
+            },
+            {
+                attempts: 5,
+                backoff: {
+                    type: "exponential",
+                    delay: 5000
+                },
+                removeOnComplete: {
+                    age: 3600
+                },
+                removeOnFail: {
+                    age: 86400
+                }
+            }
+        );
+
+        logger.info("Hotel delete job added to queue", {
             metadata: {
                 hotelId: id,
-            },
+                requestId,
+                jobId: job.id
+            }
         });
-        res.status(200).json({ message: "Hotel deleted successfully" });
+
+        return res.status(202).json({
+            success: true,
+            message: "Hotel deletion is being processed",
+            data: {
+                jobId: job.id,
+                requestId
+            }
+        });
+
     } catch (error) {
         logger.error("Error deleting hotel", {
             metadata: {
                 hotelId: id,
+                requestId,
                 error: error instanceof Error
                     ? error.message
-                    : String(error),
-            },
+                    : String(error)
+            }
         });
-        res.status(500).json({ message: "Error deleting hotel" });
+
+        return res.status(500).json({
+            success: false,
+            message: "Error deleting hotel"
+        });
     }
 };

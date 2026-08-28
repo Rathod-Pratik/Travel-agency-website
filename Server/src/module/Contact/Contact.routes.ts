@@ -7,7 +7,7 @@ import { CreateContactSchema,ContactIdSchema } from './Contact.validation';
 
 const route=express.Router();
 
-route.post('/contact',Validate(CreateContactSchema),verifyUser,AddContact);
+route.post('/',Validate(CreateContactSchema),verifyUser,AddContact);
 route.get('/',verifyAdmin,GetContact);
 route.delete('/contact/:id',Validate(ContactIdSchema),verifyAdmin,DeleteContact);
 

@@ -64,24 +64,15 @@ const TourSchema = new mongoose.Schema<ITour>(
       default: "INR"
     },
 
-    images: {
+    image: {
       type: [String],
       required: true
     },
 
     category: {
-      type: String,
+      type:mongoose.Schema.ObjectId,
+      ref: "Category",
       required: true,
-      enum: [
-        "Adventure",
-        "Beach",
-        "Family",
-        "Honeymoon",
-        "Luxury",
-        "Pilgrimage",
-        "Wildlife",
-        "Cultural"
-      ]
     },
 
     included: {
@@ -141,8 +132,8 @@ const TourSchema = new mongoose.Schema<ITour>(
 
     status: {
       type: String,
-      enum: ["draft", "active", "inactive", "completed","Cancelled"],
-      default: "draft"
+      enum: ["active", "inactive", "completed","Cancelled"],
+      default: "inactive"
     },
 
     featured: {

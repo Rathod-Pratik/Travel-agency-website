@@ -8,6 +8,8 @@ export const CategorySchema = z.object({
     isHomePage: z.boolean().optional()
 });
 
+export const UpdateCategorySchema = CategorySchema.partial();
+
 export const CategoryIdSchema = z.object({
     id: z.string().min(1, "Category ID is required")
 });

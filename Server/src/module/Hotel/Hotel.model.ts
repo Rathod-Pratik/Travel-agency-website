@@ -3,42 +3,50 @@ import { IHotel } from "./Hotel.types";
 
 const HotelSchema = new mongoose.Schema<IHotel>(
   {
-    image:{
-        type: [String],
+    requestId: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true
     },
-      name: {
-        type: String,
-        required: true,
-        trim: true
-      },
+    image: {
+      type: [String],
+    },
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    city: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    country: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    address: {
+      type: String,
+      required: true,
+      trim: true
+    },
 
-      address: {
-        type: String,
-        required: true,
-        trim: true
-      },
+    rating: {
+      type: Number,
+      min: 0,
+      max: 5,
+      default: 0
+    },
 
-      rating: {
-        type: Number,
-        min: 0,
-        max: 5,
-        default: 0
-      },
-
-      roomType: {
-        type: String,
-        required: true,
-        enum: ["Single", "Double"],
-        trim: true
-      },
+    roomType: {
+      type: String,
+      required: true,
+      trim: true
+    },
 
     meal: {
-      name: {
-        type: String,
-        required: true,
-        trim: true
-      },
-
       breakfast: {
         type: Boolean,
         default: false
@@ -66,19 +74,23 @@ const HotelSchema = new mongoose.Schema<IHotel>(
       required: true,
       min: 0
     },
-
+    amenities: {
+      type: [String],
+      default: []
+    },
     isActive: {
-      type: Boolean,
-      default: true
+      type: String,
+      default: "active",
+      enum: ["active", "inactive", "draft"]
     },
     isDeleted: {
       type: Boolean,
       default: false
-  },
-  DeletedAt: {
+    },
+    DeletedAt: {
       type: Date,
       default: null
-  }
+    }
   },
   {
     timestamps: true

@@ -5,6 +5,7 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { logger } from "@modules/log/logger";
 import crypto from "crypto";
 
 import dotenv from "dotenv";
@@ -43,94 +44,78 @@ const allowedTypes = [
 ];
 
 export interface AwsConfigEnv {
-	accessKeyId: string;
-	secretAccessKey: string;
-	region: string;
-	bucket: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  region: string;
+  bucket: string;
 }
 
 export interface SignUrlRequestBody {
-	fileName: string;
-	fileType?: string;
-	folderType: string;
+  fileName: string;
+  fileType?: string;
+  folderType: string;
 }
 
 export interface SanitizedUploadInput {
-	folderType: string;
-	fileName: string;
-	fileType: string;
+  folderType: string;
+  fileName: string;
+  fileType: string;
 }
 
 export interface GetSignedUrlRequestBody {
-	key: string;
-	downloadFileName?: string;
+  key: string;
+  downloadFileName?: string;
 }
 
-export interface UploadFileRequestBody {
-	buffer: Buffer;
-	fileName: string;
-	fileType: string;
-	folderType: string;
+export type UploadImageType = {
+  buffer: Buffer;
+  fileName: string;
+  fileType: string;
+  folderType: string;
 }
 
 export interface UploadFileResponse {
-	url: string;
-	key: string;
-	fileName: string;
-	fileType: string;
+  url: string;
+  key: string;
+  fileName: string;
+  fileType: string;
 }
 
 export interface DeleteImageRequestBody {
-	fileUrl?: string;
-	key?: string;
+  fileUrl?: string;
+  key?: string;
 }
 
 export interface UpdateImageRequestBody {
-	folderType: string;
-	oldFileUrl?: string;
-	oldKey?: string;
+  folderType: string;
+  oldFileUrl?: string;
+  oldKey?: string;
 }
 
 const isSafeS3Key = (key: string): boolean => {
   return Boolean(key) && !key.includes("..") && !key.startsWith("/") && !key.startsWith("\\");
 };
 
-export const deleteFile = async (fileUrl: string) => {
-  if (!fileUrl) {
-    console.warn("No file URL provided for deletion");
-    return;
+export const Delete_S3_File = async (
+  key: string
+) => {
+  if (!key) {
+    throw new Error("S3 key is required");
   }
 
-  const bucket = process.env.S3_BUCKET_NAME;
-  const key = extractKeyFromUrl(fileUrl);
-
-  if (!bucket) {
-    console.warn("S3 bucket is not configured, skipping S3 delete.");
-    return;
+  if (!isSafeS3Key(key)) {
+    throw new Error("Invalid S3 key");
   }
 
-  if (key) {
-    await s3.send(
-      new DeleteObjectCommand({
-        Bucket: bucket,
-        Key: key,
-      }),
-    );
-  } else {
-    console.warn("Invalid file key extracted, skipping S3 delete.");
-  }
+  await s3.send(
+    new DeleteObjectCommand({
+      Bucket: awsConfig.bucket,
+      Key: key,
+    })
+  );
 };
 
 export const extractKeyFromUrl = (url: string) => {
-  if (!url || typeof url !== "string") {
-    console.error("Invalid URL passed to extractKeyFromUrl:", url);
-    return null;
-  }
-
-  if (!url.includes(".com/")) {
-    return url;
-  }
-
   const parts = url.split(".com/");
   return parts.length > 1 ? parts[1] : null;
 };
@@ -162,25 +147,15 @@ export const uploadFileToS3 = async ({
   fileName,
   fileType,
   folderType,
-}: UploadFileRequestBody): Promise<UploadFileResponse> => {
-  if (!buffer || !fileName || !fileType || !folderType) {
-    throw new Error("buffer, fileName, fileType and folderType are required");
-  }
-
-  const sanitized = sanitizeInput(folderType, fileName, fileType);
-  const normalizedFolderType = sanitized.folderType;
-  const normalizedFileName = sanitized.fileName;
-  const normalizedFileType = sanitized.fileType;
-  const ext = normalizedFileName.includes(".") ? normalizedFileName.split(".").pop() || "bin" : "bin";
-  const safeName = `${Date.now()}-${crypto.randomUUID()}.${ext}`;
-  const key = `${normalizedFolderType.replace(/\s+/g, "_")}/${safeName}`;
+}: UploadImageType) => {
+  const key = `${folderType.replace(/\s+/g, "_")}/${fileName}`;
 
   await s3.send(
     new PutObjectCommand({
       Bucket: awsConfig.bucket,
       Key: key,
       Body: buffer,
-      ContentType: normalizedFileType,
+      ContentType: fileType,
       ACL: "private",
     }),
   );
@@ -190,52 +165,11 @@ export const uploadFileToS3 = async ({
   return {
     url: uploadedFileUrl,
     key,
-    fileName: normalizedFileName,
-    fileType: normalizedFileType,
+    fileName,
+    fileType,
   };
 };
 
-export const create_sign_url = async ({
-  fileName,
-  fileType,
-  folderType,
-}: SignUrlRequestBody) => {
-  if (!fileName || !folderType || !fileType) {
-    throw new Error("fileName, fileType and folderType are required");
-  }
-
-  if (!allowedTypes.includes(fileType)) {
-    throw new Error("Invalid file type");
-  }
-
-  const sanitized = sanitizeInput(folderType, fileName, fileType);
-  const normalizedFolderType = sanitized.folderType;
-  const normalizedFileName = sanitized.fileName;
-  const normalizedFileType = sanitized.fileType;
-
-  const ext = normalizedFileName.includes(".") ? normalizedFileName.split(".").pop() || "bin" : "bin";
-  const safeName = `${Date.now()}-${crypto.randomUUID()}.${ext}`;
-  const key = `${normalizedFolderType.replace(/\s+/g, "_")}/${safeName}`;
-
-  const presignedUrl = await getSignedUrl(
-    s3,
-    new PutObjectCommand({
-      Bucket: awsConfig.bucket,
-      Key: key,
-      ContentType: normalizedFileType,
-      ACL: "private",
-    }),
-    {
-      expiresIn: 3600,
-    },
-  );
-
-  return {
-    url: presignedUrl,
-    fields: {},
-    key,
-  };
-};
 
 export const Get_Signed_Url = async ({ key, downloadFileName }: GetSignedUrlRequestBody) => {
   if (!key) {
@@ -253,33 +187,55 @@ export const Get_Signed_Url = async ({ key, downloadFileName }: GetSignedUrlRequ
       Key: key,
       ...(downloadFileName
         ? {
-            ResponseContentDisposition: `attachment; filename="${downloadFileName}"`,
-          }
+          ResponseContentDisposition: `attachment; filename="${downloadFileName}"`,
+        }
         : {}),
     }),
     {
       expiresIn: 3600,
     },
   );
-
-  return { url: signedUrl };
-};
-
-export const getUploadedFile = (req: Request) => {
-  const files = req.files as
-    | {
-        file?: Express.Multer.File[];
-        image?: Express.Multer.File[];
-      }
-    | undefined;
-
-  return files?.image?.[0] ?? files?.file?.[0] ?? req.file ?? null;
+const url = signedUrl;
+  return url;
 };
 
 export const getMultipleUploadedFiles = (req: Request): Express.Multer.File[] => {
-  const files = req.files as Express.Multer.File[] ;
-
+  const files = req.files as Express.Multer.File[];
   return files;
 };
 
-export const Get_Signed_url = Get_Signed_Url;
+export const uploadWithRetry = async (
+  file: Express.Multer.File,
+  retries = 3,
+  Directory: string = "Hotel"
+) => {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await uploadFileToS3({
+        buffer: file.buffer,
+        fileName: file.originalname,
+        fileType: file.mimetype,
+        folderType: Directory,
+      });
+    } catch (error) {
+      lastError = error;
+
+      logger.warn("S3 upload failed", {
+        metadata: {
+          fileName: file.originalname,
+          attempt,
+        },
+      });
+
+      if (attempt < retries) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, attempt * 2000)
+        );
+      }
+    }
+  }
+
+  throw lastError;
+};

@@ -112,7 +112,7 @@ export function AdminNavbar({ onMenuClick }: AdminNavbarProps) {
                   type="button"
                   onClick={() => {
                     setOpen(false);
-                    alert("Logged out from admin panel");
+                   router.push("/login");
                   }}
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50"
                 >

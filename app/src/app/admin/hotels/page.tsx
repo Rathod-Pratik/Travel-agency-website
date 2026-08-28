@@ -37,8 +37,8 @@ export default function AdminHotelsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiClient.get(GET_HOTEL_URL(1, 100), { withCredentials: true });
-      const data: IHotel[] = res.data?.data ?? res.data?.hotels ?? [];
+      const res = await apiClient.get(GET_HOTEL_URL(1, 20), { withCredentials: true });
+      const data: IHotel[] =  res.data ?? [];
       setHotels(data);
     } catch (err: any) {
       const msg = err?.response?.data?.message || "Failed to load hotels. Please try again.";

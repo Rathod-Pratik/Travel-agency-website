@@ -1,7 +1,35 @@
 import { Request, Response } from 'express';
 import { TourModel } from './Tour.model';
-import { getCache, getCacheVersion, getMultipleUploadedFiles, incrementCacheVersion, setCache, TourCacheKeys, uploadFileToS3 } from '@utils/index';
+import { Get_Signed_Url, getCache, getCacheVersion, getMultipleUploadedFiles, incrementCacheVersion, setCache, TourCacheKeys, uploadWithRetry } from '@utils/index';
 import { logger } from '@modules/log/logger';
+import { ITour } from './Tour.types';
+import { tourCreationQueue, TourDeleteQueue, TourUpdateQueue } from './Tour.queue';
+
+
+const GetSignedImages = async (images: string[]) => {
+    return Promise.all(
+        images.map(async (key) => {
+            const url = await Get_Signed_Url({ key });
+            return url;
+        })
+    );
+};
+
+export const TourResponse = async (tour: ITour) => {
+    return {
+        ...tour,
+        image: await GetSignedImages(tour.image),
+    };
+};
+
+export const ToursResponse = async (tours: ITour[]) => {
+    return Promise.all(
+        tours.map(async (tour) => ({
+            ...tour,
+            image: await GetSignedImages(tour.image.slice(0, 1)),
+        }))
+    );
+};
 
 export const GetTours = async (req: Request, res: Response) => {
     try {
@@ -160,14 +188,18 @@ export const GetToursDetails = async (req: Request, res: Response) => {
     }
 };
 
-export const CreateTour = async (req: Request, res: Response) => {
+export const CreateTour = async (
+    req: Request,
+    res: Response
+) => {
     const {
         title,
         slug,
         description,
         country,
         city,
-        duration,
+        days,
+        nights,
         price,
         discountPrice,
         currency,
@@ -176,7 +208,6 @@ export const CreateTour = async (req: Request, res: Response) => {
         notIncluded,
         itinerary,
         hotel,
-        food,
         maxSeats,
         availableSeats,
         rating,
@@ -187,51 +218,54 @@ export const CreateTour = async (req: Request, res: Response) => {
         endDate
     } = req.body;
 
+    const requestId = crypto.randomUUID();
     const files = getMultipleUploadedFiles(req);
 
     try {
-
         if (!files.length) {
-
             logger.warn("Tour creation failed - images missing", {
                 metadata: {
-                    title
+                    title,
+                    requestId
                 }
             });
 
             return res.status(400).json({
+                success: false,
                 message: "Images are required"
             });
         }
 
         const uploadedFiles = await Promise.all(
-            files.map(async (file) => {
-                return await uploadFileToS3({
-                    buffer: file.buffer,
-                    fileName: file.originalname,
-                    fileType: file.mimetype,
-                    folderType: "Blog",
-                });
-            })
+            files.map((file) =>
+                uploadWithRetry(file, 3)
+            )
         );
 
-        const newTour = {
+        const imagekeys = uploadedFiles.map(
+            (file) => file.key
+        );
+
+        const tourData = {
             title,
             slug,
             description,
-            country,
-            city,
-            duration,
+            destination: {
+                country,
+                city
+            },
+            duration: {
+                days,
+                nights
+            },
             price,
             discountPrice,
             currency,
-            images: uploadedFiles.map((file) => file.url),
             category,
             included,
             notIncluded,
             itinerary,
             hotel,
-            food,
             maxSeats,
             availableSeats,
             rating,
@@ -242,53 +276,54 @@ export const CreateTour = async (req: Request, res: Response) => {
             endDate
         };
 
-        const tour = await TourModel.create(newTour);
-
-        if (!tour) {
-
-            logger.error("Tour creation failed", {
-                metadata: {
-                    title,
-                    city,
-                    country
+        const job = await tourCreationQueue.add(
+            "tour-creation",
+            {
+                tourData,
+                requestId,
+                imagekeys
+            },
+            {
+                attempts: 5,
+                backoff: {
+                    type: "exponential",
+                    delay: 5000
+                },
+                removeOnComplete: {
+                    age: 3600
+                },
+                removeOnFail: {
+                    age: 86400
                 }
-            });
+            }
+        );
 
-            return res.status(400).json({
-                success: false,
-                message: "Error creating tour"
-            });
-        } else {
+        logger.info("Tour creation job added to queue", {
+            metadata: {
+                title,
+                requestId,
+                jobId: job.id,
+                city,
+                country
+            }
+        });
 
-            await incrementCacheVersion(
-                TourCacheKeys.listVersion()
-            );
-
-            logger.info("Tour created successfully", {
-                metadata: {
-                    tourId: tour._id.toString(),
-                    title: tour.title,
-                    city,
-                    country,
-                    price,
-                    availableSeats
-                }
-            });
-
-            return res.status(201).json({
-                success: true,
-                message: "Tour created successfully",
-                data: tour,
-            });
-        }
+        return res.status(202).json({
+            success: true,
+            message: "Tour creation has been queued",
+            data: {
+                jobId: job.id,
+                requestId
+            }
+        });
 
     } catch (err) {
-
         logger.error("Error creating tour", {
             metadata: {
                 title,
                 city,
                 country,
+                requestId,
                 error: err instanceof Error
                     ? err.message
                     : String(err)
@@ -297,63 +332,48 @@ export const CreateTour = async (req: Request, res: Response) => {
 
         return res.status(500).json({
             success: false,
-            message: "Error creating tour",
-            data: err,
+            message: "Failed to process tour creation"
         });
     }
 };
 
-export const UpdateTour = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const files = getMultipleUploadedFiles(req);
+export const UpdateTour = async (
+    req: Request,
+    res: Response
+) => {
+    const {
+        title,
+        slug,
+        description,
+        country,
+        city,
+        days,
+        nights,
+        price,
+        discountPrice,
+        currency,
+        category,
+        included,
+        notIncluded,
+        itinerary,
+        hotel,
+        maxSeats,
+        availableSeats,
+        rating,
+        totalReviews,
+        status,
+        featured,
+        startDate,
+        endDate
+    } = req.body;
 
-    if (files.length) {
-        try {
-
-            const uploadedFiles = await Promise.all(
-                files.map(async (file) => {
-                    return await uploadFileToS3({
-                        buffer: file.buffer,
-                        fileName: file.originalname,
-                        fileType: file.mimetype,
-                        folderType: "Blog",
-                    });
-                })
-            );
-
-            req.body.images = uploadedFiles.map((file) => file.url);
-
-        } catch (err) {
-
-            logger.error("Tour image upload failed", {
-                metadata: {
-                    tourId: id,
-                    error: err instanceof Error
-                        ? err.message
-                        : String(err)
-                }
-            });
-
-            return res.status(500).json({
-                success: false,
-                message: "Error uploading images",
-                data: err
-            });
-        }
-    }
-
-    const updateData = req.body;
+    const { id } = req.params as { id: string };
+    const requestId = crypto.randomUUID();
 
     try {
+        const existingTour = await TourModel.findById(id);
 
-        const tour = await TourModel.findByIdAndUpdate(
-            id,
-            updateData,
-            { new: true }
-        );
-
-        if (!tour) {
-
+        if (!existingTour) {
             logger.warn("Tour update failed - tour not found", {
                 metadata: {
                     tourId: id
@@ -366,34 +386,98 @@ export const UpdateTour = async (req: Request, res: Response) => {
             });
         }
 
-        await incrementCacheVersion(
-            TourCacheKeys.listVersion()
+        const files = getMultipleUploadedFiles(req);
+
+        let imagekeys: string[] | undefined;
+
+        if (files.length > 0) {
+            const uploadedFiles = await Promise.all(
+                files.map((file) =>
+                    uploadWithRetry(file, 3)
+                )
+            );
+
+            imagekeys = uploadedFiles.map(
+                (file) => file.key
+            );
+        }
+
+        const tourData = {
+            title,
+            slug,
+            description,
+            destination: {
+                country,
+                city
+            },
+            duration: {
+                days,
+                nights
+            },
+            price,
+            discountPrice,
+            currency,
+            category,
+            included,
+            notIncluded,
+            itinerary,
+            hotel,
+            maxSeats,
+            availableSeats,
+            rating,
+            totalReviews,
+            status,
+            featured,
+            startDate,
+            endDate
+        };
+
+        const job = await TourUpdateQueue.add(
+            "tour-update",
+            {
+                requestId,
+                tourData,
+                imagekeys,
+                id
+            },
+            {
+                attempts: 5,
+                backoff: {
+                    type: "exponential",
+                    delay: 5000
+                },
+                removeOnComplete: {
+                    age: 3600
+                },
+                removeOnFail: {
+                    age: 86400
+                }
+            }
         );
 
-        await incrementCacheVersion(
-            TourCacheKeys.detailsVersion(id as string)
-        );
-
-        logger.info("Tour updated successfully", {
+        logger.info("Tour update job added to queue", {
             metadata: {
                 tourId: id,
-                title: tour.title,
-                price: tour.price,
-                availableSeats: tour.availableSeats
+                requestId,
+                jobId: job.id,
+                hasImages: Boolean(imagekeys?.length)
             }
         });
 
-        return res.status(200).json({
+        return res.status(202).json({
             success: true,
-            message: "Tour updated successfully",
-            data: tour
+            message: "Tour update is being processed",
+            data: {
+                jobId: job.id,
+                requestId
+            }
         });
 
     } catch (err) {
-
         logger.error("Error updating tour", {
             metadata: {
                 tourId: id,
+                requestId,
                 error: err instanceof Error
                     ? err.message
                     : String(err)
@@ -402,65 +486,78 @@ export const UpdateTour = async (req: Request, res: Response) => {
 
         return res.status(500).json({
             success: false,
-            message: "Error updating tour",
-            data: err
+            message: "Error updating tour"
         });
     }
 };
 
-export const DeleteTour = async (req: Request, res: Response) => {
-    const { id } = req.params;
+export const DeleteTour = async (
+    req: Request,
+    res: Response
+) => {
+    const { id } = req.params as { id: string };
+    const requestId = crypto.randomUUID();
 
     try {
+        const existingTour = await TourModel.findById(id);
 
-        const tour = await TourModel.findByIdAndUpdate(
-            id,
-            {
-                isDeleted: true,
-                DeletedAt: new Date()
-            },
-            { new: true }
-        );
-
-        if (!tour) {
-
-            logger.warn("Tour deletion failed - tour not found", {
-                metadata: {
-                    tourId: id
-                }
-            });
-
+        if (!existingTour) {
             return res.status(404).json({
                 success: false,
                 message: "Tour not found"
             });
         }
 
-        await incrementCacheVersion(
-            TourCacheKeys.detailsVersion(id as string)
+        if (existingTour.isDeleted) {
+            return res.status(400).json({
+                success: false,
+                message: "Tour is already deleted"
+            });
+        }
+
+        const job = await TourDeleteQueue.add(
+            "tour-delete",
+            {
+                requestId,
+                id
+            },
+            {
+                attempts: 5,
+                backoff: {
+                    type: "exponential",
+                    delay: 5000
+                },
+                removeOnComplete: {
+                    age: 3600
+                },
+                removeOnFail: {
+                    age: 86400
+                }
+            }
         );
 
-        await incrementCacheVersion(
-            TourCacheKeys.listVersion()
-        );
-
-        logger.info("Tour deleted successfully", {
+        logger.info("Tour delete job added to queue", {
             metadata: {
                 tourId: id,
-                title: tour.title
+                requestId,
+                jobId: job.id
             }
         });
 
-        return res.status(200).json({
+        return res.status(202).json({
             success: true,
-            message: "Tour deleted successfully"
+            message: "Tour deletion is being processed",
+            data: {
+                jobId: job.id,
+                requestId
+            }
         });
 
     } catch (err) {
-
         logger.error("Error deleting tour", {
             metadata: {
                 tourId: id,
+                requestId,
                 error: err instanceof Error
                     ? err.message
                     : String(err)
@@ -469,8 +566,7 @@ export const DeleteTour = async (req: Request, res: Response) => {
 
         return res.status(500).json({
             success: false,
-            message: "Error deleting tour",
-            data: err
+            message: "Error deleting tour"
         });
     }
 };

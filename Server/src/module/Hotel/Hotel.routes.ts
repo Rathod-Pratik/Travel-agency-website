@@ -11,6 +11,6 @@ Route.get("/",verifyUser, GetHotels);
 Route.get("/:id",verifyUser,Validate(HotelIdSchema), GetHotelDetails);
 Route.post("/",verifyAdmin,uploadImages,Validate(HotelSchema), CreateHotel);
 Route.put("/:id", verifyAdmin,uploadImages,Validate(HotelIdSchema), UpdateHotel);
-Route.delete("/:id", verifyAdmin, Validate(HotelIdSchema), DeleteHotel);
+Route.delete("/:id", verifyAdmin,Validate(HotelIdSchema), DeleteHotel);
 
 export default Route;

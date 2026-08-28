@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useFormik } from "formik";
@@ -22,10 +22,23 @@ import {
 import { apiClient } from "@apiClient";
 import { CREATE_HOTEL_URL, hotelValidationSchema } from "@utils";
 import { FiImage, FiX } from "react-icons/fi";
+import Image from "next/image";
 
 export default function CreateHotelPage() {
   const router = useRouter();
   const [images, setImages] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+
+  useEffect(() => {
+    const urls = images.map((file) => URL.createObjectURL(file));
+
+    setPreviews(urls);
+
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [images]);
+
   const amenities = [
     "High-speed Free WiFi",
     "Infinity Swimming Pool",
@@ -35,8 +48,8 @@ export default function CreateHotelPage() {
     "24/7 Room Concierge",
   ];
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([
-    "High-speed Free WiFi",
-    "Infinity Swimming Pool",
+    "",
+    "",
   ]);
 
   const formik = useFormik({
@@ -45,76 +58,80 @@ export default function CreateHotelPage() {
       address: "",
       city: "",
       country: "",
-      rating: 4.8,
-      roomType: "Deluxe Ocean View",
-      pricePerPerson: 180,
-      availableRooms: 10,
-      breakfast: true,
+      rating: 0,
+      roomType: "",
+      pricePerPerson: null,
+      availableRooms: null,
+      breakfast: false,
       lunch: false,
-      dinner: true,
+      dinner: false,
       description: "",
-      isActive: true,
+      isActive: false,
+      amenities: [],
     },
     validationSchema: hotelValidationSchema,
-   onSubmit: async (values, { setSubmitting }) => {
-  try {
-    const formData = new FormData();
+    onSubmit: async (values, { setSubmitting }) => {
+      try {
+        const formData = new FormData();
 
-    formData.append("name", values.name);
-    formData.append("address", values.address);
-    formData.append("city", values.city);
-    formData.append("country", values.country);
-    formData.append("rating", String(Number(values.rating)));
-    formData.append("roomType", values.roomType);
-    formData.append(
-      "pricePerPerson",
-      String(Number(values.pricePerPerson))
-    );
-    formData.append(
-      "availableRooms",
-      String(Number(values.availableRooms))
-    );
+        formData.append("name", values.name);
+        formData.append("address", values.address);
+        formData.append("city", values.city);
+        formData.append("country", values.country);
+        formData.append("rating", String(Number(values.rating)));
+        formData.append("roomType", values.roomType);
+        formData.append(
+          "pricePerPerson",
+          String(Number(values.pricePerPerson))
+        );
+        formData.append(
+          "availableRooms",
+          String(Number(values.availableRooms))
+        );
 
-    formData.append(
-      "meal",
-      JSON.stringify({
-        breakfast: values.breakfast,
-        lunch: values.lunch,
-        dinner: values.dinner,
-      })
-    );
+        formData.append(
+          "meal",
+          JSON.stringify({
+            breakfast: values.breakfast,
+            lunch: values.lunch,
+            dinner: values.dinner,
+          })
+        );
 
-    formData.append("isActive", String(values.isActive));
-    formData.append("description", values.description);
-    formData.append(
-      "amenities",
-      JSON.stringify(selectedAmenities)
-    );
+        formData.append("isActive", String(values.isActive));
+        formData.append("description", values.description);
+        formData.append(
+          "amenities",
+          JSON.stringify(selectedAmenities)
+        );
 
-    // Multiple images
-    images.forEach((image) => {
-      formData.append("image", image);
-    });
+        // Multiple images
+        images.forEach((image) => {
+          formData.append("image", image);
+        });
 
-    const response = await apiClient.post(CREATE_HOTEL_URL, formData, {
-      withCredentials: true,
-    });
-    if (response.status === 201) {
-      toast.success("Hotel partner added successfully!");
-      router.push("/admin/hotels");
-    }
+        const response = await apiClient.post(CREATE_HOTEL_URL, formData, {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        if (response.status === 201) {
+          toast.success("Hotel partner added successfully!");
+          router.push("/admin/hotels");
+        }
 
-  } catch (err: any) {
-    console.error("Create hotel error:", err);
+      } catch (err: any) {
+        console.error("Create hotel error:", err);
 
-    toast.error(
-      err?.response?.data?.message ||
-        "Failed to create hotel. Please try again."
-    );
-  } finally {
-    setSubmitting(false);
-  }
-},
+        toast.error(
+          err?.response?.data?.message ||
+          "Failed to create hotel. Please try again."
+        );
+      } finally {
+        setSubmitting(false);
+      }
+    },
   });
 
   const toggleAmenity = (item: string) => {
@@ -225,34 +242,35 @@ export default function CreateHotelPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                  {images.map((file, index) => (
+                  {previews.map((url, index) => (
                     <div
-                      key={`${file.name}-${index}`}
+                      key={`${images[index].name}-${images[index].lastModified}-${index}`}
                       className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white"
                     >
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={file.name}
+                      <Image
+                        src={url}
+                        alt={images[index].name}
                         className="h-32 w-full object-cover"
+                        height={128}
+                        width={128}
+                        unoptimized
                       />
 
-                      {/* Remove Image */}
                       <button
                         type="button"
-                        onClick={() =>
+                        onClick={() => {
                           setImages((prev) =>
                             prev.filter((_, i) => i !== index)
-                          )
-                        }
+                          );
+                        }}
                         className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100 hover:bg-red-500"
                       >
                         <FiX size={14} />
                       </button>
 
-                      {/* Image Number */}
                       <div className="absolute bottom-0 left-0 right-0 bg-black/50 px-2 py-1">
                         <p className="truncate text-[10px] text-white">
-                          {file.name}
+                          {images[index].name}
                         </p>
                       </div>
                     </div>
@@ -426,6 +444,28 @@ export default function CreateHotelPage() {
                   formik.setFieldValue("dinner", e.target.checked)
                 }
               />
+            </div>
+          </div>
+          <div className="mt-6 border-t border-gray-100 pt-4">
+            <label className="text-xs font-semibold uppercase text-gray-600">
+              Hotel Status
+            </label>
+            <div className="mt-3 flex items-center gap-6 text-sm text-gray-700">
+          <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase text-gray-600">
+                  Status:
+                </span>
+                <select
+                  name="isActive"
+                  value={formik.values.isActive ? "active" : "inactive"}
+                  onChange={formik.handleChange}
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium focus:border-orange-500 focus:outline-none"
+                >
+                  <option value="active">Active</option>
+                  <option value="draft">Draft</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
             </div>
           </div>
         </AdminCard>

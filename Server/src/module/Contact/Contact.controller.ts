@@ -7,6 +7,7 @@ import {
 } from "@utils/index";
 
 import { logger } from "@modules/log/logger";
+import { ContactCreationQueue } from "./Contact.queue";
 
 export const AddContact = async (
     req: Request,
@@ -21,54 +22,63 @@ export const AddContact = async (
         message
     } = req.body;
 
+    const requestId = crypto.randomUUID();
+
     try {
-        const contact = await ContactModel.create({
-            userid,
-            name,
-            email,
-            mobile,
-            message
-        });
 
-        if (!contact) {
+        const job = await ContactCreationQueue.add(
+            "contact-creation",
+            {
+                userid,
+                name,
+                email,
+                mobile,
+                message,
+                requestId
+            },
+            {
+                attempts: 5,
 
-            logger.warn("Contact creation failed", {
-                metadata: {
-                    email,
-                    userid
+                backoff: {
+                    type: "exponential",
+                    delay: 3000
+                },
+                removeOnComplete: {
+                    age: 3600
+                },
+
+                removeOnFail: {
+                    age: 86400
                 }
-            });
-
-            return res.status(400).json({
-                success: false,
-                message: "Failed to add contact"
-            });
-        }
-
-        await incrementCacheVersion(
-            ContactCacheKeys.listVersion()
+            }
         );
 
-        logger.info("Contact added successfully", {
+        logger.info("Contact creation job added to queue", {
             metadata: {
-                contactId: contact._id.toString(),
+                jobId: job.id,
+                name,
+                email,
                 userid,
-                email
+                requestId
             }
         });
 
-        return res.status(201).json({
+        return res.status(202).json({
             success: true,
-            message: "Contact added successfully",
-            data: contact
+            message: "Contact creation queued",
+            data: {
+                jobId: job.id,
+                requestId
+            }
         });
 
     } catch (err) {
 
-        logger.error("Error adding contact", {
+        logger.error("Error adding contact creation job", {
             metadata: {
                 userid,
                 email,
+                requestId,
                 error: err instanceof Error
                     ? err.message
                     : String(err)
@@ -77,8 +87,7 @@ export const AddContact = async (
 
         return res.status(500).json({
             success: false,
-            message: "Error adding contact",
-            data: err
+            message: "Failed to queue contact creation"
         });
     }
 };

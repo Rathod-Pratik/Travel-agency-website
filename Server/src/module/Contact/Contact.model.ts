@@ -18,6 +18,10 @@ const ContactSchema = new mongoose.Schema<IContact>(
       required: [true, "Email is required"],
     },
 
+    requestId:{
+      type: String,
+      required: [true, "Request ID is required"],
+    },
     mobile: {
       type: String,
       required: [true, "Mobile number is required"],

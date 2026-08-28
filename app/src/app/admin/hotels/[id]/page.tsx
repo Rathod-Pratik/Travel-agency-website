@@ -24,7 +24,7 @@ interface IHotel {
   availableRooms: number;
   isActive: boolean;
   description?: string;
-  images?: string[];
+  image?: string[];
   meal: { breakfast: boolean; lunch: boolean; dinner: boolean };
   amenities?: string[];
 }
@@ -45,7 +45,7 @@ export default function HotelDetailsPage({ params }: { params: Promise<{ id: str
       setError(null);
       try {
         const res = await apiClient.get(GET_HOTEL_DETAIL_URL(id), { withCredentials: true });
-        const d: IHotel = res.data?.data || res.data?.hotel;
+        const d: IHotel =  res.data.data;
         if (!d) throw new Error("Hotel not found");
         setHotel(d);
       } catch (err: any) {
@@ -121,11 +121,11 @@ export default function HotelDetailsPage({ params }: { params: Promise<{ id: str
       </div>
 
       {/* ── Image Strip ── */}
-      {hotel.images && hotel.images.length > 0 && (
+      {hotel.image && hotel.image.length > 0 && (
         <div className="flex gap-3 overflow-x-auto pb-1">
-          {hotel.images.map((img, i) => (
+          {hotel.image.map((img, i) => (
             <img key={i} src={img} alt={`Hotel image ${i + 1}`}
-              className="h-40 w-64 flex-shrink-0 rounded-xl object-cover border border-gray-200" />
+              className="h-40 w-64 shrink-0 rounded-xl object-cover border border-gray-200" />
           ))}
         </div>
       )}
