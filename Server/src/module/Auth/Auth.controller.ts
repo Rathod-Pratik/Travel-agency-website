@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { AuthModel } from "./Auth.model";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { getUploadedFile, uploadFileToS3 } from "@utils/Function";
+import { getUploadedFile, uploadWithRetry } from "@utils/Function";
 import {
     AuthCacheKeys,
     getCache,
@@ -402,12 +402,7 @@ export const UpdateProfile = async (req: Request, res: Response) => {
             });
         }
 
-        const uploadedFile = await uploadFileToS3({
-            buffer: file.buffer,
-            fileName: file.originalname,
-            fileType: file.mimetype,
-            folderType: "Blog",
-        });
+        const uploadedFile = await uploadWithRetry(file, 3, "Profile");
 
         const user = AuthModel.findByIdAndUpdate(
             { _id: id },

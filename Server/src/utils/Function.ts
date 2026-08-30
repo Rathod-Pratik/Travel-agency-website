@@ -6,7 +6,6 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { logger } from "@modules/log/logger";
-import crypto from "crypto";
 
 import dotenv from "dotenv";
 import { Request } from "express";
@@ -43,26 +42,7 @@ const allowedTypes = [
   "application/pdf",
 ];
 
-export interface AwsConfigEnv {
-  accessKeyId: string;
-  secretAccessKey: string;
-  region: string;
-  bucket: string;
-}
-
-export interface SignUrlRequestBody {
-  fileName: string;
-  fileType?: string;
-  folderType: string;
-}
-
-export interface SanitizedUploadInput {
-  folderType: string;
-  fileName: string;
-  fileType: string;
-}
-
-export interface GetSignedUrlRequestBody {
+export interface GetSignedUrlType {
   key: string;
   downloadFileName?: string;
 }
@@ -72,24 +52,6 @@ export type UploadImageType = {
   fileName: string;
   fileType: string;
   folderType: string;
-}
-
-export interface UploadFileResponse {
-  url: string;
-  key: string;
-  fileName: string;
-  fileType: string;
-}
-
-export interface DeleteImageRequestBody {
-  fileUrl?: string;
-  key?: string;
-}
-
-export interface UpdateImageRequestBody {
-  folderType: string;
-  oldFileUrl?: string;
-  oldKey?: string;
 }
 
 const isSafeS3Key = (key: string): boolean => {
@@ -114,33 +76,6 @@ export const Delete_S3_File = async (
     })
   );
 };
-
-export const extractKeyFromUrl = (url: string) => {
-  const parts = url.split(".com/");
-  return parts.length > 1 ? parts[1] : null;
-};
-
-export function sanitizeInput(folderType: string, fileName: string, fileType?: string): SanitizedUploadInput {
-  // Normalize folder path
-  folderType = folderType.replace(/\\/g, '/').trim();
-
-  // Remove invalid characters from folderType
-  folderType = folderType.replace(/[^a-zA-Z0-9/_-]/g, '');
-
-  // Remove invalid characters from fileName
-  fileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '').trim();
-
-  // Infer fileType if empty
-  if (!fileType && fileName.includes('.')) {
-    fileType = fileName.split('.').pop() || '';
-  }
-
-  if (!fileType) {
-    fileType = 'application/octet-stream';
-  }
-
-  return { folderType, fileName, fileType };
-}
 
 export const uploadFileToS3 = async ({
   buffer,
@@ -171,7 +106,8 @@ export const uploadFileToS3 = async ({
 };
 
 
-export const Get_Signed_Url = async ({ key, downloadFileName }: GetSignedUrlRequestBody) => {
+
+export const Get_Signed_Url = async ({ key, downloadFileName }: GetSignedUrlType) => {
   if (!key) {
     throw new Error("key is required");
   }
@@ -198,6 +134,11 @@ export const Get_Signed_Url = async ({ key, downloadFileName }: GetSignedUrlRequ
 const url = signedUrl;
   return url;
 };
+
+export const getUploadedFile = (req: Request): Express.Multer.File => {
+  const file = req.file as Express.Multer.File;
+  return file;
+}
 
 export const getMultipleUploadedFiles = (req: Request): Express.Multer.File[] => {
   const files = req.files as Express.Multer.File[];

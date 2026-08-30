@@ -26,6 +26,7 @@ export const TourCreateWorker = new Worker<CreateTourJobData>(
                     tourId: existingTour._id
                 }
             })
+            return;
         }
         const hotel = await TourModel.create({
             ...tourData,
@@ -74,7 +75,7 @@ export const TourUpdateWorker = new Worker<UpdateTourJobData>("tour-update", asy
                 tourId: id
             }
         });
-        throw new Error("Tour not found");
+        return;
     }
 
     let removeImageKeys: string[] = [];
@@ -96,7 +97,7 @@ export const TourUpdateWorker = new Worker<UpdateTourJobData>("tour-update", asy
     })
 
     if (!tour) {
-        throw new Error("Tour not found");
+        throw new Error("Failed to update tour");
     }
     await incrementCacheVersion(TourCacheKeys.listVersion());
     await incrementCacheVersion(TourCacheKeys.detailsVersion(id));
@@ -144,7 +145,7 @@ export const TourDeleteWorker = new Worker<DeleteTourJobData>("tour-delete", asy
                 tourId: id
             }
         });
-        throw new Error("Tour not found");
+        return;
     }
     if (existingTour.isDeleted){
         logger.warn("Tour delete failed - Tour already deleted", {
@@ -153,7 +154,7 @@ export const TourDeleteWorker = new Worker<DeleteTourJobData>("tour-delete", asy
                 tourId: id
             }
         });
-        throw new Error("Tour already deleted");
+        return;
     }
 
     const tour = await TourModel.findByIdAndUpdate({_id:id}, {isDeleted:true, DeletedAt:new Date()},{new:true, runValidators:true}).lean();

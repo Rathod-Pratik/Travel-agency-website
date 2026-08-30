@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 import { IReview } from "./Review.types";
 
 const reviewSchema = new mongoose.Schema<IReview>({
+    requestId:{
+        type: String,
+        required: [true, 'Request ID is required']
+    },
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

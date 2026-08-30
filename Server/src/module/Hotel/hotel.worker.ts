@@ -17,11 +17,7 @@ export const hotelCreateWorker = new Worker<CreateHotelJobData>(
         const existingHotel = await HotelModel.findOne({ requestId });
         if (existingHotel) {
             console.log(`Hotel with requestId: ${requestId} already exists. Skipping creation.`);
-            return {
-                hotelId: existingHotel._id,
-                alreadyCreated: true,
-                message: "Hotel already exists"
-            };
+            return;
         }
 
         const hotel = await HotelModel.create({
@@ -84,7 +80,7 @@ export const hotelUpdateWorker =
                     }
                 );
 
-                throw new Error("Hotel not found");
+                return;
             }
 
             let removedImageKeys: string[] = [];
@@ -160,8 +156,7 @@ export const hotelUpdateWorker =
             );
 
             return {
-                hotelId:
-                    hotel._id.toString(),
+                hotelId:hotel._id.toString(),
                 updated: true,
             };
         },
@@ -188,22 +183,16 @@ export const hotelDeleteWorker = new Worker(
                     hotelId: id
                 }
             })
-            return {
-                hotelId: id,
-                deleted: false,
-            }
+            return;
         }
-        if(existingHotel.isDeleted){
+        if (existingHotel.isDeleted) {
             logger.warn("Hotel delete failed - hotel already deleted", {
                 metadata: {
                     requestId,
                     hotelId: id
                 }
             })
-            return {
-                hotelId: id,
-                deleted: false,
-            }
+            return;
         }
         const hotel = await HotelModel.findByIdAndUpdate({ _id: id }, { isDeleted: true, DeletedAt: new Date() }, { new: true, runValidators: true }).lean();
 
@@ -222,9 +211,6 @@ export const hotelDeleteWorker = new Worker(
 
         await incrementCacheVersion(HotelCacheKeys.listVersion());
         await incrementCacheVersion(HotelCacheKeys.detailsVersion(id));
-        return {
-            hotelId: hotel?._id.toString(),
-            deleted: true
-        }
+        return;
     }
 )

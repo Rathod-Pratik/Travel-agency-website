@@ -2,55 +2,54 @@ import { Request, Response } from 'express';
 import ReviewModel from './Review.model';
 import { getCache, getCacheVersion, incrementCacheVersion, ReviewCacheKeys, setCache } from '@utils/index';
 import { logger } from '@modules/log/logger';
+import { reviewCreationQueue, reviewDeleteQueue, reviewUpdateQueue } from './Review.queue';
 
 export const AddReview = async (req: Request, res: Response) => {
     const { userId, TourId, rating, reviewText } = req.body;
+const requestId =crypto.randomUUID();
 
     try {
-        const version = await getCacheVersion(ReviewCacheKeys.listVersion());
-
-        const review = await ReviewModel.create({
-            userId,
-            TourId,
-            rating,
-            reviewText
+const job = await reviewCreationQueue.add(
+            'review-creation',
+            {
+                userId,
+                TourId,
+                rating,
+                reviewText,
+                requestId
+            },
+            {
+                attempts: 5,
+                backoff: {
+                    type: 'exponential',
+                    delay: 3000
+            },
+                removeOnComplete: {
+                    age: 3600
+                },
+                removeOnFail: {
+                    age: 86400
+                }
+            }
+        )
+        logger.info('Review creation job added to queue', {
+            metadata: {
+                jobId: job.id,
+                userId,
+                TourId,
+                rating,
+                requestId
+            }
         });
 
-        if (!review) {
-
-            logger.warn("Review creation failed", {
-                metadata: {
-                    userId,
-                    TourId,
-                    rating
-                }
-            });
-
-            return res.status(400).json({
-                message: "Failed to add review"
-            });
-
-        } else {
-
-            await incrementCacheVersion(
-                ReviewCacheKeys.listVersion()
-            );
-
-            logger.info("Review added successfully", {
-                metadata: {
-                    reviewId: review._id.toString(),
-                    userId,
-                    TourId,
-                    rating
-                }
-            });
-
-            return res.status(201).json({
-                success: true,
-                message: "Review added successfully",
-                data: review,
-            });
-        }
+        return res.status(202).json({
+            success: true,
+            message: 'Review creation job added to queue',
+            data: {
+                jobId: job.id,
+                requestId
+            }
+        })
 
     } catch (err) {
 
@@ -174,45 +173,36 @@ export const GetReview = async (req: Request, res: Response) => {
 
 export const EditReview = async (req: Request, res: Response) => {
 
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const { userId, TourId, rating, reviewText } = req.body;
-
+const requestId =crypto.randomUUID();
     try {
 
-        const review = await ReviewModel.findByIdAndUpdate(
-            id,
+       const job = await reviewUpdateQueue.add(
+            'review-update',
             {
+                id,
                 userId,
                 TourId,
+                reviewText,
                 rating,
-                reviewText
-            },
-            {
-                new: true
-            }
-        );
-
-        if (!review) {
-
-            logger.warn("Review update failed - review not found", {
-                metadata: {
-                    reviewId: id,
-                    userId,
-                    TourId
+                requestId
+            },{
+                attempts: 5,
+                backoff: {
+                    type: 'exponential',
+                    delay: 3000
+                },
+                removeOnComplete: {
+                    age: 3600
+                },
+                removeOnFail: {
+                    age: 86400
                 }
-            });
-
-            return res.status(404).json({
-                message: "Review not found"
-            });
-        }
-
-        await incrementCacheVersion(
-            ReviewCacheKeys.detailsVersion(id as string)
-        );
-
-        logger.info("Review updated successfully", {
+            })
+        logger.info("Review update job added to queue", {
             metadata: {
+                requestId,
                 reviewId: id,
                 userId,
                 TourId,
@@ -220,10 +210,10 @@ export const EditReview = async (req: Request, res: Response) => {
             }
         });
 
-        return res.status(200).json({
+        return res.status(202).json({
             success: true,
-            message: "Review updated successfully",
-            data: review,
+            message: "Review update job added to queue",
+            data: job,
         });
 
     } catch (err) {
@@ -249,41 +239,43 @@ export const EditReview = async (req: Request, res: Response) => {
 
 export const DeleteReview = async (req: Request, res: Response) => {
 
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
+    const { userId } = req.body;
+    const requestId = crypto.randomUUID();
 
     try {
 
-        const review = await ReviewModel.findByIdAndDelete(id);
-
-        if (!review) {
-
-            logger.warn("Review deletion failed - review not found", {
-                metadata: {
-                    reviewId: id
+        const job = await reviewDeleteQueue.add(
+            'review-delete',
+            {
+                id,
+                requestId,
+                userId
+            },{
+                attempts: 5,
+                backoff: {
+                    type: 'exponential',
+                    delay: 3000
+                },
+                removeOnComplete: {
+                    age: 3600
+                },
+                removeOnFail: {
+                    age: 86400
                 }
-            });
+            })
 
-            return res.status(404).json({
-                message: "Review not found"
-            });
-        }
-
-        await incrementCacheVersion(
-            ReviewCacheKeys.detailsVersion(id as string)
-        );
-
-        logger.info("Review deleted successfully", {
+        logger.info("Review delete job added to queue", {
             metadata: {
-                reviewId: id,
-                userId: review.userId,
-                TourId: review.TourId
+                requestId,
+                reviewId: id
             }
         });
 
-        return res.status(200).json({
+        return res.status(202).json({
             success: true,
-            message: "Review deleted successfully",
-            data: review,
+            message: "Review delete job added to queue",
+            data: job,
         });
 
     } catch (err) {
