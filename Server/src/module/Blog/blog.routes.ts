@@ -1,16 +1,16 @@
 import { verifyAdmin } from '@middleware/Auth.middleware';
 import upload from '@middleware/Multer.middleware';
 import express from 'express'
-import { CreateBlog, UpdateBlog, DeleteBlog, GetBlog, GetBlogById } from './Blog.controller';
+import { CreateBlog, UpdateBlog, DeleteBlog, GetBlogs, GetBlogDetails } from './Blog.controller';
 import { Validate } from '@middleware/Validation.middleware';
-import { IBlogSchema, IGetBlogSchema, IGetBlogsSchema, IUpdateBlogSchema } from './Blog.validation';
+import { BlogSchema, BlogIdSchema, UpdateBlogSchema } from './Blog.validation';
 
 const Route = express.Router();
 
 Route.post(
     "/",
     verifyAdmin,
-    Validate(IBlogSchema),
+    Validate(BlogSchema),
     upload.single("image"),
     CreateBlog
 );
@@ -18,7 +18,7 @@ Route.post(
 Route.put(
     "/:id",
     verifyAdmin,
-    Validate(IUpdateBlogSchema),
+    Validate(UpdateBlogSchema),
     upload.single("image"),
     UpdateBlog
 );
@@ -26,20 +26,19 @@ Route.put(
 Route.delete(
     "/:id",
     verifyAdmin,
-    Validate(IGetBlogSchema),
+    Validate(BlogIdSchema),
     DeleteBlog
 );
 
 Route.get(
     "/",
-    Validate(IGetBlogsSchema),
-    GetBlog
+    GetBlogs
 );
 
 Route.get(
     "/:id",
-    Validate(IGetBlogSchema),
-    GetBlogById
+    Validate(BlogIdSchema),
+    GetBlogDetails
 );
 
 export default Route;

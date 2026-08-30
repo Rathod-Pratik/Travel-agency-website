@@ -56,10 +56,3 @@ export const UpdateContentSchema = z.object({
         .boolean()
         .optional()
 });
-
-
-export const ContentIdSchema = z.object({
-    id: z
-        .string()
-        .min(1, "Content ID is required")
-});

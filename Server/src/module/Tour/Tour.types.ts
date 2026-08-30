@@ -68,6 +68,7 @@ export interface ITour {
 
 export interface CreateTourJobData {
   requestId: string;
+  userId: mongoose.Types.ObjectId;
   tourData: {
     title: string;
 
@@ -138,6 +139,7 @@ export interface CreateTourJobData {
 }
 
 export interface UpdateTourJobData {
+  userId: mongoose.Types.ObjectId;
   requestId: string;
   tourData: {
     title: string;
@@ -204,5 +206,6 @@ export interface UpdateTourJobData {
 
 export interface DeleteTourJobData {
   requestId: string;
+  userId: mongoose.Types.ObjectId;
   id: string;
 }

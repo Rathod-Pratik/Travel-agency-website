@@ -6,10 +6,11 @@ import { Delete_S3_File, TourCacheKeys } from "@utils/index"
 import { logger } from "@modules/log/logger"
 import { incrementCacheVersion } from "@utils/index"
 import { CreateTourJobData, UpdateTourJobData, DeleteTourJobData } from "./Tour.types"
+import { createNotification } from "@modules/Notification/Notification.service"
 
 export const TourCreateWorker = new Worker<CreateTourJobData>(
     "tour-creation", async (job) => {
-        const { requestId, tourData, imagekeys } = job.data;
+        const { requestId, tourData, imagekeys, userId } = job.data;
         logger.info("Tour Worker: Proceessing tour creation job", {
             metadata: {
                 requestId,
@@ -35,6 +36,11 @@ export const TourCreateWorker = new Worker<CreateTourJobData>(
         })
 
         await incrementCacheVersion(TourCacheKeys.listVersion());
+        await createNotification({
+            userId: userId,
+            message: `Your request to create tour "${tourData.title}" is being processed.`,
+            type: "info"
+        });
         logger.info("Tour Worker:Tour created successfully", {
             metadata: {
                 requestId,
@@ -54,7 +60,7 @@ export const TourCreateWorker = new Worker<CreateTourJobData>(
 )
 
 export const TourUpdateWorker = new Worker<UpdateTourJobData>("tour-update", async (job) => {
-    const { requestId, tourData, imagekeys, id } = job.data;
+    const { requestId, tourData, imagekeys, id,userId } = job.data;
 
     console.log(`Processing tour update job for requestId: ${requestId} and tourId: ${id}`);
     logger.info("Tour Worker: Processing tour update job", {
@@ -111,6 +117,11 @@ export const TourUpdateWorker = new Worker<UpdateTourJobData>("tour-update", asy
             }
         });
     }
+    await createNotification({
+        userId: userId,
+        message: `Your request to update tour "${tourData.title}" is being processed.`,
+        type: "info"
+    });
     console.log(`Tour updated Successfully with requestId: ${requestId} and tourId: ${id}`);
     logger.info("Tour Worker: Tour updated successfully", {
         metadata: {
@@ -129,7 +140,7 @@ export const TourUpdateWorker = new Worker<UpdateTourJobData>("tour-update", asy
 });
 
 export const TourDeleteWorker = new Worker<DeleteTourJobData>("tour-delete", async (job) => {
-    const { requestId, id } = job.data;
+    const { requestId, id,userId } = job.data;
     console.log(`Processing tour delete job for requestId: ${requestId} and tourId: ${id}`);
     logger.info("Tour Worker: Processing tour delete job", {
         metadata: {
@@ -139,6 +150,11 @@ export const TourDeleteWorker = new Worker<DeleteTourJobData>("tour-delete", asy
     });
     const existingTour = await TourModel.findOne({ requestId });
     if (!existingTour) {
+        await createNotification({
+            userId: userId,
+            message: `Your request to delete tour is being processed.`,
+            type: "info"
+        });
         logger.warn("Tour delete failed - Tour not found", {
             metadata: {
                 requestId,
@@ -169,7 +185,11 @@ export const TourDeleteWorker = new Worker<DeleteTourJobData>("tour-delete", asy
     }
     await incrementCacheVersion(TourCacheKeys.listVersion());
     await incrementCacheVersion(TourCacheKeys.detailsVersion(id));
-
+await createNotification({
+        userId: userId,
+        message: `your Tour "${tour.title}" has been deleted successfully.`,
+        type: "info"
+    });
     return {
         tourId: id,
         alreadyDeleted: false

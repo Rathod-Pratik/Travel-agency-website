@@ -5,9 +5,7 @@ import BookingModel from "./Booking.model";
 
 import {
     bookingCreationQueue,
-    bookingStatusQueue,
     bookingCancellationQueue,
-    bookingDeleteQueue
 } from "./Booking.queue";
 
 import {
@@ -18,7 +16,7 @@ import {
 } from "@utils/index";
 
 import { logger } from "@modules/log/logger";
-
+import { createNotification } from "@modules/Notification/Notification.service";
 
 export const CreateBooking = async (
     req: Request,
@@ -34,15 +32,15 @@ export const CreateBooking = async (
         amount,
         paymentId
     } = req.body;
-   const code =
-    `BOOK-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(
-        1000 + Math.random() * 9000
-    )}`;
+    const code =
+        `BOOK-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(
+            1000 + Math.random() * 9000
+        )}`;
 
     const requestId =
         crypto.randomUUID();
     try {
-const invoiceNumber =
+        const invoiceNumber =
             `INV-${Date.now()}-${Math.floor(
                 Math.random() * 1000
             )}`;
@@ -51,7 +49,7 @@ const invoiceNumber =
                 "booking-creation",
                 {
                     requestId,
-
+                    userId,
                     bookingData: {
                         code,
                         invoiceNumber,
@@ -82,6 +80,8 @@ const invoiceNumber =
                 }
             );
 
+
+
         logger.info(
             "Booking creation job added to queue",
             {
@@ -93,7 +93,11 @@ const invoiceNumber =
                 }
             }
         );
-
+        await createNotification({
+            userId: req.body.id,
+            message: "Blog creation is being processed",
+            type: "info",
+        });
         return res.status(202).json({
             success: true,
             message: "Booking creation is being processed",
@@ -104,7 +108,11 @@ const invoiceNumber =
         });
 
     } catch (error) {
-
+        createNotification({
+            userId: req.body.id,
+            message: "Error creating booking",
+            type: "error",
+        });
         logger.error(
             "Error creating booking",
             {
@@ -117,14 +125,17 @@ const invoiceNumber =
                 }
             }
         );
-
+ await createNotification({
+            userId: req.body?.id,
+            message: `Your request to create booking failed.`,
+            type: "error"
+        });
         return res.status(500).json({
             success: false,
             message: "Error creating booking"
         });
     }
 };
-
 
 export const GetBookings = async (
     req: Request,
@@ -476,7 +487,6 @@ export const CancelBooking = async (
             });
 
         if (!booking) {
-
             return res.status(404).json({
                 success: false,
                 message: "Booking not found"
@@ -522,6 +532,11 @@ export const CancelBooking = async (
                 }
             );
 
+        createNotification({
+            userId: req.body.id,
+            message: "Booking cancellation is being processed",
+            type: "info",
+        });
         return res.status(202).json({
             success: true,
             message: "Booking cancellation is being processed",
@@ -546,7 +561,11 @@ export const CancelBooking = async (
                 }
             }
         );
-
+ await createNotification({
+            userId: req.body?.id,
+            message: `Your request to cancel booking failed.`,
+            type: "error"
+        });
         return res.status(500).json({
             success: false,
             message: "Error cancelling booking"

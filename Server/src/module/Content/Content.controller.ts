@@ -12,6 +12,7 @@ import {
 } from "@utils/index";
 
 import { logger } from "@modules/log/logger";
+import { createNotification } from "@modules/Notification/Notification.service";
 
 export const AddContent = async (
     req: Request,
@@ -34,6 +35,7 @@ export const AddContent = async (
         const job = await ContentQueue.add(
             "content-create",
             {
+                userId: req.body.id,
                 title,
                 slug,
                 type,
@@ -73,7 +75,11 @@ export const AddContent = async (
             }
         );
 
-
+        await createNotification({
+            userId: req.body.id,
+            message: `Your content "${title}" has been queued for creation.`,
+            type: "info"
+        });
         return res.status(202).json({
             success: true,
             message: "Content creation queued",
@@ -101,7 +107,11 @@ export const AddContent = async (
             }
         );
 
-
+ await createNotification({
+            userId: req.body?.id,
+            message: `Your request to create content "${title}" failed.`,
+            type: "error"
+        });
         return res.status(500).json({
             success: false,
             message: "Failed to queue content creation"
@@ -259,20 +269,20 @@ export const GetContentById = async (
     res: Response
 ) => {
 
-    const { id } = req.params as {id: string};
+    const { type } = req.params as {type: string};
 
 
     try {
 
         const version =
             await getCacheVersion(
-                ContentCacheKeys.detailsVersion(id)
+                ContentCacheKeys.detailsVersion(type)
             );
 
 
         const cacheKey =
             ContentCacheKeys.details(
-                id,
+                type,
                 version
             );
 
@@ -294,7 +304,7 @@ export const GetContentById = async (
 
         const content =
             await ContentModel
-                .findById(id)
+                .findOne({ type })
                 .lean();
 
 
@@ -328,7 +338,7 @@ export const GetContentById = async (
             "Error retrieving content by ID",
             {
                 metadata: {
-                    contentId: id,
+                    contentType: type,
                     error:
                         err instanceof Error
                             ? err.message
@@ -368,6 +378,7 @@ export const UpdateContent = async (
         const job = await ContentQueue.add(
             "content-update",
             {
+                userId: req.body.id,
                 id,
                 title,
                 slug,
@@ -394,7 +405,11 @@ export const UpdateContent = async (
             }
         );
 
-
+        await createNotification({
+            userId: req.body.id,
+            message: `Your content "${title}" has been queued for update.`,
+            type: "info"
+        });
         return res.status(202).json({
             success: true,
             message: "Content update queued",
@@ -421,81 +436,14 @@ export const UpdateContent = async (
             }
         );
 
-
+await createNotification({
+            userId: req.body?.id,
+            message: `Your request to update content "${title}" failed.`,
+            type: "error"
+        });
         return res.status(500).json({
             success: false,
             message: "Failed to queue content update"
-        });
-    }
-};
-
-export const DeleteContent = async (
-    req: Request,
-    res: Response
-) => {
-
-    const { id } = req.params as { id: string };
-
-    const requestId = crypto.randomUUID();
-
-
-    try {
-
-        const job = await ContentQueue.add(
-            "content-delete",
-            {
-                id,
-                requestId
-            },
-            {
-                attempts: 5,
-
-                backoff: {
-                    type: "exponential",
-                    delay: 3000
-                },
-
-                removeOnComplete: {
-                    age: 3600
-                },
-
-                removeOnFail: {
-                    age: 86400
-                }
-            }
-        );
-
-
-        return res.status(202).json({
-            success: true,
-            message: "Content deletion queued",
-            data: {
-                jobId: job.id,
-                requestId
-            }
-        });
-
-
-    } catch (err) {
-
-        logger.error(
-            "Error adding content deletion job",
-            {
-                metadata: {
-                    contentId: id,
-                    requestId,
-                    error:
-                        err instanceof Error
-                            ? err.message
-                            : String(err)
-                }
-            }
-        );
-
-
-        return res.status(500).json({
-            success: false,
-            message: "Failed to queue content deletion"
         });
     }
 };

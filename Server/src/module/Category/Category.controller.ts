@@ -17,7 +17,7 @@ import {
 } from "@utils/index";
 
 import { logger } from "@modules/log/logger";
-
+import { createNotification } from "@modules/Notification/Notification.service";
 
 export const CreateCategory = async (
     req: Request,
@@ -80,6 +80,11 @@ export const CreateCategory = async (
             }
         );
 
+        await createNotification({
+            userId: req.body.id,
+            message: "Category creation is being processed",
+            type: "info"
+        });
         return res.status(202).json({
             success: true,
             message: "Category creation is being processed",
@@ -104,7 +109,11 @@ export const CreateCategory = async (
                 }
             }
         );
-
+ await createNotification({
+            userId: req.body?.id,
+            message: `Your request to create category "${name}" failed.`,
+            type: "error"
+        });
         return res.status(500).json({
             success: false,
             message: "Error creating category"
@@ -438,6 +447,12 @@ export const UpdateCategory = async (
             }
         );
 
+        await createNotification({
+            userId: req.body.id,
+            message: "Category update is being processed",
+            type: "info"
+        });
+
         return res.status(202).json({
             success: true,
             message: "Category update is being processed",
@@ -462,7 +477,11 @@ export const UpdateCategory = async (
                 }
             }
         );
-
+ await createNotification({
+            userId: req.body?.id,
+            message: `Your request to update category "${name}" failed.`,
+            type: "error"
+        });
         return res.status(500).json({
             success: false,
             message: "Error updating category"
@@ -481,27 +500,27 @@ export const DeleteCategory = async (
 
     const requestId =
         crypto.randomUUID();
+    const existingCategory =
+        await CategoryModel.findById(id);
 
+    if (!existingCategory) {
+
+        return res.status(404).json({
+            success: false,
+            message: "Category not found"
+        });
+    }
+
+    if (existingCategory.isDeleted) {
+
+        return res.status(400).json({
+            success: false,
+            message: "Category is already deleted"
+        });
+    }
     try {
 
-        const existingCategory =
-            await CategoryModel.findById(id);
 
-        if (!existingCategory) {
-
-            return res.status(404).json({
-                success: false,
-                message: "Category not found"
-            });
-        }
-
-        if (existingCategory.isDeleted) {
-
-            return res.status(400).json({
-                success: false,
-                message: "Category is already deleted"
-            });
-        }
 
         const job =
             await categoryDeleteQueue.add(
@@ -539,6 +558,12 @@ export const DeleteCategory = async (
             }
         );
 
+        await createNotification({
+            userId: req.body.id,
+            message: "Category deletion is being processed",
+            type: "info"
+        });
+
         return res.status(202).json({
             success: true,
             message: "Category deletion is being processed",
@@ -563,7 +588,11 @@ export const DeleteCategory = async (
                 }
             }
         );
-
+        await createNotification({
+            userId: req.body?.id,
+            message: `Your request to delete category "${existingCategory.name}" failed.`,
+            type: "error"
+        });
         return res.status(500).json({
             success: false,
             message: "Error deleting category"

@@ -6,7 +6,7 @@ export interface IContact {
     mobile: string,
     message: string,
     requestId: string,
-    userid: mongoose.Schema.Types.ObjectId,
+    userid: mongoose.Types.ObjectId,
     isDeleted?: boolean,
     DeletedAt?: Date
 }
@@ -16,7 +16,7 @@ export interface CreateContactJobData {
     mobile: string,
     message: string,
     requestId: string,
-    userid: mongoose.Schema.Types.ObjectId,
+    userid: mongoose.Types.ObjectId,
     isDeleted?: boolean,
     DeletedAt?: Date
 }

@@ -47,6 +47,7 @@ export interface IBooking {
 
 export interface CreateBookingJobData {
     requestId: string;
+    userId: mongoose.Types.ObjectId;
     bookingData: {
         invoiceNumber: string;
         userId: string;

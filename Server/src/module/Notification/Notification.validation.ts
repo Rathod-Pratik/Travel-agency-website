@@ -7,10 +7,6 @@ export const NotificationSchema = z.object({
         .string()
         .min(1, "Message is required"),
 
-    icon: z
-        .string()
-        .min(1, "Icon is required"),
-
     type: z.enum([
         "info",
         "warning",

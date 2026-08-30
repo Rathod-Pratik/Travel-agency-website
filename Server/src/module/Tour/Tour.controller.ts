@@ -4,7 +4,7 @@ import { Get_Signed_Url, getCache, getCacheVersion, getMultipleUploadedFiles, in
 import { logger } from '@modules/log/logger';
 import { ITour } from './Tour.types';
 import { tourCreationQueue, TourDeleteQueue, TourUpdateQueue } from './Tour.queue';
-
+import { createNotification } from '@modules/Notification/Notification.service';
 
 const GetSignedImages = async (images: string[]) => {
     return Promise.all(
@@ -281,7 +281,8 @@ export const CreateTour = async (
             {
                 tourData,
                 requestId,
-                imagekeys
+                imagekeys,
+                userId: req.body?.id
             },
             {
                 attempts: 5,
@@ -308,6 +309,11 @@ export const CreateTour = async (
             }
         });
 
+        await createNotification({
+            userId: req.body?.id,
+            message: `Your request to create tour "${title}" is being processed.`,
+            type: "info"
+        });
         return res.status(202).json({
             success: true,
             message: "Tour creation has been queued",
@@ -329,7 +335,11 @@ export const CreateTour = async (
                     : String(err)
             }
         });
-
+ await createNotification({
+            userId: req.body?.id,
+            message: `Your request to create tour "${title}" failed.`,
+            type: "error"
+        });
         return res.status(500).json({
             success: false,
             message: "Failed to process tour creation"
@@ -438,7 +448,8 @@ export const UpdateTour = async (
                 requestId,
                 tourData,
                 imagekeys,
-                id
+                id,
+                userId: req.body?.id
             },
             {
                 attempts: 5,
@@ -463,7 +474,11 @@ export const UpdateTour = async (
                 hasImages: Boolean(imagekeys?.length)
             }
         });
-
+        await createNotification({
+            userId: req.body?.id,
+            message: `Your request to update tour "${title}" is being processed.`,
+            type: "info"
+        });
         return res.status(202).json({
             success: true,
             message: "Tour update is being processed",
@@ -483,7 +498,11 @@ export const UpdateTour = async (
                     : String(err)
             }
         });
-
+        await createNotification({
+            userId: req.body?.id,
+            message: `Your request to update tour "${title}" failed.`,
+            type: "error"
+        });
         return res.status(500).json({
             success: false,
             message: "Error updating tour"
@@ -519,7 +538,8 @@ export const DeleteTour = async (
             "tour-delete",
             {
                 requestId,
-                id
+                id,
+                userId: req.body?.id
             },
             {
                 attempts: 5,
@@ -544,6 +564,12 @@ export const DeleteTour = async (
             }
         });
 
+        await createNotification({
+            userId: req.body?.id,
+            message: `Your request to delete tour is being processed.`,
+            type: "info"
+        });
+
         return res.status(202).json({
             success: true,
             message: "Tour deletion is being processed",
@@ -563,7 +589,11 @@ export const DeleteTour = async (
                     : String(err)
             }
         });
-
+await createNotification({
+            userId: req.body?.id,
+            message: `Your request to delete tour failed.`,
+            type: "error"
+        });
         return res.status(500).json({
             success: false,
             message: "Error deleting tour"

@@ -9,7 +9,7 @@ import { logger } from "@modules/log/logger";
 import mongoose from "mongoose";
 
 interface CreateNotificationParams {
-    userId: mongoose.Schema.Types.ObjectId;
+    userId: mongoose.Types.ObjectId;
     message: string;
     type: NotificationType;
 }

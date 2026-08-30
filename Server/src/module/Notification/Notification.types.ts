@@ -17,7 +17,7 @@ export type NotificationIcon =
     typeof NotificationIcons[NotificationType];
 
 export interface INotification {
-    userId: mongoose.Schema.Types.ObjectId;
+    userId: mongoose.Types.ObjectId;
     message: string;
     read: boolean;
     icon?: NotificationIcon;
@@ -32,7 +32,7 @@ export interface INotification {
 export interface CreateNotificationJobData {
     requestId: string;
     notificationData: {
-        userId: mongoose.Schema.Types.ObjectId;
+        userId: mongoose.Types.ObjectId;
         message: string;
         type: NotificationType;
     };

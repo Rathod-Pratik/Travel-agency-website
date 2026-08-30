@@ -7,8 +7,7 @@ import { ContentModel } from "./Content.model";
 import {
     CreateContentJobData,
     UpdateContentJobData,
-    DeleteContentJobData
-} from "./Content.types";
+    } from "./Content.types";
 
 import { logger } from "@modules/log/logger";
 
@@ -17,19 +16,15 @@ import {
     ContentCacheKeys
 } from "@utils/index";
 
+import { createNotification } from "@modules/Notification/Notification.service";
 
 export const ContentWorker = new Worker<
     | CreateContentJobData
     | UpdateContentJobData
-    | DeleteContentJobData
 >(
     "content",
 
     async (job) => {
-
-        // =====================================================
-        // CREATE
-        // =====================================================
 
         if (job.name === "content-create") {
 
@@ -39,7 +34,8 @@ export const ContentWorker = new Worker<
                 type,
                 content,
                 isActive,
-                requestId
+                requestId,
+                userId
             } = job.data as CreateContentJobData;
 
 
@@ -98,7 +94,11 @@ export const ContentWorker = new Worker<
                 ContentCacheKeys.listVersion()
             );
 
-
+            await createNotification({
+                userId: userId,
+                message: `Your content "${title}" has been created successfully.`,
+                type: "info"
+            });
             logger.info(
                 "Content Worker: Content created successfully",
                 {
@@ -116,11 +116,6 @@ export const ContentWorker = new Worker<
                 alreadyCreated: false
             };
         }
-
-
-        // =====================================================
-        // UPDATE
-        // =====================================================
 
         if (job.name === "content-update") {
 
@@ -200,7 +195,11 @@ export const ContentWorker = new Worker<
                 ContentCacheKeys.detailsVersion(id)
             );
 
-
+            await createNotification({
+                userId: job.data.userId,
+                message: `Your content "${title}" has been updated successfully.`,
+                type: "info"
+            });
             logger.info(
                 "Content Worker: Content updated successfully",
                 {
@@ -215,70 +214,6 @@ export const ContentWorker = new Worker<
             return {
                 contentId: updatedContent._id,
                 updated: true
-            };
-        }
-
-
-        // =====================================================
-        // DELETE
-        // =====================================================
-
-        if (job.name === "content-delete") {
-
-            const {
-                id,
-                requestId
-            } = job.data as DeleteContentJobData;
-
-
-            logger.info(
-                "Content Worker: Processing content deletion job",
-                {
-                    metadata: {
-                        contentId: id,
-                        requestId
-                    }
-                }
-            );
-
-
-            const deletedContent =
-                await ContentModel.findByIdAndDelete(id);
-
-
-            if (!deletedContent) {
-
-                throw new Error(
-                    "Content not found"
-                );
-            }
-
-
-            await incrementCacheVersion(
-                ContentCacheKeys.listVersion()
-            );
-
-
-            await incrementCacheVersion(
-                ContentCacheKeys.detailsVersion(id)
-            );
-
-
-            logger.info(
-                "Content Worker: Content deleted successfully",
-                {
-                    metadata: {
-                        contentId: deletedContent._id,
-                        type: deletedContent.type,
-                        requestId
-                    }
-                }
-            );
-
-
-            return {
-                contentId: deletedContent._id,
-                deleted: true
             };
         }
 

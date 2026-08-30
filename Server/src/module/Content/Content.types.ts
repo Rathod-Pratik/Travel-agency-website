@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 export type ContentType =
     | "terms"
     | "privacy"
@@ -23,6 +25,7 @@ export interface IContent {
 
 
 export interface CreateContentJobData {
+    userId: mongoose.Types.ObjectId;
     title: string;
     slug: string;
     type: ContentType;
@@ -33,17 +36,12 @@ export interface CreateContentJobData {
 
 
 export interface UpdateContentJobData {
+    userId: mongoose.Types.ObjectId;
     id: string;
     title?: string;
     slug?: string;
     type?: ContentType;
     content?: string;
     isActive?: boolean;
-    requestId: string;
-}
-
-
-export interface DeleteContentJobData {
-    id: string;
     requestId: string;
 }

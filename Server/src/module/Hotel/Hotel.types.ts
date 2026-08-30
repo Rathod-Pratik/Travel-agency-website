@@ -27,7 +27,7 @@ export interface IHotel {
 
 export interface CreateHotelJobData {
     requestId: string;
-
+userId: mongoose.Types.ObjectId;
     hotelData: {
         name: string;
         rating: number;
@@ -55,7 +55,7 @@ export interface CreateHotelJobData {
 export interface UpdateHotelJobData {
     requestId: string;
     id: string;
-
+    userId: mongoose.Types.ObjectId;
     hotelData: {
         name: string;
         rating: number;
@@ -79,6 +79,7 @@ export interface UpdateHotelJobData {
 }
 
 export interface DeleteHotelJobData {
+    userId: mongoose.Types.ObjectId;
     requestId: string;
     id: string;
 }

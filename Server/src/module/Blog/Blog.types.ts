@@ -17,7 +17,7 @@ export interface CreateBlogJobData {
         description: string[];
     };
     imagekeys: string[];
-    userId: mongoose.Schema.Types.ObjectId;
+    userId: mongoose.Types.ObjectId;
 }
 
 export interface UpdateBlogJobData {
@@ -28,11 +28,11 @@ export interface UpdateBlogJobData {
         description: string[];
     };
     imagekeys?: string[];
-     userId: mongoose.Schema.Types.ObjectId;
+     userId: mongoose.Types.ObjectId;
 }
 
 export interface DeleteBlogJobData {
     requestId: string;
     id: string;
-     userId: mongoose.Schema.Types.ObjectId;
+     userId: mongoose.Types.ObjectId;
 }

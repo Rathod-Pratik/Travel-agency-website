@@ -23,6 +23,7 @@ import { Refund, VerifyPayment } from "@modules/Payment/Payment.controller";
 import { invoiceGenerationQueue } from "@modules/Invoice/Invoice.queue";
 import { AuthModel } from "@modules/Auth/Auth.model";
 import { TourModel } from "@modules/Tour/Tour.model";
+import { createNotification } from "@modules/Notification/Notification.service";
 
 export const bookingCreateWorker =
     new Worker<CreateBookingJobData>(
@@ -32,7 +33,8 @@ export const bookingCreateWorker =
 
             const {
                 requestId,
-                bookingData
+                bookingData,
+                userId
             } = job.data;
 
             logger.info(
@@ -223,6 +225,11 @@ export const bookingCreateWorker =
                     }
                 );
 
+                await createNotification({
+                    userId: userId,
+                    message: "Tour Booked successfully",
+                    type: "success",
+                });
             logger.info(
                 "Booking Worker: Booking created successfully",
                 {
@@ -277,7 +284,6 @@ export const bookingCancellationWorker =
                 });
 
             if (!booking) {
-
                 logger.warn(
                     "Booking cancellation failed - booking not found",
                     {
@@ -287,7 +293,11 @@ export const bookingCancellationWorker =
                         }
                     }
                 );
-
+                await createNotification({
+                    userId: userId,
+                    message: "Booking cancellation failed - booking not found",
+                    type: "error",
+                });
                 return {
                     bookingId,
                     cancelled: false
@@ -295,7 +305,11 @@ export const bookingCancellationWorker =
             }
 
             if (booking.status === "Cancelled") {
-
+                await createNotification({
+                    userId: userId,
+                    message: "Booking cancellation failed - booking already cancelled",
+                    type: "error",
+                });
                 logger.warn(
                     "Booking cancellation failed - booking already cancelled",
                     {
@@ -337,6 +351,11 @@ export const bookingCancellationWorker =
                 )
             );
 
+            await createNotification({
+                userId: userId,
+                message: "Your booking has been cancelled successfully",
+                type: "success",
+            });
             logger.info(
                 "Booking cancelled successfully",
                 {

@@ -5,10 +5,11 @@ import { Delete_S3_File, HotelCacheKeys } from "@utils/index";
 import { logger } from "@modules/log/logger";
 import { incrementCacheVersion } from "@utils/index";
 import { CreateHotelJobData, UpdateHotelJobData } from "./Hotel.types";
+import {createNotification} from "@modules/Notification/Notification.service";
 
 export const hotelCreateWorker = new Worker<CreateHotelJobData>(
     "hotel-creation", async (job) => {
-        const { requestId, hotelData, imagekeys } = job.data;
+        const { requestId, hotelData, imagekeys,userId } = job.data;
         console.log(`Processing hotel creation job for requestId: ${requestId}`);
 
         logger.info("Hotel Worker: Processing hotel creation job", {
@@ -30,7 +31,11 @@ export const hotelCreateWorker = new Worker<CreateHotelJobData>(
         logger.info("Hotel Worker: Hotel created successfully", {
             metadata: { requestId, hotelId: hotel._id }
         })
-
+        await createNotification({
+            userId: userId,
+            message: `Your request to create hotel "${hotelData.name}" is being processed.`,
+            type: "info"
+        });
         return {
             hotelId: hotel._id,
             alreadyCreated: false
@@ -52,6 +57,7 @@ export const hotelUpdateWorker =
                 hotelData,
                 imagekeys,
                 id,
+                userId
             } = job.data;
 
             logger.info(
@@ -154,7 +160,11 @@ export const hotelUpdateWorker =
                     },
                 }
             );
-
+            await createNotification({
+                userId: userId,
+                message: `Your request to update hotel "${hotelData.name}" is being processed.`,
+                type: "info"
+            });
             return {
                 hotelId:hotel._id.toString(),
                 updated: true,
@@ -168,7 +178,7 @@ export const hotelUpdateWorker =
 
 export const hotelDeleteWorker = new Worker(
     "hotel-delete", async (job) => {
-        const { id, requestId } = job.data;
+        const { id, requestId, userId } = job.data;
         logger.info("Hotel Worker: Processing hotel delete job", {
             metadata: {
                 requestId,
@@ -211,6 +221,11 @@ export const hotelDeleteWorker = new Worker(
 
         await incrementCacheVersion(HotelCacheKeys.listVersion());
         await incrementCacheVersion(HotelCacheKeys.detailsVersion(id));
+        await createNotification({
+            userId: userId,
+            message: `Your request to delete hotel "${existingHotel.name}" is being processed.`,
+            type: "info"
+        });
         return;
     }
 )

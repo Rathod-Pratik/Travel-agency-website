@@ -5,6 +5,8 @@ import { getCache, getCacheVersion, incrementCacheVersion, setCache } from "@uti
 import { logger } from "@modules/log/logger";
 import { IHotel } from "./Hotel.types";
 import { hotelCreationQueue, hotelDeleteQueue, hotelUpdateQueue } from "./hotel.queue";
+import { createNotification } from "@modules/Notification/Notification.service";
+
 
 const GetSignedImages = async (images: string[]) => {
     return Promise.all(
@@ -226,7 +228,8 @@ export const CreateHotel = async (
             {
                 requestId,
                 hotelData,
-                imagekeys
+                imagekeys,
+                userId: req.body.id
             },
             {
                 attempts: 5,
@@ -251,6 +254,11 @@ export const CreateHotel = async (
             }
         });
 
+        await createNotification({
+            userId: req.body.id,
+            message: `Your request to create hotel "${name}" is being processed.`,
+            type: "info"
+        });
         return res.status(202).json({
             success: true,
             message: "Hotel creation is being processed",
@@ -270,7 +278,11 @@ export const CreateHotel = async (
                     : String(error)
             }
         });
-
+ await createNotification({
+            userId: req.body?.id,
+            message: `Your request to create hotel "${name}" failed.`,
+            type: "error"
+        });
         return res.status(500).json({
             success: false,
             message: "Error creating hotel"
@@ -355,7 +367,8 @@ export const UpdateHotel = async (
                 requestId,
                 hotelData,
                 imagekeys,
-                id
+                id,
+                userId: req.body.id
             },
             {
                 attempts: 5,
@@ -381,6 +394,12 @@ export const UpdateHotel = async (
             }
         });
 
+        await createNotification({
+            userId: req.body.id,
+            message: `Your request to update hotel "${existingHotel.name}" is being processed.`,
+            type: "info"
+        });
+
         return res.status(202).json({
             success: true,
             message: "Hotel update is being processed",
@@ -400,7 +419,11 @@ export const UpdateHotel = async (
                     : String(error)
             }
         });
-
+ await createNotification({
+            userId: req.body?.id,
+            message: `Your request to update hotel "${name}" failed.`,
+            type: "error"
+        });
         return res.status(500).json({
             success: false,
             message: "Error updating hotel"
@@ -437,7 +460,8 @@ export const DeleteHotel = async (
             "hotel-delete",
             {
                 requestId,
-                id
+                id,
+                userId: req.body.id
             },
             {
                 attempts: 5,
@@ -462,6 +486,11 @@ export const DeleteHotel = async (
             }
         });
 
+        await createNotification({
+            userId: req.body.id,
+            message: `Your request to delete hotel "${existingHotel.name}" is being processed.`,
+            type: "info"
+        });
         return res.status(202).json({
             success: true,
             message: "Hotel deletion is being processed",
@@ -481,7 +510,11 @@ export const DeleteHotel = async (
                     : String(error)
             }
         });
-
+ await createNotification({
+            userId: req.body?.id,
+            message: `Your request to delete hotel failed.`,
+            type: "error"
+        });
         return res.status(500).json({
             success: false,
             message: "Error deleting hotel"

@@ -4,15 +4,13 @@ import { bellmqConnection } from "@config/redis";
 
 import {
     CreateContentJobData,
-    UpdateContentJobData,
-    DeleteContentJobData
+    UpdateContentJobData
 } from "./Content.types";
 
 
 export const ContentQueue = new Queue<
     | CreateContentJobData
     | UpdateContentJobData
-    | DeleteContentJobData
 >(
     "content",
     {

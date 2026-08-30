@@ -78,3 +78,6 @@ export const NotificationCacheKeys =
 
 export const BookingCacheKeys =
     createCacheKeys("booking");
+
+export const CoupanCacheKeys =
+    createCacheKeys("coupan");

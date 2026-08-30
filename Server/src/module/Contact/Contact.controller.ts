@@ -8,6 +8,7 @@ import {
 
 import { logger } from "@modules/log/logger";
 import { ContactCreationQueue } from "./Contact.queue";
+import { createNotification } from "@modules/Notification/Notification.service";
 
 export const AddContact = async (
     req: Request,
@@ -52,7 +53,7 @@ export const AddContact = async (
                 }
             }
         );
-
+        
         logger.info("Contact creation job added to queue", {
             metadata: {
                 jobId: job.id,
@@ -84,7 +85,11 @@ export const AddContact = async (
                     : String(err)
             }
         });
-
+ await createNotification({
+            userId: req.body?.id,
+            message: `Your request to create contact "${name}" failed.`,
+            type: "error"
+        });
         return res.status(500).json({
             success: false,
             message: "Failed to queue contact creation"
@@ -267,7 +272,11 @@ export const DeleteContact = async (
                     : String(err)
             }
         });
-
+        await createNotification({
+            userId: req.body?.id,
+            message: `Your request to delete contact failed.`,
+            type: "error"
+        });
         return res.status(500).json({
             success: false,
             message: "Error deleting contact",
