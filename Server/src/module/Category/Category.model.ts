@@ -32,6 +32,10 @@ const CategorySchema = new mongoose.Schema<ICategory>(
             type: Boolean,
             default: false
         },
+        requestId:{
+            type: String,
+            required: true
+        },
         DeletedAt: {
             type: Date,
             default: null

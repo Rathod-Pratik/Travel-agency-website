@@ -3,7 +3,7 @@ import type { IBooking } from "./Booking.types";
 
 const bookingSchema = new mongoose.Schema<IBooking>(
     {
-        code:{
+        code: {
             type: String,
             required: [true, "Booking code is required"],
             unique: true,
@@ -26,7 +26,7 @@ const bookingSchema = new mongoose.Schema<IBooking>(
             required: [true, "Number of seats is required"],
             min: [1, "Number of seats must be at least 1"]
         },
-        travellerDetails: {
+        travellerDetails: [{
             name: {
                 type: String,
                 required: [true, "Traveller name is required"],
@@ -44,12 +44,7 @@ const bookingSchema = new mongoose.Schema<IBooking>(
                 required: [true, "Traveller document is required"],
                 trim: true,
             },
-        },
-
-        date: {
-            type: Date,
-            required: [true, "Booking date is required"],
-        },
+        }],
 
         amount: {
             type: Number,
@@ -63,6 +58,12 @@ const bookingSchema = new mongoose.Schema<IBooking>(
             trim: true,
             ref: "Payment",
         },
+        invoiceNumber:{
+            type: String,
+            required: [true, "Booking code is required"],
+            unique: true,
+            trim: true,
+        },
 
         status: {
             type: String,
@@ -74,7 +75,7 @@ const bookingSchema = new mongoose.Schema<IBooking>(
             description: String,
             cancelledBy: {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: "User"
+                ref: "Auth"
             },
             cancelledAt: Date,
             refundAmount: Number,

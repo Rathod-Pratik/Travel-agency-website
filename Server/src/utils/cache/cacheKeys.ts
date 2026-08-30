@@ -72,3 +72,9 @@ export const WishlistCacheKeys =
 // Content module
 export const ContentCacheKeys =
     createCacheKeys("content");
+
+export const NotificationCacheKeys =
+    createCacheKeys("notification");
+
+export const BookingCacheKeys =
+    createCacheKeys("booking");

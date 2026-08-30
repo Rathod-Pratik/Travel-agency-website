@@ -1,299 +1,82 @@
-import {
-    deleteFile,
-    getUploadedFile,
-    uploadFileToS3,
-} from "@utils/Function";
-
 import { Request, Response } from "express";
 
-import { BlogModel } from "./Blog.model";
-
 import {
-    getCacheVersion,
-    incrementCacheVersion,
+    Get_Signed_Url,
+    getMultipleUploadedFiles,
+    uploadWithRetry,
     BlogCacheKeys,
-    setCache,
-    getCache
+    getCache,
+    getCacheVersion,
+    setCache
 } from "@utils/index";
 
+import { BlogModel } from "./Blog.model";
+import { IBlog } from "./Blog.types";
+
+import {
+    blogCreationQueue,
+    blogUpdateQueue,
+    blogDeleteQueue
+} from "./Blog.queue";
+
 import { logger } from "@modules/log/logger";
+import { createNotification } from "@modules/Notification/Notification.service";
 
 
-export const CreateBlog = async (
-    req: Request,
-    res: Response
+const GetSignedImages = async (
+    images: string[]
 ) => {
 
-    const { title, description } = req.body;
-
-    try {
-
-        const file = getUploadedFile(req);
-
-        if (!file) {
-
-            logger.warn("Blog creation failed - image missing", {
-                metadata: {
-                    title
-                }
+    return Promise.all(
+        images.map(async (key) => {
+            return await Get_Signed_Url({
+                key
             });
-
-            return res.status(400).json({
-                success: false,
-                message: "Image is required",
-            });
-        }
-
-        const uploadedFile = await uploadFileToS3({
-            buffer: file.buffer,
-            fileName: file.originalname,
-            fileType: file.mimetype,
-            folderType: "Blog",
-        });
-
-        const blog = await BlogModel.create({
-            title,
-            description,
-            image: uploadedFile.url,
-        });
-
-        await incrementCacheVersion(
-            BlogCacheKeys.listVersion()
-        );
-
-        logger.info("Blog created successfully", {
-            metadata: {
-                blogId: blog._id.toString(),
-                title
-            }
-        });
-
-        return res.status(201).json({
-            success: true,
-            message: "Blog created successfully",
-            data: blog,
-        });
-
-    } catch (err) {
-
-        logger.error("CreateBlog error", {
-            metadata: {
-                title,
-                error: err instanceof Error
-                    ? err.message
-                    : String(err)
-            }
-        });
-
-        return res.status(500).json({
-            success: false,
-            message: "Error creating blog",
-        });
-    }
+        })
+    );
 };
 
 
-export const UpdateBlog = async (
-    req: Request,
-    res: Response
+export const BlogResponse = async (
+    blog: IBlog
 ) => {
 
-    const { id } = req.params;
-    const { title, description } = req.body;
-
-    try {
-
-        const file = getUploadedFile(req);
-
-        const blog = await BlogModel.findById(id);
-
-        if (!blog) {
-
-            logger.warn("Blog update failed - blog not found", {
-                metadata: {
-                    blogId: id
-                }
-            });
-
-            return res.status(404).json({
-                success: false,
-                message: "Blog not found",
-            });
-        }
-
-        const updatedBlog: {
-            title?: string;
-            description?: string;
-            image?: string;
-        } = {};
-
-        if (title !== undefined) {
-            updatedBlog.title = title;
-        }
-
-        if (description !== undefined) {
-            updatedBlog.description = description;
-        }
-
-        if (file) {
-
-            const uploadedFile = await uploadFileToS3({
-                buffer: file.buffer,
-                fileName: file.originalname,
-                fileType: file.mimetype,
-                folderType: "Blog",
-            });
-
-            updatedBlog.image = uploadedFile.url;
-
-            if (blog.image) {
-                await deleteFile(blog.image);
-            }
-        }
-
-        const updatedBlogData =
-            await BlogModel.findByIdAndUpdate(
-                id,
-                updatedBlog,
-                {
-                    new: true,
-                    runValidators: true,
-                }
-            );
-
-        if (!updatedBlogData) {
-
-            logger.warn("Blog update failed - blog not found", {
-                metadata: {
-                    blogId: id
-                }
-            });
-
-            return res.status(404).json({
-                success: false,
-                message: "Blog not found",
-            });
-        }
-
-        await incrementCacheVersion(
-            BlogCacheKeys.detailsVersion(id as string)
-        );
-
-        await incrementCacheVersion(
-            BlogCacheKeys.listVersion()
-        );
-
-        logger.info("Blog updated successfully", {
-            metadata: {
-                blogId: id
-            }
-        });
-
-        return res.status(200).json({
-            success: true,
-            message: "Blog updated successfully",
-            data: updatedBlogData,
-        });
-
-    } catch (err) {
-
-        logger.error("UpdateBlog error", {
-            metadata: {
-                blogId: id,
-                error: err instanceof Error
-                    ? err.message
-                    : String(err)
-            }
-        });
-
-        return res.status(500).json({
-            success: false,
-            message: "Error updating blog",
-        });
-    }
+    return {
+        ...blog,
+        image: await GetSignedImages(
+            blog.image
+        )
+    };
 };
 
 
-export const DeleteBlog = async (
-    req: Request,
-    res: Response
+export const BlogsResponse = async (
+    blogs: IBlog[]
 ) => {
 
-    const { id } = req.params;
-
-    try {
-
-        const blog = await BlogModel.findById(id);
-
-        if (!blog) {
-
-            logger.warn("Blog deletion failed - blog not found", {
-                metadata: {
-                    blogId: id
-                }
-            });
-
-            return res.status(404).json({
-                success: false,
-                message: "Blog not found",
-            });
-        }
-
-        await BlogModel.findByIdAndUpdate(
-            id,
-            {
-                isDeleted: true,
-                DeletedAt: new Date()
-            }
-        );
-
-        await incrementCacheVersion(
-            BlogCacheKeys.detailsVersion(id as string)
-        );
-
-        await incrementCacheVersion(
-            BlogCacheKeys.listVersion()
-        );
-
-        logger.info("Blog deleted successfully", {
-            metadata: {
-                blogId: id
-            }
-        });
-
-        return res.status(200).json({
-            success: true,
-            message: "Blog deleted successfully",
-        });
-
-    } catch (err) {
-
-        logger.error("DeleteBlog error", {
-            metadata: {
-                blogId: id,
-                error: err instanceof Error
-                    ? err.message
-                    : String(err)
-            }
-        });
-
-        return res.status(500).json({
-            success: false,
-            message: "Error deleting blog",
-        });
-    }
+    return Promise.all(
+        blogs.map(async (blog) => ({
+            ...blog,
+            image: await GetSignedImages(
+                blog.image.slice(0, 1)
+            )
+        }))
+    );
 };
 
 
-export const GetBlog = async (
+export const GetBlogs = async (
     req: Request,
     res: Response
 ) => {
 
     try {
 
-        let page = Number(req.query.page) || 1;
-        let limit = Number(req.query.limit) || 10;
+        let page =
+            Number(req.query.page) || 1;
+
+        let limit =
+            Number(req.query.limit) || 10;
 
         if (page < 1) {
             page = 1;
@@ -307,202 +90,632 @@ export const GetBlog = async (
             limit = 100;
         }
 
-        const version = await getCacheVersion(
-            BlogCacheKeys.listVersion()
-        );
+        const version =
+            await getCacheVersion(
+                BlogCacheKeys.listVersion()
+            );
 
-        const cacheKey = BlogCacheKeys.list(
-            version,
-            page,
-            limit
-        );
-
-        const cachedData = await getCache(cacheKey);
-
-        if (cachedData) {
-
-            logger.info("Blogs retrieved from cache", {
-                metadata: {
-                    page,
-                    limit,
-                    source: "cache"
-                }
-            });
-
-            return res.status(200).json({
-                success: true,
-                message: "Blogs retrieved successfully",
-                source: "cache",
+        const cacheKey =
+            BlogCacheKeys.list(
+                version,
                 page,
-                limit,
-                data: cachedData,
-            });
+                limit
+            );
+
+        const cachedBlogs =
+            await getCache(cacheKey);
+
+        if (cachedBlogs) {
+
+            logger.info(
+                "Blogs fetched from Redis",
+                {
+                    metadata: {
+                        page,
+                        limit,
+                        source: "redis"
+                    }
+                }
+            );
+
+            return res.status(200).json(
+                cachedBlogs
+            );
         }
 
-        const blogs = await BlogModel.find({
-            isDeleted: false
-        })
-            .sort({ createdAt: -1 })
-            .skip((page - 1) * limit)
-            .limit(limit)
-            .lean();
+        const blogs =
+            await BlogModel
+                .find({
+                    isDeleted: false
+                })
+                .limit(limit)
+                .skip(
+                    (page - 1) * limit
+                )
+                .lean();
 
-        if (blogs.length === 0) {
+        if (!blogs || blogs.length === 0) {
 
-            logger.warn("No blogs found", {
-                metadata: {
-                    page,
-                    limit
+            logger.warn(
+                "No blogs found",
+                {
+                    metadata: {
+                        page,
+                        limit
+                    }
                 }
-            });
+            );
 
             return res.status(404).json({
-                success: false,
-                message: "No blogs found",
+                message: "No blogs found"
             });
         }
+
+        const response =
+            await BlogsResponse(blogs);
 
         await setCache(
             cacheKey,
-            blogs,
-            600
+            response,
+            3600
         );
 
-        logger.info("Blogs retrieved from database", {
-            metadata: {
-                count: blogs.length,
-                page,
-                limit,
-                source: "database"
+        logger.info(
+            "Blogs fetched successfully",
+            {
+                metadata: {
+                    count: blogs.length,
+                    page,
+                    limit,
+                    source: "mongodb"
+                }
             }
-        });
+        );
 
-        return res.status(200).json({
-            success: true,
-            message: "Blogs retrieved successfully",
-            source: "database",
-            page,
-            limit,
-            data: blogs,
-        });
+        return res.status(200).json(
+            response
+        );
 
-    } catch (err) {
+    } catch (error) {
 
-        logger.error("GetBlog error", {
-            metadata: {
-                error: err instanceof Error
-                    ? err.message
-                    : String(err)
+        logger.error(
+            "Error fetching blogs",
+            {
+                metadata: {
+                    error:
+                        error instanceof Error
+                            ? error.message
+                            : String(error),
+                    page: req.query.page,
+                    limit: req.query.limit
+                }
             }
-        });
+        );
 
         return res.status(500).json({
-            success: false,
-            message: "Error retrieving blogs",
+            message: "Error fetching blogs"
         });
     }
 };
 
 
-export const GetBlogById = async (
+export const GetBlogDetails = async (
     req: Request,
     res: Response
 ) => {
 
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     try {
 
-        if (!id) {
+        const version =
+            await getCacheVersion(
+                BlogCacheKeys.detailsVersion(
+                    id
+                )
+            );
 
-            logger.warn("Get blog failed - blog ID missing");
+        const cacheKey =
+            BlogCacheKeys.details(
+                id,
+                version
+            );
 
-            return res.status(400).json({
-                success: false,
-                message: "Blog ID is required",
-            });
-        }
+        const cachedBlog =
+            await getCache(cacheKey);
 
-        const version = await getCacheVersion(
-            BlogCacheKeys.detailsVersion(id as string)
-        );
+        if (cachedBlog) {
 
-        const cacheKey = BlogCacheKeys.details(
-            id as string,
-            version
-        );
-
-        const cachedData = await getCache(cacheKey);
-
-        if (cachedData) {
-
-            logger.info("Blog retrieved from cache", {
-                metadata: {
-                    blogId: id,
-                    source: "cache"
+            logger.info(
+                "Blog details fetched from Redis",
+                {
+                    metadata: {
+                        blogId: id,
+                        source: "redis"
+                    }
                 }
-            });
+            );
 
             return res.status(200).json({
                 success: true,
-                message: "Blog retrieved successfully",
-                source: "cache",
-                data: cachedData,
+                source: "redis",
+                data: cachedBlog
             });
         }
 
-        const blog = await BlogModel
-            .findById(id)
-            .lean();
+        const blog =
+            await BlogModel
+                .findOne({
+                    _id: id,
+                    isDeleted: false
+                })
+                .lean();
 
         if (!blog) {
 
-            logger.warn("Blog not found", {
-                metadata: {
-                    blogId: id
-                }
-            });
-
             return res.status(404).json({
-                success: false,
-                message: "Blog not found",
+                message: "Blog not found"
             });
         }
 
+        const response =
+            await BlogResponse(blog);
+
         await setCache(
             cacheKey,
-            blog,
-            600
+            response,
+            3600
         );
 
-        logger.info("Blog retrieved from database", {
-            metadata: {
-                blogId: id,
-                source: "database"
-            }
-        });
-
         return res.status(200).json({
-            success: true,
-            message: "Blog retrieved successfully",
-            source: "database",
-            data: blog,
+            data: response
         });
 
-    } catch (err) {
+    } catch (error) {
 
-        logger.error("GetBlogById error", {
-            metadata: {
-                blogId: id,
-                error: err instanceof Error
-                    ? err.message
-                    : String(err)
+        logger.error(
+            "Error fetching blog details",
+            {
+                metadata: {
+                    blogId: id,
+                    error:
+                        error instanceof Error
+                            ? error.message
+                            : String(error)
+                }
             }
+        );
+
+        return res.status(500).json({
+            message: "Error fetching blog details"
+        });
+    }
+};
+
+
+export const CreateBlog = async (
+    req: Request,
+    res: Response
+) => {
+
+    const {
+        title,
+        description
+    } = req.body;
+
+    const requestId =
+        crypto.randomUUID();
+
+    const files =
+        getMultipleUploadedFiles(req);
+
+    try {
+
+        if (!files.length) {
+
+            logger.warn(
+                "Blog creation failed - images missing",
+                {
+                    metadata: {
+                        title,
+                        requestId
+                    }
+                }
+            );
+
+            await createNotification({
+                userId: req.body.id,
+                message: "Blog creation failed due to missing images",
+                type: "error"
+            });
+
+            return res.status(400).json({
+                success: false,
+                message: "Images are required"
+            });
+        }
+
+        const uploadedFiles =
+            await Promise.all(
+                files.map(
+                    (file) =>
+                        uploadWithRetry(
+                            file,
+                            3,
+                            "Blog"
+                        )
+                )
+            );
+
+        const imagekeys =
+            uploadedFiles.map(
+                (file) =>
+                    file.key
+            );
+
+        const blogData = {
+            title,
+            description
+        };
+
+        const job =
+            await blogCreationQueue.add(
+                "blog-creation",
+                {
+                    requestId,
+                    blogData,
+                    imagekeys,
+                    userId: req.body.id
+                },
+                {
+                    attempts: 5,
+
+                    backoff: {
+                        type: "exponential",
+                        delay: 5000
+                    },
+
+                    removeOnComplete: {
+                        age: 3600
+                    },
+
+                    removeOnFail: {
+                        age: 86400
+                    }
+                }
+            );
+
+        logger.info(
+            "Blog creation job added to queue",
+            {
+                metadata: {
+                    title,
+                    requestId,
+                    jobId: job.id
+                }
+            }
+        );
+
+        await createNotification({
+            userId: req.body.id,
+            message: "Blog creation is being processed",
+            type: "info"
+        });
+
+        return res.status(202).json({
+            success: true,
+            message: "Blog creation is being processed",
+            data: {
+                jobId: job.id,
+                requestId
+            }
+        });
+
+    } catch (error) {
+
+        await createNotification({
+            userId: req.body.id,
+            message: "Blog creation failed",
+            type: "error"
+        });
+        logger.error(
+            "Error creating blog",
+            {
+                metadata: {
+                    title,
+                    requestId,
+                    error:
+                        error instanceof Error
+                            ? error.message
+                            : String(error)
+                }
+            }
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Error creating blog"
+        });
+    }
+};
+
+
+export const UpdateBlog = async (
+    req: Request,
+    res: Response
+) => {
+
+    const {
+        title,
+        description
+    } = req.body;
+
+    const { id } =
+        req.params as { id: string };
+
+    const requestId =
+        crypto.randomUUID();
+
+    try {
+
+        const existingBlog =
+            await BlogModel.findById(id);
+
+        if (!existingBlog) {
+
+            return res.status(404).json({
+                success: false,
+                message: "Blog not found"
+            });
+        }
+
+        if (existingBlog.isDeleted) {
+
+            await createNotification({
+                userId: req.body.id,
+                message: "Blog update failed - blog is deleted",
+                type: "error"
+            });
+            return res.status(400).json({
+                success: false,
+                message: "Blog is already deleted"
+            });
+        }
+
+        const files =
+            getMultipleUploadedFiles(req);
+
+        let imagekeys:
+            string[] | undefined;
+
+        if (files.length > 0) {
+
+            const uploadedFiles =
+                await Promise.all(
+                    files.map(
+                        (file) =>
+                            uploadWithRetry(
+                                file,
+                                3,
+                                "Blog"
+                            )
+                    )
+                );
+
+            imagekeys =
+                uploadedFiles.map(
+                    (file) =>
+                        file.key
+                );
+        }
+
+        const blogData = {
+            title,
+            description
+        };
+
+        const job =
+            await blogUpdateQueue.add(
+                "blog-update",
+                {
+                    id,
+                    requestId,
+                    blogData,
+                    imagekeys,
+                    userId: req.body.id
+                },
+                {
+                    attempts: 5,
+
+                    backoff: {
+                        type: "exponential",
+                        delay: 5000
+                    },
+
+                    removeOnComplete: {
+                        age: 3600
+                    },
+
+                    removeOnFail: {
+                        age: 86400
+                    }
+                }
+            );
+
+        logger.info(
+            "Blog update job added to queue",
+            {
+                metadata: {
+                    blogId: id,
+                    requestId,
+                    jobId: job.id,
+                    hasNewImages:
+                        Boolean(
+                            imagekeys?.length
+                        )
+                }
+            }
+        );
+
+        await createNotification({
+            userId: req.body.id,
+            message: "Blog update is being processed",
+            type: "info"
+        });
+        return res.status(202).json({
+            success: true,
+            message: "Blog update is being processed",
+            data: {
+                jobId: job.id,
+                requestId
+            }
+        });
+
+    } catch (error) {
+
+        logger.error(
+            "Error updating blog",
+            {
+                metadata: {
+                    blogId: id,
+                    requestId,
+                    error:
+                        error instanceof Error
+                            ? error.message
+                            : String(error)
+                }
+            }
+        );
+
+        await createNotification({
+            userId: req.body.id,
+            message: "Blog update failed",
+            type: "error"
         });
 
         return res.status(500).json({
             success: false,
-            message: "Error retrieving blog",
+            message: "Error updating blog"
+        });
+    }
+};
+
+
+export const DeleteBlog = async (
+    req: Request,
+    res: Response
+) => {
+
+    const { id } =
+        req.params as { id: string };
+
+    const requestId =
+        crypto.randomUUID();
+
+    try {
+
+        const existingBlog =
+            await BlogModel.findById(id);
+
+        if (!existingBlog) {
+            await createNotification({
+                userId: req.body.id,
+                message: "Blog deletion failed - blog not found",
+                type: "error"
+            });
+            return res.status(404).json({
+                success: false,
+                message: "Blog not found"
+            });
+        }
+
+        if (existingBlog.isDeleted) {
+            await createNotification({
+                userId: req.body.id,
+                message: "Blog deletion failed - blog is already deleted",
+                type: "error"
+            });
+            return res.status(400).json({
+                success: false,
+                message: "Blog is already deleted"
+            });
+        }
+
+        const job =
+            await blogDeleteQueue.add(
+                "blog-delete",
+                {
+                    requestId,
+                    id,
+                    userId: req.body.id,
+                },
+                {
+                    attempts: 5,
+
+                    backoff: {
+                        type: "exponential",
+                        delay: 5000
+                    },
+
+                    removeOnComplete: {
+                        age: 3600
+                    },
+
+                    removeOnFail: {
+                        age: 86400
+                    }
+                }
+            );
+
+        logger.info(
+            "Blog delete job added to queue",
+            {
+                metadata: {
+                    blogId: id,
+                    requestId,
+                    jobId: job.id
+                }
+            }
+        );
+        await createNotification({
+            userId: req.body.id,
+            message: "Blog deletion is being processed",
+            type: "info"
+        });
+        return res.status(202).json({
+            success: true,
+            message: "Blog deletion is being processed",
+            data: {
+                jobId: job.id,
+                requestId
+            }
+        });
+
+    } catch (error) {
+
+        logger.error(
+            "Error deleting blog",
+            {
+                metadata: {
+                    blogId: id,
+                    requestId,
+                    error:
+                        error instanceof Error
+                            ? error.message
+                            : String(error)
+                }
+            }
+        );
+
+        await createNotification({
+            userId: req.body.id,
+            message: "Error deleting blog",
+            type: "error"
+        });
+
+        return res.status(500).json({
+            success: false,
+            message: "Error deleting blog"
         });
     }
 };

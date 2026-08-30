@@ -6,11 +6,21 @@ export type NotificationType =
     | "error"
     | "success";
 
+    export const NotificationIcons = {
+    info: "FiInfo",
+    warning: "FiAlertTriangle",
+    error: "FiAlertCircle",
+    success: "FiCheckCircle"
+} as const;
+
+export type NotificationIcon =
+    typeof NotificationIcons[NotificationType];
+
 export interface INotification {
     userId: mongoose.Schema.Types.ObjectId;
     message: string;
     read: boolean;
-    icon: string;
+    icon?: NotificationIcon;
     type: NotificationType;
     requestId: string;
     isDeleted?: boolean;
@@ -24,7 +34,6 @@ export interface CreateNotificationJobData {
     notificationData: {
         userId: mongoose.Schema.Types.ObjectId;
         message: string;
-        icon: string;
         type: NotificationType;
     };
 }

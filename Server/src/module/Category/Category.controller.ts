@@ -1,175 +1,572 @@
 import { Request, Response } from "express";
+import crypto from "crypto";
+
 import { CategoryModel } from "./Category.model";
-import { CategoryCacheKeys, incrementCacheVersion, setCache, getCache, getCacheVersion } from "@utils/index";
+
+import {
+    categoryCreationQueue,
+    categoryUpdateQueue,
+    categoryDeleteQueue
+} from "./Category.queue";
+
+import {
+    CategoryCacheKeys,
+    getCache,
+    getCacheVersion,
+    setCache
+} from "@utils/index";
+
 import { logger } from "@modules/log/logger";
 
-export const CreateCategory = async (req: Request, res: Response) => {
-    const { name, slug, description, icon, isHomePage } = req.body;
+
+export const CreateCategory = async (
+    req: Request,
+    res: Response
+) => {
+
+    const {
+        name,
+        slug,
+        description,
+        icon,
+        isHomePage
+    } = req.body;
+
+    const requestId =
+        crypto.randomUUID();
+
     try {
-        const category = await CategoryModel.create({
-            name,
-            slug,
-            description,
-            icon,
-            isHomePage
-        }); if (!category) {
-            logger.error("Category creation failed", {
+
+        const job =
+            await categoryCreationQueue.add(
+                "category-creation",
+                {
+                    requestId,
+                    categoryData: {
+                        name,
+                        slug,
+                        description,
+                        icon,
+                        isHomePage
+                    }
+                },
+                {
+                    attempts: 5,
+
+                    backoff: {
+                        type: "exponential",
+                        delay: 5000
+                    },
+
+                    removeOnComplete: {
+                        age: 3600
+                    },
+
+                    removeOnFail: {
+                        age: 86400
+                    }
+                }
+            );
+
+        logger.info(
+            "Category creation job added to queue",
+            {
                 metadata: {
                     name,
                     slug,
-                    description,
-                    icon,
-                    isHomePage
-                },
-            });
-            return res.status(400).json({ message: "Category creation failed" });
-        }
-        logger.info("Category created successfully", {
-            metadata: {
-                categoryId: category._id.toString(),
-                name: category.name,
-                isHomePage: category.isHomePage
-            },
-        });
-        await incrementCacheVersion(CategoryCacheKeys.listVersion());
-        res.status(201).json({ message: "Category created successfully", category });
-    } catch (error) {
-        logger.error("Internal server error", {
-            metadata: {
-                error: error instanceof Error
-                    ? error.message
-                    : String(error),
-            },
-        });
-        res.status(500).json({ message: "Internal server error" });
-    }
-}
+                    requestId,
+                    jobId: job.id
+                }
+            }
+        );
 
-export const UpdateCategory = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const { name, slug, description, icon, isHomePage } = req.body;
-    try {
-        const category = await CategoryModel.findByIdAndUpdate(id, { name, slug, description, icon, isHomePage }, { new: true });
-        if (!category) {
-            logger.warn("Category update failed - category not found", {
-                metadata: {
-                    categoryId: id,
-                },
-            });
-            return res.status(404).json({ message: "Category not found" });
-        }
-        await incrementCacheVersion(CategoryCacheKeys.listVersion());
-        res.status(200).json({ message: "Category updated successfully", category });
-    } catch (error) {
-        logger.error("Internal server error", {
-            metadata: {
-                error: error instanceof Error
-                    ? error.message
-                    : String(error),
-            },
+        return res.status(202).json({
+            success: true,
+            message: "Category creation is being processed",
+            data: {
+                jobId: job.id,
+                requestId
+            }
         });
-        res.status(500).json({ message: "Internal server error" });
-    }
-}
 
-export const DeleteCategory = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    try {
-        const category = await CategoryModel.findByIdAndUpdate(id, { isDeleted: true, DeletedAt: new Date() }, { new: true });
-        if (!category) {
-            logger.warn("Category deletion failed - category not found", {
-                metadata: {
-                    categoryId: id,
-                },
-            });
-            return res.status(404).json({ message: "Category not found" });
-        }
-        await incrementCacheVersion(CategoryCacheKeys.listVersion());
-        res.status(200).json({ message: "Category deleted successfully", category });
     } catch (error) {
-        logger.error("Internal server error", {
-            metadata: {
-                error: error instanceof Error
-                    ? error.message
-                    : String(error),
-            },
+
+        logger.error(
+            "Error creating category",
+            {
+                metadata: {
+                    name,
+                    requestId,
+                    error:
+                        error instanceof Error
+                            ? error.message
+                            : String(error)
+                }
+            }
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Error creating category"
         });
-        res.status(500).json({ message: "Internal server error" });
     }
-}
-export const GetCategory = async (req: Request, res: Response) => {
-    let page = Number(req.query.page) || 1;
-    let limit = Number(req.query.limit) || 10;
-    if (page < 1) {
-        page = 1;
-    }
-    if (limit < 1) {
-        limit = 10;
-    }
-    if (limit > 100) {
-        limit = 100;
-    }
+};
+
+
+export const GetCategories = async (
+    req: Request,
+    res: Response
+) => {
     try {
-        const version = await getCacheVersion(CategoryCacheKeys.listVersion());
-        const cacheKey = CategoryCacheKeys.list(version, page, limit);
-        const cachedCategories = await getCache(cacheKey);
+        let isHomePage =
+            req.query.isHomePage === "true";
+        let page =
+            Number(req.query.page) || 1;
+
+        let limit =
+            Number(req.query.limit) || 10;
+
+        if (page < 1) {
+            page = 1;
+        }
+
+        if (limit < 1) {
+            limit = 10;
+        }
+
+        if (limit > 100) {
+            limit = 100;
+        }
+
+        const version =
+            await getCacheVersion(
+                CategoryCacheKeys.listVersion()
+            );
+
+        const cacheKey =
+            CategoryCacheKeys.list(
+                version,
+                page,
+                limit
+            );
+
+        const cachedCategories =
+            await getCache(cacheKey);
+
         if (cachedCategories) {
-            return res.status(200).json({
-                message: "Categories fetched successfully",
-                categories: cachedCategories,
-                source: "redis"
+
+            logger.info(
+                "Categories fetched from Redis",
+                {
+                    metadata: {
+                        page,
+                        limit,
+                        source: "redis"
+                    }
+                }
+            );
+
+            return res.status(200).json(
+                cachedCategories
+            );
+        }
+
+        const categories =
+            await CategoryModel
+                .find({
+                    isDeleted: false,
+                    isHomePage: isHomePage
+                })
+                .sort({
+                    createdAt: -1
+                })
+                .limit(limit)
+                .skip(
+                    (page - 1) * limit
+                )
+                .lean();
+
+        if (
+            !categories ||
+            categories.length === 0
+        ) {
+
+            logger.warn(
+                "No categories found",
+                {
+                    metadata: {
+                        page,
+                        limit
+                    }
+                }
+            );
+
+            return res.status(404).json({
+                message: "No categories found"
             });
         }
 
-        const categories = await CategoryModel.find({ isDeleted: false })
-            .skip((Number(page) - 1) * Number(limit))
-            .limit(Number(limit));
-        await setCache(cacheKey, categories, 1800);
-        res.status(200).json({ message: "Categories fetched successfully", categories });
+        await setCache(
+            cacheKey,
+            categories,
+            3600
+        );
+
+        logger.info(
+            "Categories fetched successfully",
+            {
+                metadata: {
+                    count: categories.length,
+                    page,
+                    limit,
+                    source: "mongodb"
+                }
+            }
+        );
+
+        return res.status(200).json(
+            categories
+        );
+
     } catch (error) {
-        logger.error("Internal server error", {
-            metadata: {
-                error: error instanceof Error
-                    ? error.message
-                    : String(error),
-            },
-        });
-        res.status(500).json({ message: "Internal server error" });
-    }
-}
 
-export const GetCategoryById = async (req: Request, res: Response) => {
-    const { id } = req.params;
+        logger.error(
+            "Error fetching categories",
+            {
+                metadata: {
+                    error:
+                        error instanceof Error
+                            ? error.message
+                            : String(error),
+                    page: req.query.page,
+                    limit: req.query.limit
+                }
+            }
+        );
+
+        return res.status(500).json({
+            message: "Error fetching categories"
+        });
+    }
+};
+
+
+export const GetCategoryDetails = async (
+    req: Request,
+    res: Response
+) => {
+
+    const { id } = req.params as { id: string };
+
     try {
-        const version = await getCacheVersion(CategoryCacheKeys.detailsVersion(id as string));
-        const cacheKey = CategoryCacheKeys.details(id as string, version);
-        const cachedCategory = await getCache(cacheKey);
+
+        const version =
+            await getCacheVersion(
+                CategoryCacheKeys.detailsVersion(
+                    id
+                )
+            );
+
+        const cacheKey =
+            CategoryCacheKeys.details(
+                id,
+                version
+            );
+
+        const cachedCategory =
+            await getCache(cacheKey);
+
         if (cachedCategory) {
+
+            logger.info(
+                "Category details fetched from Redis",
+                {
+                    metadata: {
+                        categoryId: id,
+                        source: "redis"
+                    }
+                }
+            );
+
             return res.status(200).json({
-                message: "Category fetched successfully",
-                category: cachedCategory,
-                source: "redis"
+                success: true,
+                source: "redis",
+                data: cachedCategory
             });
         }
-        const category = await CategoryModel.findById(id);
-        if (!category || category.isDeleted) {
-            logger.warn("Category not found", {
+
+        const category =
+            await CategoryModel
+                .findOne({
+                    _id: id,
+                    isDeleted: false
+                })
+                .lean();
+
+        if (!category) {
+
+            return res.status(404).json({
+                success: false,
+                message: "Category not found"
+            });
+        }
+
+        await setCache(
+            cacheKey,
+            category,
+            3600
+        );
+
+        logger.info(
+            "Category details fetched successfully",
+            {
                 metadata: {
                     categoryId: id,
-                },
-            });
-            return res.status(404).json({ message: "Category not found" });
-        }
-        await setCache(cacheKey, category, 1800);
-        res.status(200).json({ message: "Category fetched successfully", category });
-    } catch (error) {
-        logger.error("Internal server error", {
-            metadata: {
-                error: error instanceof Error
-                    ? error.message
-                    : String(error),
-            },
+                    source: "mongodb"
+                }
+            }
+        );
+
+        return res.status(200).json({
+            success: true,
+            source: "mongodb",
+            data: category
         });
-        res.status(500).json({ message: "Internal server error" });
+
+    } catch (error) {
+
+        logger.error(
+            "Error fetching category details",
+            {
+                metadata: {
+                    categoryId: id,
+                    error:
+                        error instanceof Error
+                            ? error.message
+                            : String(error)
+                }
+            }
+        );
+
+        return res.status(500).json({
+            message: "Error fetching category details"
+        });
     }
-}
+};
+
+
+export const UpdateCategory = async (
+    req: Request,
+    res: Response
+) => {
+
+    const {
+        name,
+        slug,
+        description,
+        icon,
+        isHomePage
+    } = req.body;
+
+    const { id } =
+        req.params as { id: string };
+
+    const requestId =
+        crypto.randomUUID();
+
+    try {
+
+        const existingCategory =
+            await CategoryModel.findById(id);
+
+        if (!existingCategory) {
+
+            return res.status(404).json({
+                success: false,
+                message: "Category not found"
+            });
+        }
+
+        if (existingCategory.isDeleted) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Category is already deleted"
+            });
+        }
+
+        const job =
+            await categoryUpdateQueue.add(
+                "category-update",
+                {
+                    requestId,
+                    id,
+                    categoryData: {
+                        name,
+                        slug,
+                        description,
+                        icon,
+                        isHomePage
+                    }
+                },
+                {
+                    attempts: 5,
+
+                    backoff: {
+                        type: "exponential",
+                        delay: 5000
+                    },
+
+                    removeOnComplete: {
+                        age: 3600
+                    },
+
+                    removeOnFail: {
+                        age: 86400
+                    }
+                }
+            );
+
+        logger.info(
+            "Category update job added to queue",
+            {
+                metadata: {
+                    categoryId: id,
+                    requestId,
+                    jobId: job.id
+                }
+            }
+        );
+
+        return res.status(202).json({
+            success: true,
+            message: "Category update is being processed",
+            data: {
+                jobId: job.id,
+                requestId
+            }
+        });
+
+    } catch (error) {
+
+        logger.error(
+            "Error updating category",
+            {
+                metadata: {
+                    categoryId: id,
+                    requestId,
+                    error:
+                        error instanceof Error
+                            ? error.message
+                            : String(error)
+                }
+            }
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Error updating category"
+        });
+    }
+};
+
+
+export const DeleteCategory = async (
+    req: Request,
+    res: Response
+) => {
+
+    const { id } =
+        req.params as { id: string };
+
+    const requestId =
+        crypto.randomUUID();
+
+    try {
+
+        const existingCategory =
+            await CategoryModel.findById(id);
+
+        if (!existingCategory) {
+
+            return res.status(404).json({
+                success: false,
+                message: "Category not found"
+            });
+        }
+
+        if (existingCategory.isDeleted) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Category is already deleted"
+            });
+        }
+
+        const job =
+            await categoryDeleteQueue.add(
+                "category-delete",
+                {
+                    requestId,
+                    id
+                },
+                {
+                    attempts: 5,
+
+                    backoff: {
+                        type: "exponential",
+                        delay: 5000
+                    },
+
+                    removeOnComplete: {
+                        age: 3600
+                    },
+
+                    removeOnFail: {
+                        age: 86400
+                    }
+                }
+            );
+
+        logger.info(
+            "Category delete job added to queue",
+            {
+                metadata: {
+                    categoryId: id,
+                    requestId,
+                    jobId: job.id
+                }
+            }
+        );
+
+        return res.status(202).json({
+            success: true,
+            message: "Category deletion is being processed",
+            data: {
+                jobId: job.id,
+                requestId
+            }
+        });
+
+    } catch (error) {
+
+        logger.error(
+            "Error deleting category",
+            {
+                metadata: {
+                    categoryId: id,
+                    requestId,
+                    error:
+                        error instanceof Error
+                            ? error.message
+                            : String(error)
+                }
+            }
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Error deleting category"
+        });
+    }
+};

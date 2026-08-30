@@ -8,138 +8,139 @@ import {
     getCache,
     getCacheVersion,
     incrementCacheVersion,
+    OtpCacheKeys,
     setCache
 } from "@utils/index";
 import { logger } from "@modules/log/logger";
 
 export const Login = async (req: Request, res: Response) => {
-  try {
-    const { email, password } = req.body;
-    
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Email and password are required",
-      });
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "Email and password are required",
+            });
+        }
+
+        if (!process.env.JWT_SECRET) {
+            throw new Error("JWT_SECRET is not configured on the server");
+        }
+
+        const user = await AuthModel.findOne({ email });
+
+        // User not found
+        if (!user) {
+            logger.warn("User login failed - user not found", {
+                metadata: {
+                    email,
+                },
+            });
+
+            return res.status(401).json({
+                success: false,
+                NotFound: true,
+                message: "Invalid email or password",
+            });
+        }
+
+        // Account deleted
+        if (user.isDeleted) {
+            logger.warn("User login failed - account deleted", {
+                metadata: {
+                    email,
+                },
+            });
+
+            return res.status(403).json({
+                success: false,
+                message: "Account has been deleted. Please contact support.",
+            });
+        }
+
+        // Compare password
+        const comparePassword = await bcrypt.compare(
+            password,
+            user.password
+        );
+
+        if (!comparePassword) {
+            logger.warn("User login failed - wrong password", {
+                metadata: {
+                    email,
+                },
+            });
+
+            return res.status(401).json({
+                success: false,
+                WrongPass: true,
+                message: "Invalid email or password",
+            });
+        }
+
+        // Create JWT
+        const token = jwt.sign(
+            {
+                id: user._id,
+                email: user.email,
+                role: user.role,
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "24h",
+            }
+        );
+
+        const isProduction = process.env.NODE_ENV === "production";
+
+        const cookieOptions = {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: (isProduction ? "none" : "lax") as
+                | "none"
+                | "lax",
+            maxAge: 24 * 60 * 60 * 1000,
+        };
+
+        res.cookie("token", token, cookieOptions);
+
+        logger.info("User login successful", {
+            metadata: {
+                userId: user._id.toString(),
+                email: user.email,
+            },
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Login successful",
+
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                role: user.role,
+            },
+        });
+    } catch (error) {
+        console.error("Login error:", error);
+
+        logger.error("Login error", {
+            metadata: {
+                error:
+                    error instanceof Error
+                        ? error.message
+                        : String(error),
+            },
+        });
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+        });
     }
-
-    if (!process.env.JWT_SECRET) {
-      throw new Error("JWT_SECRET is not configured on the server");
-    }
-
-    const user = await AuthModel.findOne({ email });
-
-    // User not found
-    if (!user) {
-      logger.warn("User login failed - user not found", {
-        metadata: {
-          email,
-        },
-      });
-
-      return res.status(401).json({
-        success: false,
-        NotFound: true,
-        message: "Invalid email or password",
-      });
-    }
-
-    // Account deleted
-    if (user.isDeleted) {
-      logger.warn("User login failed - account deleted", {
-        metadata: {
-          email,
-        },
-      });
-
-      return res.status(403).json({
-        success: false,
-        message: "Account has been deleted. Please contact support.",
-      });
-    }
-
-    // Compare password
-    const comparePassword = await bcrypt.compare(
-      password,
-      user.password
-    );
-
-    if (!comparePassword) {
-      logger.warn("User login failed - wrong password", {
-        metadata: {
-          email,
-        },
-      });
-
-      return res.status(401).json({
-        success: false,
-        WrongPass: true,
-        message: "Invalid email or password",
-      });
-    }
-
-    // Create JWT
-    const token = jwt.sign(
-      {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "24h",
-      }
-    );
-
-    const isProduction = process.env.NODE_ENV === "production";
-
-    const cookieOptions = {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: (isProduction ? "none" : "lax") as
-        | "none"
-        | "lax",
-      maxAge: 24 * 60 * 60 * 1000,
-    };
-
-    res.cookie("token", token, cookieOptions);
-
-    logger.info("User login successful", {
-      metadata: {
-        userId: user._id.toString(),
-        email: user.email,
-      },
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: "Login successful",
-
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-      },
-    });
-  } catch (error) {
-    console.error("Login error:", error);
-
-    logger.error("Login error", {
-      metadata: {
-        error:
-          error instanceof Error
-            ? error.message
-            : String(error),
-      },
-    });
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
 };
 
 export const SignUp = async (req: Request, res: Response) => {
@@ -478,3 +479,81 @@ export const Logout = (req: Request, res: Response) => {
         message: "Logged out successfully"
     });
 };
+
+export const ForgotPassword = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body;
+
+        const otp = Math.floor(
+            100000 + Math.random() * 900000
+        ).toString();
+
+        setCache(
+            OtpCacheKeys.detailsVersion(email),
+            otp,
+            5 * 60
+        );
+
+        logger.info("OTP generated successfully", {
+            metadata: {
+                email
+            }
+        });
+
+        res.status(200).json({
+            message: "OTP generated successfully"
+        });
+
+    } catch (error) {
+
+        logger.error("Error generating OTP", {
+            metadata: {
+                email: req.body.email,
+                error: error instanceof Error
+                    ? error.message
+                    : String(error)
+            }
+        });
+
+        res.status(500).json({
+            message: "Error generating OTP"
+        });
+    }
+}
+
+export const ResetPassword = async (req: Request, res: Response) => {
+    try {
+        const { email, newPassword } = req.body;
+        const user = await AuthModel.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found",
+            });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        logger.info("Password reset successfully", {
+            metadata: {
+                email
+            }
+        });
+
+        res.status(200).json({
+            message: "Password reset successfully"
+        });
+
+    } catch (error) {
+        logger.error("Error resetting password", {
+            metadata: {
+                email: req.body.email,
+                error: error instanceof Error
+                    ? error.message
+                    : String(error)
+            }
+        });
+    }
+}

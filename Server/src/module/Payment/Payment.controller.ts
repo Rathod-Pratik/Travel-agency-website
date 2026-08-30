@@ -3,6 +3,9 @@ import Razorpay from 'razorpay';
 import { Request, Response } from 'express';
 import { PaymentModel } from './Payment.model';
 import { logger } from '@modules/log/logger';
+import { AuthModel } from '@modules/Auth/Auth.model';
+import ca from 'zod/v4/locales/ca.js';
+import mongoose from 'mongoose';
 
 const keyId = process.env.RAZORPAY_API_KEY;
 const keySecret = process.env.RAZORPAY_API_SECRET;
@@ -235,62 +238,190 @@ export const verifyOrder = async (req: Request, res: Response) => {
     }
 };
 
-export const Refund = async (req: Request, res: Response) => {
+export const Refund = async (
+    { paymentId, userId }: { paymentId: string; userId: mongoose.Types.ObjectId }
+) => {
+    const user = await AuthModel.findById(userId);
+    if (!user) {
+
+        logger.warn(
+            "Refund failed - user not found",
+            {
+                metadata: {
+                    paymentId,
+                    userId
+                }
+            }
+        );
+
+        return {
+            success: false,
+            message: "User not found"
+        };
+    }
     try {
 
-        const {
-            payment_id,
-            amount
-        } = req.body;
+        const paymentRecord =
+            await PaymentModel.findOne({
+                _id: paymentId, status
+                    : "Completed"
+            });
 
-        const payment =
-            await razorpayInstance.payments.fetch(payment_id);
+        if (!paymentRecord) {
 
-        if (!payment || !payment.amount) {
-
-            logger.warn("Refund failed - invalid payment details", {
-                metadata: {
-                    paymentId: payment_id
+            logger.warn(
+                "Refund failed - payment record not found",
+                {
+                    metadata: {
+                        paymentId
+                    }
                 }
-            });
+            );
 
-            return res.status(400).json({
+            return {
                 success: false,
-                message: "Invalid payment details or missing amount"
-            });
+                message: "Payment record not found"
+            };
         }
 
+        if (!paymentRecord.razorpayPaymentId) {
+
+            logger.warn(
+                "Refund failed - Razorpay payment ID not found",
+                {
+                    metadata: {
+                        paymentId
+                    }
+                }
+            );
+
+            return {
+                success: false,
+                message: "Razorpay payment ID not found"
+            };
+        }
+
+        if (
+            paymentRecord.status === "Refunded"
+        ) {
+
+            return {
+                success: false,
+                message: "Payment has already been refunded"
+            };
+        }
+
+        const razorpayPayment =
+            await razorpayInstance.payments.fetch(
+                paymentRecord.razorpayPaymentId
+            );
+
+        if (
+            !razorpayPayment ||
+            typeof razorpayPayment.amount !== "number"
+        ) {
+
+            logger.warn(
+                "Refund failed - invalid Razorpay payment",
+                {
+                    metadata: {
+                        paymentId,
+                        razorpayPaymentId:
+                            paymentRecord.razorpayPaymentId
+                    }
+                }
+            );
+
+            return {
+                success: false,
+                message: "Invalid Razorpay payment details"
+            };
+        }
+
+        const databaseAmount =
+            Number(paymentRecord.amount);
+
+        const razorpayAmount =
+            Number(razorpayPayment.amount);
+
+        if (
+            !Number.isFinite(databaseAmount) ||
+            !Number.isFinite(razorpayAmount)
+        ) {
+
+            return {
+                success: false,
+                message: "Invalid payment amount"
+            };
+        }
+
+        if (
+            databaseAmount !== razorpayAmount
+        ) {
+
+            logger.error(
+                "Refund blocked - payment amount mismatch",
+                {
+                    metadata: {
+                        paymentId,
+                        databaseAmount,
+                        razorpayAmount
+                    }
+                }
+            );
+
+            return {
+                success: false,
+                message:
+                    "Payment amount mismatch. Refund blocked."
+            };
+        }
+
+
+
+        const refundPercentage =
+            user.role === "admin"
+                ? 100
+                : 80;
+
         const refundAmount =
-            amount || payment.amount;
+            Math.floor(
+                razorpayAmount *
+                refundPercentage /
+                100
+            );
 
         if (refundAmount < 100) {
 
-            logger.warn("Refund failed - invalid refund amount", {
-                metadata: {
-                    paymentId: payment_id,
-                    refundAmount
+            logger.warn(
+                "Refund failed - refund amount below Razorpay minimum",
+                {
+                    metadata: {
+                        paymentId,
+                        refundAmount,
+                        refundPercentage
+                    }
                 }
-            });
+            );
 
-            return res.status(400).json({
+            return {
                 success: false,
-                message: "The refund amount must be at least INR 1.00",
-            });
+                message:
+                    "Refund amount must be at least INR 1.00"
+            };
         }
 
         const refund =
             await razorpayInstance.payments.refund(
-                payment_id,
+                paymentRecord.razorpayPaymentId,
                 {
                     amount: refundAmount
                 }
             );
 
         const updatedPayment =
-            await PaymentModel.findOneAndUpdate(
-                {
-                    razorpayPaymentId: payment_id
-                },
+            await PaymentModel.findByIdAndUpdate(
+                paymentRecord._id,
                 {
                     status: "Refunded"
                 },
@@ -301,55 +432,76 @@ export const Refund = async (req: Request, res: Response) => {
 
         if (!updatedPayment) {
 
-            logger.warn("Refund completed but payment record not found", {
-                metadata: {
-                    paymentId: payment_id,
-                    refundAmount
+            logger.error(
+                "Refund completed but payment record update failed",
+                {
+                    metadata: {
+                        paymentId,
+                        refundAmount
+                    }
                 }
-            });
+            );
 
-            return res.status(404).json({
+            return {
                 success: false,
-                message: "Payment record not found for refund"
-            });
+                message:
+                    "Refund completed but payment record could not be updated",
+                refund
+            };
+        }
 
-        } else {
-
-            logger.info("Payment refunded successfully", {
+        logger.info(
+            "Payment refunded successfully",
+            {
                 metadata: {
-                    paymentId: payment_id,
-                    paymentRecordId: updatedPayment._id.toString(),
-                    userId: updatedPayment.userId,
-                    tourId: updatedPayment.tourId,
+                    paymentId,
+                    razorpayPaymentId:
+                        paymentRecord.razorpayPaymentId,
+                    userId: paymentRecord.userId,
+                    tourId: paymentRecord.tourId,
+                    originalAmount: razorpayAmount,
+                    refundPercentage,
                     refundAmount,
+                    cancelledBy: user.role,
                     status: "Refunded"
                 }
-            });
+            }
+        );
 
-            res.json({
-                success: true,
-                message: "Refund initiated successfully!",
-                refund,
-                updatedPayment,
-            });
-        }
+        return {
+            success: true,
+            message: "Refund initiated successfully",
+            refund,
+            cancelledBy: user.role,
+            refundAmount,
+            refundPercentage,
+            originalAmount: razorpayAmount,
+            updatedPayment
+        };
 
     } catch (error) {
 
-        logger.error("Razorpay refund error", {
-            metadata: {
-                paymentId: req.body.payment_id,
-                refundAmount: req.body.amount,
-                error: error instanceof Error
-                    ? error.message
-                    : String(error)
+        logger.error(
+            "Razorpay refund error",
+            {
+                metadata: {
+                    paymentId,
+                    cancelledBy: user.role,
+                    error:
+                        error instanceof Error
+                            ? error.message
+                            : String(error)
+                }
             }
-        });
+        );
 
-        res.status(500).json({
+        return {
             success: false,
-            message: error || "Refund failed"
-        });
+            message:
+                error instanceof Error
+                    ? error.message
+                    : "Refund failed"
+        };
     }
 };
 
@@ -409,5 +561,154 @@ export const GetPaymentHistory = async (
         res.status(500).json({
             message: "Internal Server Error"
         });
+    }
+};
+
+export const VerifyPayment = async (
+    paymentId: string,
+    userId: string,
+    tourId: string,
+    amount: number
+) => {
+
+    try {
+
+        const paymentRecord =
+            await PaymentModel.findOne({
+                _id: paymentId,
+                userId,
+                tourId
+            });
+
+        if (!paymentRecord) {
+
+            return {
+                success: false,
+                message: "Payment record not found"
+            };
+        }
+
+        if (!paymentRecord.razorpayPaymentId) {
+
+            return {
+                success: false,
+                message: "Razorpay payment ID not found"
+            };
+        }
+
+        if (paymentRecord.status !== "Completed") {
+
+            return {
+                success: false,
+                message: "Payment is not completed"
+            };
+        }
+
+        const razorpayPayment =
+            await razorpayInstance.payments.fetch(
+                paymentRecord.razorpayPaymentId
+            );
+
+        if (!razorpayPayment) {
+
+            return {
+                success: false,
+                message: "Razorpay payment not found"
+            };
+        }
+
+        if (
+            razorpayPayment.status !== "captured"
+        ) {
+
+            return {
+                success: false,
+                message:
+                    "Razorpay payment is not captured"
+            };
+        }
+
+        const databaseAmount =
+            Number(paymentRecord.amount);
+
+        const razorpayAmount =
+            Number(razorpayPayment.amount);
+
+        const bookingAmount =
+            Number(amount);
+
+        if (
+            databaseAmount !== razorpayAmount
+        ) {
+
+            logger.error(
+                "Payment verification failed - database and Razorpay amount mismatch",
+                {
+                    metadata: {
+                        paymentId,
+                        databaseAmount,
+                        razorpayAmount
+                    }
+                }
+            );
+
+            return {
+                success: false,
+                message:
+                    "Payment amount mismatch"
+            };
+        }
+
+        if (
+            databaseAmount !== bookingAmount
+        ) {
+
+            logger.error(
+                "Payment verification failed - booking amount mismatch",
+                {
+                    metadata: {
+                        paymentId,
+                        databaseAmount,
+                        bookingAmount
+                    }
+                }
+            );
+
+            return {
+                success: false,
+                message:
+                    "Booking amount does not match payment amount"
+            };
+        }
+
+        return {
+            success: true,
+            status: paymentRecord.status,
+            message: "Payment verified successfully",
+            payment: paymentRecord,
+            method: razorpayPayment.method
+        };
+
+    } catch (error) {
+
+        logger.error(
+            "Payment verification error",
+            {
+                metadata: {
+                    paymentId,
+                    userId,
+                    tourId,
+                    error:
+                        error instanceof Error
+                            ? error.message
+                            : String(error)
+                }
+            }
+        );
+
+        return {
+            success: false,
+            message: "Payment verification failed"
+        };
     }
 };

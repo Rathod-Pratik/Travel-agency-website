@@ -11,14 +11,12 @@ import mongoose from "mongoose";
 interface CreateNotificationParams {
     userId: mongoose.Schema.Types.ObjectId;
     message: string;
-    icon: string;
     type: NotificationType;
 }
 
 export const createNotification = async ({
     userId,
     message,
-    icon,
     type
 }: CreateNotificationParams) => {
 
@@ -36,7 +34,6 @@ export const createNotification = async ({
                     notificationData: {
                         userId,
                         message,
-                        icon,
                         type
                     }
                 },

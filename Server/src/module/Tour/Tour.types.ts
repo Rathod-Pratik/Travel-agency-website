@@ -57,9 +57,9 @@ export interface ITour {
 
   featured: boolean;
 
-  startDate?: Date;
+  startDate: Date;
 
-  endDate?: Date;
+  endDate: Date;
 
   createdBy: string;
   isDeleted?: boolean;
