@@ -194,5 +194,8 @@ await createNotification({
         tourId: id,
         alreadyDeleted: false
     }
+}, {
+    connection: bellmqConnection,
+    concurrency: 5
 });
 

@@ -227,5 +227,9 @@ export const hotelDeleteWorker = new Worker(
             type: "info"
         });
         return;
+    },
+    {
+        connection: bellmqConnection,
+        concurrency: 5
     }
 )
