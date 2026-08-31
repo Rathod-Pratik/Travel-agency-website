@@ -352,7 +352,7 @@ export const invoiceTemplate = (
                             </div>
 
                             <div class="value">
-                                ${data.booking.code}
+                                ${data.code || ""}
                             </div>
 
                         </div>

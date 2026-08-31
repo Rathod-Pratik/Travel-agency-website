@@ -1,0 +1,344 @@
+import { BookingReminderEmailData } from "../Email.types";
+
+export const bookingReminderEmail = (
+    data: BookingReminderEmailData
+) => {
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+
+        <head>
+            <meta charset="UTF-8" />
+
+            <meta
+                name="viewport"
+                content="width=device-width, initial-scale=1.0"
+            />
+
+            <title>Your Trip Is Coming Up - TravelWorld</title>
+
+            <style>
+                body {
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f7fb;
+                    font-family: Arial, Helvetica, sans-serif;
+                    color: #333333;
+                }
+
+                .container {
+                    max-width: 600px;
+                    margin: 40px auto;
+                    background-color: #ffffff;
+                    border-radius: 12px;
+                    overflow: hidden;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+                }
+
+                .header {
+                    background-color: #f97316;
+                    padding: 30px 20px;
+                    text-align: center;
+                    color: #ffffff;
+                }
+
+                .header h1 {
+                    margin: 0;
+                    font-size: 28px;
+                }
+
+                .reminder {
+                    text-align: center;
+                    padding: 30px 20px 10px;
+                }
+
+                .reminder-icon {
+                    width: 60px;
+                    height: 60px;
+                    line-height: 60px;
+                    margin: 0 auto 15px;
+                    border-radius: 50%;
+                    background-color: #fff7ed;
+                    color: #f97316;
+                    font-size: 30px;
+                }
+
+                .reminder h2 {
+                    margin: 0;
+                    color: #222222;
+                    font-size: 23px;
+                }
+
+                .content {
+                    padding: 25px 30px 35px;
+                }
+
+                .content p {
+                    font-size: 15px;
+                    line-height: 1.7;
+                    color: #555555;
+                }
+
+                .trip-box {
+                    margin-top: 25px;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 8px;
+                    overflow: hidden;
+                }
+
+                .trip-title {
+                    padding: 15px;
+                    background-color: #fff7ed;
+                    color: #f97316;
+                    font-size: 16px;
+                    font-weight: bold;
+                }
+
+                .row {
+                    padding: 12px 15px;
+                    border-bottom: 1px solid #eeeeee;
+                    font-size: 14px;
+                }
+
+                .row:last-child {
+                    border-bottom: none;
+                }
+
+                .label {
+                    color: #777777;
+                }
+
+                .value {
+                    float: right;
+                    color: #222222;
+                    font-weight: bold;
+                }
+
+                .important {
+                    margin-top: 25px;
+                    padding: 18px;
+                    background-color: #fff7ed;
+                    border-left: 4px solid #f97316;
+                    border-radius: 6px;
+                }
+
+                .important h3 {
+                    margin-top: 0;
+                    color: #f97316;
+                    font-size: 16px;
+                }
+
+                .important ul {
+                    margin-bottom: 0;
+                    padding-left: 20px;
+                }
+
+                .important li {
+                    margin-bottom: 8px;
+                    font-size: 13px;
+                    color: #666666;
+                }
+
+                .button-container {
+                    text-align: center;
+                    margin: 30px 0 10px;
+                }
+
+                .button {
+                    display: inline-block;
+                    padding: 13px 26px;
+                    background-color: #f97316;
+                    color: #ffffff !important;
+                    text-decoration: none;
+                    border-radius: 7px;
+                    font-size: 14px;
+                    font-weight: bold;
+                }
+
+                .footer {
+                    padding: 20px 30px;
+                    background-color: #f8fafc;
+                    text-align: center;
+                    color: #888888;
+                    font-size: 12px;
+                }
+            </style>
+        </head>
+
+        <body>
+
+            <div class="container">
+
+                <div class="header">
+                    <h1>TravelWorld</h1>
+                </div>
+
+                <div class="reminder">
+
+                    <div class="reminder-icon">
+                        ✈
+                    </div>
+
+                    <h2>Your Trip Is Coming Up!</h2>
+
+                </div>
+
+                <div class="content">
+
+                    <p>
+                        Hello <strong>${data.user.name}</strong>,
+                    </p>
+
+                    <p>
+                        Just a friendly reminder that your upcoming
+                        TravelWorld trip is approaching.
+                        We can't wait to have you on board!
+                    </p>
+
+                    <div class="trip-box">
+
+                        <div class="trip-title">
+                            Your Trip Details
+                        </div>
+
+                        <div class="row">
+
+                            <span class="label">
+                                Booking ID
+                            </span>
+
+                            <span class="value">
+                                ${data.booking.bookingId}
+                            </span>
+
+                        </div>
+
+                        <div class="row">
+
+                            <span class="label">
+                                Tour
+                            </span>
+
+                            <span class="value">
+                                ${data.booking.tourName}
+                            </span>
+
+                        </div>
+
+                        <div class="row">
+
+                            <span class="label">
+                                Travel Date
+                            </span>
+
+                            <span class="value">
+                                ${data.booking.travelDate}
+                            </span>
+
+                        </div>
+
+                        <div class="row">
+
+                            <span class="label">
+                                Guests
+                            </span>
+
+                            <span class="value">
+                                ${data.booking.guests}
+                            </span>
+
+                        </div>
+
+                        <div class="row">
+
+                            <span class="label">
+                                Booking Amount
+                            </span>
+
+                            <span class="value">
+                                ₹${data.booking.totalAmount.toLocaleString("en-IN")}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="important">
+
+                        <h3>
+                            Before You Travel
+                        </h3>
+
+                        <ul>
+
+                            <li>
+                                Make sure you have all required
+                                travel documents with you.
+                            </li>
+
+                            <li>
+                                Check your travel schedule and
+                                meeting/arrival instructions.
+                            </li>
+
+                            <li>
+                                Keep your Booking ID handy.
+                            </li>
+
+                            <li>
+                                Arrive at the designated meeting point
+                                on time.
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+                    <div class="button-container">
+
+                        <a
+                            href="${process.env.FRONTEND_URL}/bookings/${data.booking.bookingId}"
+                            class="button"
+                        >
+                            View Booking
+                        </a>
+
+                    </div>
+
+                    <p>
+                        If you have any questions before your trip,
+                        our support team is always here to help.
+                    </p>
+
+                    <p>
+                        Have a safe and wonderful journey! 🌍✈️
+                    </p>
+
+                    <p>
+                        Regards,<br />
+                        <strong>Team TravelWorld</strong>
+                    </p>
+
+                </div>
+
+                <div class="footer">
+
+                    <p>
+                        © ${new Date().getFullYear()}
+                        TravelWorld. All rights reserved.
+                    </p>
+
+                    <p>
+                        This is an automated email.
+                        Please do not reply to this email.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </body>
+
+        </html>
+    `;
+};

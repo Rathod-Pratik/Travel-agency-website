@@ -24,6 +24,7 @@ import { invoiceGenerationQueue } from "@modules/Invoice/Invoice.queue";
 import { AuthModel } from "@modules/Auth/Auth.model";
 import { TourModel } from "@modules/Tour/Tour.model";
 import { createNotification } from "@modules/Notification/Notification.service";
+import { sendEmail } from "@modules/Email/Email.service";
 
 export const bookingCreateWorker =
     new Worker<CreateBookingJobData>(
@@ -230,6 +231,31 @@ export const bookingCreateWorker =
                     message: "Tour Booked successfully",
                     type: "success",
                 });
+
+            await sendEmail({
+                requestId,
+                email: user.email,
+                type: "booking-confirmed",
+                data: {
+                    user: {
+                        name: user.name,
+                        email: user.email
+                    },
+                    booking: {
+                        bookingId: booking._id.toString(),
+                        tourName: tour.title,
+                        travelDate: new Date(tour.startDate).toLocaleDateString(),
+                        guests: booking.noOfSeats,
+                        totalAmount: booking.amount
+                    },
+                    payment: {
+                        paymentId: booking.paymentId.toString(),
+                        amount: booking.amount,
+                        status: paymentVerification.status
+                    }
+                }
+            });
+
             logger.info(
                 "Booking Worker: Booking created successfully",
                 {
@@ -356,6 +382,37 @@ export const bookingCancellationWorker =
                 message: "Your booking has been cancelled successfully",
                 type: "success",
             });
+
+            const user = await AuthModel.findById(booking.userId);
+            const tour = await TourModel.findById(booking.tourId);
+            if (user) {
+                const isCancelledByAdmin = cancelledBy === "admin" || (cancelledBy && cancelledBy.toString() !== booking.userId.toString());
+                await sendEmail({
+                    requestId,
+                    email: user.email,
+                    type: isCancelledByAdmin ? "booking-cancelled-admin" : "booking-cancelled-user",
+                    data: {
+                        user: {
+                            name: user.name,
+                            email: user.email
+                        },
+                        booking: {
+                            bookingId: booking._id.toString(),
+                            tourName: tour?.title || "Tour",
+                            travelDate: tour?.startDate ? new Date(tour.startDate).toLocaleDateString() : new Date().toLocaleDateString(),
+                            guests: booking.noOfSeats,
+                            totalAmount: booking.amount
+                        },
+                        payment: {
+                            paymentId: booking.paymentId?.toString() || "",
+                            amount: booking.amount,
+                            status: refundStatus || "Refunded"
+                        },
+                        cancellationReason: reason || description || "Booking cancelled"
+                    }
+                });
+            }
+
             logger.info(
                 "Booking cancelled successfully",
                 {

@@ -4,7 +4,8 @@ import { Request, Response } from 'express';
 import { PaymentModel } from './Payment.model';
 import { logger } from '@modules/log/logger';
 import { AuthModel } from '@modules/Auth/Auth.model';
-import ca from 'zod/v4/locales/ca.js';
+import { TourModel } from '@modules/Tour/Tour.model';
+import { sendEmail } from '@modules/Email/Email.service';
 import mongoose from 'mongoose';
 
 const keyId = process.env.RAZORPAY_API_KEY;
@@ -196,6 +197,27 @@ export const verifyOrder = async (req: Request, res: Response) => {
                         status: "Completed"
                     }
                 });
+
+                const user = await AuthModel.findById(payment.userId);
+                const tour = await TourModel.findById(payment.tourId);
+                if (user) {
+                    await sendEmail({
+                        requestId: crypto.randomUUID(),
+                        email: user.email,
+                        type: "payment-success",
+                        data: {
+                            name: user.name,
+                            paymentId: payment.razorpayPaymentId || paymentId,
+                            bookingId: payment.tourId?.toString() || "",
+                            tourName: tour?.title || "Tour Booking",
+                            travelDate: tour?.startDate ? new Date(tour.startDate).toLocaleDateString() : new Date().toLocaleDateString(),
+                            guests: 1,
+                            amount: Number(payment.amount) / 100,
+                            currency: "₹",
+                            paidAt: new Date().toLocaleDateString()
+                        }
+                    });
+                }
 
                 return res.status(200).json({
                     success: true,
@@ -467,6 +489,25 @@ export const Refund = async (
                 }
             }
         );
+
+        await sendEmail({
+            requestId: crypto.randomUUID(),
+            email: user.email,
+            type: "refund-processed",
+            data: {
+                user: {
+                    name: user.name,
+                    email: user.email
+                },
+                payment: {
+                    paymentId: paymentRecord.razorpayPaymentId || paymentId,
+                    refundId: refund?.id,
+                    refundAmount: refundAmount / 100,
+                    currency: "₹",
+                    processedAt: new Date().toLocaleDateString()
+                }
+            }
+        });
 
         return {
             success: true,

@@ -33,6 +33,7 @@ export interface InvoicePayment {
 export interface InvoiceJobData {
     invoiceNumber: string;
     invoiceDate: string;
+    code?: string;
 
     booking: {
         bookingDate: string;

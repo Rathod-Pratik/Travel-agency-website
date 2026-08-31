@@ -1,25 +1,17 @@
+import { OtpEmailData } from "../Email.types";
 
-import { PasswordResetEmailData } from "../Email.types";
-
-export const sendPasswordResetEmail = (
-    data: PasswordResetEmailData
-) => {
-    const resetUrl =
-        `${process.env.FRONTEND_URL}/reset-password?token=${data.resetToken}`;
-
+export const sendOtpEmail = (data: OtpEmailData) => {
     return `
         <!DOCTYPE html>
         <html lang="en">
-
         <head>
             <meta charset="UTF-8" />
-
             <meta
                 name="viewport"
                 content="width=device-width, initial-scale=1.0"
             />
 
-            <title>Reset Your TravelWorld Password</title>
+            <title>Your TravelWorld OTP</title>
 
             <style>
                 body {
@@ -67,26 +59,28 @@ export const sendPasswordResetEmail = (
                     color: #555555;
                 }
 
-                .button-container {
+                .otp-container {
                     text-align: center;
                     margin: 30px 0;
                 }
 
-                .button {
+                .otp {
                     display: inline-block;
-                    padding: 14px 28px;
-                    background-color: #f97316;
-                    color: #ffffff !important;
-                    text-decoration: none;
-                    border-radius: 7px;
-                    font-size: 15px;
+                    padding: 15px 30px;
+                    background-color: #fff7ed;
+                    border: 2px dashed #f97316;
+                    border-radius: 8px;
+                    color: #f97316;
+                    font-size: 32px;
                     font-weight: bold;
+                    letter-spacing: 8px;
                 }
 
                 .expiry {
                     text-align: center;
                     font-size: 13px;
                     color: #777777;
+                    margin-top: 10px;
                 }
 
                 .security {
@@ -100,19 +94,6 @@ export const sendPasswordResetEmail = (
                     margin: 0;
                     font-size: 13px;
                     color: #666666;
-                }
-
-                .fallback {
-                    margin-top: 25px;
-                    padding: 15px;
-                    background-color: #f8fafc;
-                    border-radius: 6px;
-                    word-break: break-all;
-                }
-
-                .fallback p {
-                    font-size: 12px;
-                    color: #777777;
                 }
 
                 .footer {
@@ -138,47 +119,38 @@ export const sendPasswordResetEmail = (
                     <h2>Hello ${data.name}! 👋</h2>
 
                     <p>
-                        We received a request to reset the password
+                        We received a request to verify your email address
                         for your TravelWorld account.
                     </p>
 
                     <p>
-                        Click the button below to create a new password.
+                        Please use the following One-Time Password (OTP)
+                        to continue:
                     </p>
 
-                    <div class="button-container">
-                        <a
-                            href="${resetUrl}"
-                            class="button"
-                        >
-                            Reset Password
-                        </a>
+                    <div class="otp-container">
+                        <div class="otp">
+                            ${data.otp}
+                        </div>
+
+                        <div class="expiry">
+                            This OTP will expire in
+                            <strong>${data.expiresInMinutes} minutes</strong>.
+                        </div>
                     </div>
-
-                    <p class="expiry">
-                        This password reset link will expire in
-                        <strong>${data.expiresInMinutes} minutes</strong>.
-                    </p>
 
                     <div class="security">
                         <p>
                             <strong>Security notice:</strong>
-                            If you did not request a password reset,
-                            you can safely ignore this email.
-                            Your password will remain unchanged.
+                            Never share this OTP with anyone.
+                            TravelWorld will never ask you for your OTP.
                         </p>
                     </div>
 
-                    <div class="fallback">
-                        <p>
-                            If the button doesn't work, copy and paste
-                            the following link into your browser:
-                        </p>
-
-                        <p>
-                            ${resetUrl}
-                        </p>
-                    </div>
+                    <p>
+                        If you did not request this verification code,
+                        you can safely ignore this email.
+                    </p>
 
                     <p>
                         Thanks,<br />
@@ -188,7 +160,6 @@ export const sendPasswordResetEmail = (
                 </div>
 
                 <div class="footer">
-
                     <p>
                         © ${new Date().getFullYear()}
                         TravelWorld. All rights reserved.
@@ -198,7 +169,6 @@ export const sendPasswordResetEmail = (
                         This is an automated email.
                         Please do not reply to this email.
                     </p>
-
                 </div>
 
             </div>

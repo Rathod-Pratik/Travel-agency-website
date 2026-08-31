@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { AuthModel } from "./Auth.model";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { getUploadedFile, uploadWithRetry } from "@utils/Function";
 import {
     AuthCacheKeys,
@@ -12,6 +13,7 @@ import {
     setCache
 } from "@utils/index";
 import { logger } from "@modules/log/logger";
+import { sendEmail } from "@modules/Email/Email.service";
 
 export const Login = async (req: Request, res: Response) => {
     try {
@@ -191,6 +193,16 @@ export const SignUp = async (req: Request, res: Response) => {
         };
 
         res.cookie("token", token, cookieOptions);
+
+        await sendEmail({
+            requestId: crypto.randomUUID(),
+            email: user.email,
+            type: "welcome",
+            data: {
+                name: user.name,
+                email: user.email
+            }
+        });
 
         logger.info("User signup successful", {
             metadata: {
@@ -488,13 +500,27 @@ export const ForgotPassword = async (req: Request, res: Response) => {
             100000 + Math.random() * 900000
         ).toString();
 
-        setCache(
+        await setCache(
             OtpCacheKeys.detailsVersion(email),
             otp,
             5 * 60
         );
 
-        logger.info("OTP generated successfully", {
+        const user = await AuthModel.findOne({ email });
+
+        await sendEmail({
+            requestId: crypto.randomUUID(),
+            email,
+            type: "otp",
+            data: {
+                name: user?.name || "Traveller",
+                email,
+                otp,
+                expiresInMinutes: 5
+            }
+        });
+
+        logger.info("OTP generated and email queued successfully", {
             metadata: {
                 email
             }
